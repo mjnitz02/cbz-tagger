@@ -1,37 +1,8 @@
-import os
-
-
 class Mode(object):
     AUTO = "auto"
     MANUAL = "manual"
     RETAG = "retag"
     UPDATE = "update"
-
-
-class ContainerMode(object):
-    TIMER = "timer"
-    CONTINUOUS = "timer"
-    MANUAL = "timer"
-
-
-class AppEnv(object):
-    if os.getenv("CONFIG_PATH") is not None:
-        config_path = os.getenv("CONFIG_PATH")
-    else:
-        config_path = "\\config"
-
-    if os.getenv("DOWNLOADS_PATH") is not None:
-        downloads_path = os.getenv("DOWNLOADS_PATH")
-    else:
-        downloads_path = "\\downloads"
-
-    timer_mode = os.getenv("ENABLE_TIMER_MODE") == "true"
-    continuous_mode = os.getenv("ENABLE_CONTINUOUS_MODE") == "true"
-
-    if os.getenv("TIMER_MODE_DELAY") is None:
-        timer_mode_delay = 600
-    else:
-        timer_mode_delay = int(os.getenv("TIMER_MODE_DELAY"))
 
 
 class MetadataSource(object):

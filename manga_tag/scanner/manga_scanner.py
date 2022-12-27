@@ -5,8 +5,9 @@ import time
 from os.path import join
 from zipfile import ZIP_DEFLATED, BadZipFile, ZipFile
 
-from manga_tag.common.enums import AppEnv, Mode
-from manga_tag.services.manga_db import MangaDB
+from manga_tag.common.enums import Mode
+from manga_tag.common.env import AppEnv
+from manga_tag.scanner.manga_db import MangaDB
 
 
 class MangaScanner(object):

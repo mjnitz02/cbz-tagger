@@ -26,11 +26,11 @@ RUN   echo "Install dependencies" && \
 
 RUN \
     echo "Adding aliases to container" && \
-    echo -e '#!/bin/bash\npython3 /manga_tag/manga.py --auto' > /usr/bin/auto && \
+    echo -e '#!/bin/bash\npython3 /manga_tag/run.py --auto' > /usr/bin/auto && \
     chmod +x /usr/bin/auto && \
-    echo -e '#!/bin/bash\npython3 /manga_tag/manga.py --manual' > /usr/bin/manual && \
+    echo -e '#!/bin/bash\npython3 /manga_tag/run.py --manual' > /usr/bin/manual && \
     chmod +x /usr/bin/manual && \
-    echo -e '#!/bin/bash\npython3 /manga_tag/manga.py --retag' > /usr/bin/retag && \
+    echo -e '#!/bin/bash\npython3 /manga_tag/run.py --retag' > /usr/bin/retag && \
     chmod +x /usr/bin/retag
 
 VOLUME /config

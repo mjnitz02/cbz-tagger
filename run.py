@@ -1,7 +1,8 @@
 import argparse
 
-from manga_tag.services.container import Container
-from manga_tag.services.manga_scanner import MangaScanner
+from manga_tag.common.env import AppEnv
+from manga_tag.container.factory import container_factory
+from manga_tag.scanner.manga_scanner import MangaScanner
 
 parser = argparse.ArgumentParser(description="Manga Tagger")
 parser.add_argument(
@@ -16,7 +17,7 @@ args = vars(parser.parse_args())
 print("Fast Manga Tagger v1.0")
 print("----------------------")
 if args["entrymode"]:
-    container = Container()
+    container = container_factory[AppEnv.container_mode]
     container.run()
 else:
     scanner = MangaScanner(args)
