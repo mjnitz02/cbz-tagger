@@ -11,12 +11,12 @@ class TimerContainer(BaseAutoContainer):
         print("Available manual modes: 'auto', 'manual', 'retag'.")
         print(
             "Timer Monitoring with {}s delay: {}".format(
-                AppEnv.timer_mode_delay, AppEnv.downloads_path
+                AppEnv.TIMER_DELAY, AppEnv.DOWNLOADS
             )
         )
 
     def _run(self):
         self.scanner.run()
         while True:
-            time.sleep(AppEnv.timer_mode_delay)
+            time.sleep(AppEnv.TIMER_DELAY)
             self.scanner.run()

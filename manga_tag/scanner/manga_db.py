@@ -10,7 +10,7 @@ from manga_tag.scanner.manga_object import MangaObject
 
 class MangaDB(object):
     def __init__(self):
-        self.config_path = AppEnv.config_path
+        self.config_path = AppEnv.CONFIG
 
         self.db_path = join(self.config_path, "manga_db.json")
         self.image_path = join(self.config_path, "images")

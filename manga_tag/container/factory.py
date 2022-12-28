@@ -4,7 +4,7 @@ from manga_tag.container.manual import ManualContainer
 from manga_tag.container.timer import TimerContainer
 
 container_factory = {
-    ContainerMode.MANUAL: ManualContainer(),
-    ContainerMode.TIMER: TimerContainer(),
-    ContainerMode.CONTINUOUS: ContinuousContainer(),
+    ContainerMode.MANUAL: ManualContainer,
+    ContainerMode.TIMER: TimerContainer,
+    ContainerMode.CONTINUOUS: ContinuousContainer,
 }

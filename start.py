@@ -17,8 +17,8 @@ args = vars(parser.parse_args())
 print("Fast Manga Tagger v1.0")
 print("----------------------")
 if args["entrymode"]:
-    container = container_factory[AppEnv.container_mode]
-    container.run()
+    container = container_factory[AppEnv.CONTAINER_MODE]
+    container().run()
 else:
     scanner = MangaScanner(args)
     scanner.run()
