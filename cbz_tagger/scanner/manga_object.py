@@ -5,7 +5,7 @@ from xml.dom import minidom
 
 import requests
 
-from manga_tag.common.enums import MetadataSource
+from cbz_tagger.common.enums import MetadataSource
 
 
 class MangaObject(object):

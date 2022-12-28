@@ -1,6 +1,6 @@
 import os
 
-from manga_tag.container.enums import ContainerMode
+from cbz_tagger.container.enums import ContainerMode
 
 
 class AppEnv(object):

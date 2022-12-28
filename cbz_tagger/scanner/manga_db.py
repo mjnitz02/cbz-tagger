@@ -4,8 +4,8 @@ from os.path import exists, join
 
 import requests as requests
 
-from manga_tag.common.env import AppEnv
-from manga_tag.scanner.manga_object import MangaObject
+from cbz_tagger.common.env import AppEnv
+from cbz_tagger.scanner.manga_object import MangaObject
 
 
 class MangaDB(object):

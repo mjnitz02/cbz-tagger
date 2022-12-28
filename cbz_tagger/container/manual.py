@@ -1,6 +1,6 @@
 import time
 
-from manga_tag.container.base import BaseContainer
+from cbz_tagger.container.base import BaseContainer
 
 
 class ManualContainer(BaseContainer):

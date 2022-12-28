@@ -1,6 +1,6 @@
 from abc import ABC
 
-from manga_tag.scanner.manga_scanner import MangaScanner
+from cbz_tagger.scanner.manga_scanner import MangaScanner
 
 
 class BaseContainer(object):

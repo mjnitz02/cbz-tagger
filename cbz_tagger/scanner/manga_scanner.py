@@ -5,9 +5,9 @@ import time
 from os.path import join
 from zipfile import ZIP_DEFLATED, BadZipFile, ZipFile
 
-from manga_tag.common.enums import Mode
-from manga_tag.common.env import AppEnv
-from manga_tag.scanner.manga_db import MangaDB
+from cbz_tagger.common.enums import Mode
+from cbz_tagger.common.env import AppEnv
+from cbz_tagger.scanner.manga_db import MangaDB
 
 
 class MangaScanner(object):
@@ -120,7 +120,8 @@ class MangaScanner(object):
         if os.path.exists(storage_chapter):
             print("Cannot move {}, file already exists in storage!".format(chapter))
             return
-        os.rename(chapter_file, storage_chapter)
+        shutil.copy(chapter_file, storage_chapter)
+        os.remove(chapter_file)
 
     def rebuild_zip_without_metadata(self, chapter_file):
         temp_file = join(self.config_path, "temp.cbz")
@@ -145,19 +146,19 @@ class MangaScanner(object):
         except ValueError:
             return "{:06.2f}".format(float(chapter_number))
 
-    def scan_for_series(self) -> list[str]:
+    def scan_for_series(self):
         return [
-            str(f)
+            f
             for f in os.listdir(self.downloads_path)
             if os.path.isdir(os.path.join(self.downloads_path, f))
         ]
 
-    def scan_for_chapters(self, series: str) -> list[str]:
+    def scan_for_chapters(self, series):
         series_folder = join(self.downloads_path, series)
         return [
-            str(f)
+            f
             for f in os.listdir(series_folder)
-            if (os.path.isfile(os.path.join(series_folder, f)) and ".cbz" in str(f))
+            if (os.path.isfile(os.path.join(series_folder, f)) and ".cbz" in f)
         ]
 
     @staticmethod

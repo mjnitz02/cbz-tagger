@@ -5,8 +5,9 @@ LABEL \
 
 ENV \
     DOWNLOADS_PATH="/downloads" \
-    STORAGE_PATH="/downloads" \
+    STORAGE_PATH="/storage" \
     CONFIG_PATH="/config" \
+    MOVE_FILES="true" \
     ENABLE_CONTINUOUS_MODE="false" \
     ENABLE_TIMER_MODE="false" \
     TIMER_MODE_DELAY="600"
@@ -16,7 +17,7 @@ RUN \
   apk update && apk upgrade
 
 ### Manga Tagger ###
-COPY manga_tag /app/manga_tag
+COPY cbz_tagger /app/cbz_tagger
 COPY start.py /app/start.py
 COPY requirements.txt /app/requirements.txt
 

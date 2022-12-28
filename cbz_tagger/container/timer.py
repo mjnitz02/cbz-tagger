@@ -1,7 +1,7 @@
 import time
 
-from manga_tag.common.env import AppEnv
-from manga_tag.container.base import BaseAutoContainer
+from cbz_tagger.common.env import AppEnv
+from cbz_tagger.container.base import BaseAutoContainer
 
 
 class TimerContainer(BaseAutoContainer):

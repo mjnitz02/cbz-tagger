@@ -1,8 +1,8 @@
 import argparse
 
-from manga_tag.common.env import AppEnv
-from manga_tag.container.factory import container_factory
-from manga_tag.scanner.manga_scanner import MangaScanner
+from cbz_tagger.common.env import AppEnv
+from cbz_tagger.container.factory import container_factory
+from cbz_tagger.scanner.manga_scanner import MangaScanner
 
 parser = argparse.ArgumentParser(description="Manga Tagger")
 parser.add_argument(

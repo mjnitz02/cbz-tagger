@@ -1,6 +1,6 @@
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
-.PHONY : docker-restart docker-fresh stop clean build run
+.PHONY : restart fresh stop clean build run
 
 build:
 	docker build -t manga-tag .
@@ -40,9 +40,9 @@ shell:
 logs:
 	docker logs manga-tag
 
-docker-fresh: clean build run
+fresh: clean build run
 
-docker-restart: stop fresh
+restart: stop fresh
 
 python-fresh:
 	export CONFIG_PATH=debug_image/config & \
