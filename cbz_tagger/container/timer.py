@@ -9,11 +9,7 @@ class TimerContainer(BaseAutoContainer):
         print("Container running in Timer Scan mode.")
         print("Manual scans can also be triggered through the container console.")
         print("Available manual modes: 'auto', 'manual', 'retag'.")
-        print(
-            "Timer Monitoring with {}s delay: {}".format(
-                AppEnv.TIMER_DELAY, AppEnv.DOWNLOADS
-            )
-        )
+        print(f"Timer Monitoring with {AppEnv.TIMER_DELAY}s delay: {AppEnv.DOWNLOADS}")
 
     def _run(self):
         self.scanner.run()

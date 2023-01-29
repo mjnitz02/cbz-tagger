@@ -1,14 +1,14 @@
 import json
-from xml.etree import ElementTree
 from datetime import datetime
 from xml.dom import minidom
+from xml.etree import ElementTree
 
 import requests
 
 from cbz_tagger.common.enums import MetadataSource
 
 
-class MangaObject(object):
+class MangaObject:
     def __init__(
         self,
         manga_name,
@@ -53,9 +53,7 @@ class MangaObject(object):
         print(">>> SET AGE RATING")
         for key, val in self.age_ratings.items():
             print(f"{key}: {val}")
-        return self.get_input(
-            "Please select the age rating for the manga: ", len(self.age_ratings.keys())
-        )
+        return self.get_input("Please select the age rating for the manga: ", len(self.age_ratings.keys()))
 
     def extract_id(self, term, page, perpage):
         preset = {"query": term, "page": page, "perpage": perpage}
@@ -63,6 +61,7 @@ class MangaObject(object):
             MetadataSource.access["apiurl"],
             headers=MetadataSource.access["header"],
             json={"query": MetadataSource.query_id, "variables": preset},
+            timeout=30,
         )
 
         if req.status_code != 200:
@@ -83,6 +82,7 @@ class MangaObject(object):
             MetadataSource.access["apiurl"],
             headers=MetadataSource.access["header"],
             json={"query": MetadataSource.query_info, "variables": id_val},
+            timeout=30,
         )
 
         if req.status_code != 200:
@@ -103,12 +103,12 @@ class MangaObject(object):
             try:
                 user_input = int(user_input)
                 if user_input <= 0 or user_input > max_val:
-                    print(f"Your input is incorrect! Please try again!")
+                    print("Your input is incorrect! Please try again!")
                 else:
                     return user_input
 
-            except TypeError or ValueError:
-                print(f"Your input is incorrect! Please try again!")
+            except (TypeError, ValueError):
+                print("Your input is incorrect! Please try again!")
 
     def search_id_by_name(self, manga_name):
         data = self.extract_id(manga_name, 1, 5)
@@ -118,14 +118,12 @@ class MangaObject(object):
             curr_eng = data["data"]["Page"]["media"][i]["title"]["english"]
             curr_format = data["data"]["Page"]["media"][i]["format"]
             curr_chapters = data["data"]["Page"]["media"][i]["chapters"]
-            print(
-                f"{counter + 1}. {curr_manga} ({curr_eng}) [{curr_format} - Ch. {curr_chapters}]"
-            )
+            print(f"{counter + 1}. {curr_manga} ({curr_eng}) [{curr_format} - Ch. {curr_chapters}]")
             counter += 1
         return counter, data
 
     def search_id(self):
-        print(">>> SEARCHING FOR NEW SERIES [{}]".format(self.manga_name))
+        print(f">>> SEARCHING FOR NEW SERIES [{self.manga_name}]")
         counter = 0
         manga_name = self.manga_name
         while counter <= 0:
@@ -168,8 +166,7 @@ class MangaObject(object):
         node = self.manga_info.get("staff", {}).get("edges", [{}])[0].get("node")
         if node:
             return node["name"]["full"]
-        else:
-            return "Unknown"
+        return "Unknown"
 
     @property
     def genre(self):
@@ -201,7 +198,7 @@ class MangaObject(object):
 
         def assign(cix_entry, md_entry):
             if md_entry is not None:
-                ElementTree.SubElement(root, cix_entry).text = "{0}".format(md_entry)
+                ElementTree.SubElement(root, cix_entry).text = f"{md_entry}"
 
         assign("Series", self.series)
         assign("LocalizedSeries", self.localized_series)
@@ -224,7 +221,7 @@ class MangaObject(object):
         assign("Web", MetadataSource.url.format(self.manga_id))
         assign(
             "Notes",
-            "Updated on {}.".format(datetime.now().strftime("%m/%d/%Y, %H:%M:%S")),
+            f"Updated on {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}.",
         )
         # tree = ET.ElementTree(root)
         # ET.indent(tree, space="\t", level=0)
@@ -233,5 +230,5 @@ class MangaObject(object):
     def to_xml_file(self, chapter_number, filename):
         root = self.to_xml_tree(chapter_number)
         xmlstr = minidom.parseString(ElementTree.tostring(root)).toprettyxml()
-        with open(filename, "w") as f:
-            f.write(xmlstr)
+        with open(filename, "w", encoding="UTF-8") as write_file:
+            write_file.write(xmlstr)

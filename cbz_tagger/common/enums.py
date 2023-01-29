@@ -1,11 +1,11 @@
-class Mode(object):
+class Mode:
     AUTO = "auto"
     MANUAL = "manual"
     RETAG = "retag"
     UPDATE = "update"
 
 
-class MetadataSource(object):
+class MetadataSource:
     url = "https://anilist.co/manga/{}"
 
     access = {

@@ -3,7 +3,7 @@ import os
 from cbz_tagger.container.enums import ContainerMode
 
 
-class AppEnv(object):
+class AppEnv:
     if os.getenv("CONFIG_PATH") is not None:
         CONFIG = os.getenv("CONFIG_PATH")
     else:

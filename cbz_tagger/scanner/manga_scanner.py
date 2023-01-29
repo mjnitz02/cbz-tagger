@@ -3,14 +3,16 @@ import re
 import shutil
 import time
 from os.path import join
-from zipfile import ZIP_DEFLATED, BadZipFile, ZipFile
+from zipfile import ZIP_DEFLATED
+from zipfile import BadZipFile
+from zipfile import ZipFile
 
 from cbz_tagger.common.enums import Mode
 from cbz_tagger.common.env import AppEnv
 from cbz_tagger.scanner.manga_db import MangaDB
 
 
-class MangaScanner(object):
+class MangaScanner:
     def __init__(self, args) -> None:
         if args["auto"]:
             self.mode = Mode.AUTO
@@ -29,9 +31,9 @@ class MangaScanner(object):
         self.move_files = AppEnv.MOVE_FILES
         self.retag_files = self.mode == Mode.RETAG
 
-        print("Scanner running in {} mode.".format(self.mode))
+        print(f"Scanner running in {self.mode} mode.")
 
-        self.db = MangaDB()
+        self.database = MangaDB()
 
     def run(self):
         while True:
@@ -47,39 +49,31 @@ class MangaScanner(object):
         print("Starting scan....")
         for series in self.scan_for_series():
             if self.mode == Mode.AUTO:
-                record = self.db.get(series, find_new=False)
+                record = self.database.get(series, find_new=False)
                 if record is None:
                     print(
-                        "Skipping Series: {}".format(series),
+                        f"Skipping Series: {series}",
                         "(run with --manual to add new series.)",
                     )
                     continue
 
-            print("Scanning Series: {}".format(series))
+            print(f"Scanning Series: {series}")
             for chapter in self.scan_for_chapters(series):
                 chapter_file = join(self.downloads_path, series, chapter)
 
                 # Check if cover or metadata is missing
                 try:
-                    with ZipFile(chapter_file, "r") as zf:
-                        update_xml = (
-                            "ComicInfo.xml" not in zf.namelist() or self.retag_files
-                        )
-                        update_cover = (
-                            "000_cover.jpg" not in zf.namelist() or self.retag_files
-                        )
+                    with ZipFile(chapter_file, "r") as zip_file:
+                        update_xml = "ComicInfo.xml" not in zip_file.namelist() or self.retag_files
+                        update_cover = "000_cover.jpg" not in zip_file.namelist() or self.retag_files
 
                     if self.retag_files:
                         self.rebuild_zip_without_metadata(chapter_file)
 
-                    self.update_cbz(
-                        series, chapter, chapter_file, update_xml, update_cover
-                    )
+                    self.update_cbz(series, chapter, chapter_file, update_xml, update_cover)
                     self.move_cbz(series, chapter, chapter_file)
                 except BadZipFile:
-                    print(
-                        "Unable to read file... files are either in use or corrupted."
-                    )
+                    print("Unable to read file... files are either in use or corrupted.")
                     return False
         print("Removing empty dirs")
         self.remove_empty_dirs()
@@ -93,24 +87,22 @@ class MangaScanner(object):
             if not files:
                 shutil.rmtree(folder[0])
 
-    def update_cbz(
-        self, series, chapter, chapter_file, update_xml=False, update_cover=False
-    ):
+    def update_cbz(self, series, chapter, chapter_file, update_xml=False, update_cover=False):
         if not update_xml and not update_cover:
             return
 
-        print("Updating {}...".format(chapter_file))
+        print(f"Updating {chapter_file}...")
         chapter_number = self.get_chapter_number_from_chapter(chapter)
 
-        with ZipFile(chapter_file, "a", ZIP_DEFLATED) as zf:
+        with ZipFile(chapter_file, "a", ZIP_DEFLATED) as zip_file:
             if update_xml:
                 xml_path = join(self.config_path, "temp.xml")
-                self.db.to_temp_xml(xml_path, series, chapter_number)
-                zf.write(xml_path, os.path.basename("ComicInfo.xml"))
+                self.database.to_temp_xml(xml_path, series, chapter_number)
+                zip_file.write(xml_path, os.path.basename("ComicInfo.xml"))
                 os.remove(xml_path)
             if update_cover:
-                image_path = self.db.get_image_path(series)
-                zf.write(image_path, os.path.basename("000_cover.jpg"))
+                image_path = self.database.get_image_path(series)
+                zip_file.write(image_path, os.path.basename("000_cover.jpg"))
 
     def move_cbz(self, series, chapter, chapter_file):
         storage_dir = os.path.join(self.storage_path, series)
@@ -118,21 +110,18 @@ class MangaScanner(object):
         if not os.path.exists(storage_dir):
             os.mkdir(storage_dir)
         if os.path.exists(storage_chapter):
-            print("Cannot move {}, file already exists in storage!".format(chapter))
+            print(f"Cannot move {chapter}, file already exists in storage!")
             return
         shutil.copy(chapter_file, storage_chapter)
         os.remove(chapter_file)
 
     def rebuild_zip_without_metadata(self, chapter_file):
         temp_file = join(self.config_path, "temp.cbz")
-        with ZipFile(chapter_file, "r") as zf:
+        with ZipFile(chapter_file, "r") as zip_file:
             with ZipFile(temp_file, "w", ZIP_DEFLATED) as zf_force:
-                for item in zf.infolist():
-                    if (
-                        "ComicInfo" not in item.filename
-                        and "000_cover.jpg" not in item.filename
-                    ):
-                        zf_force.writestr(item, zf.read(item.filename))
+                for item in zip_file.infolist():
+                    if "ComicInfo" not in item.filename and "000_cover.jpg" not in item.filename:
+                        zf_force.writestr(item, zip_file.read(item.filename))
         shutil.move(temp_file, chapter_file)
 
     @staticmethod
@@ -142,31 +131,25 @@ class MangaScanner(object):
         if first_digit > 0:
             chapter_number = chapter_number[first_digit:]
         try:
-            return "{:03d}".format(int(chapter_number))
+            return f"{int(chapter_number):03d}"
         except ValueError:
-            return "{:06.2f}".format(float(chapter_number))
+            return f"{float(chapter_number):06.2f}"
 
     def scan_for_series(self):
-        return [
-            f
-            for f in os.listdir(self.downloads_path)
-            if os.path.isdir(os.path.join(self.downloads_path, f))
-        ]
+        return [f for f in os.listdir(self.downloads_path) if os.path.isdir(os.path.join(self.downloads_path, f))]
 
     def scan_for_chapters(self, series):
         series_folder = join(self.downloads_path, series)
         return [
-            f
-            for f in os.listdir(series_folder)
-            if (os.path.isfile(os.path.join(series_folder, f)) and ".cbz" in f)
+            f for f in os.listdir(series_folder) if (os.path.isfile(os.path.join(series_folder, f)) and ".cbz" in f)
         ]
 
     @staticmethod
     def check_if_cover(cbz_folder, cbz_file):
-        with ZipFile(join(cbz_folder, cbz_file), "r") as zf:
-            return "000_cover.jpg" in zf.namelist()
+        with ZipFile(join(cbz_folder, cbz_file), "r") as zip_file:
+            return "000_cover.jpg" in zip_file.namelist()
 
     @staticmethod
     def check_if_comicinfo(cbz_folder, cbz_file):
-        with ZipFile(join(cbz_folder, cbz_file), "r") as zf:
-            return "ComicInfo.xml" in zf.namelist()
+        with ZipFile(join(cbz_folder, cbz_file), "r") as zip_file:
+            return "ComicInfo.xml" in zip_file.namelist()

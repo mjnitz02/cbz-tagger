@@ -5,9 +5,7 @@ from cbz_tagger.container.factory import container_factory
 from cbz_tagger.scanner.manga_scanner import MangaScanner
 
 parser = argparse.ArgumentParser(description="Manga Tagger")
-parser.add_argument(
-    "--entrymode", help="Container Entrymode Start", action="store_true"
-)
+parser.add_argument("--entrymode", help="Container Entrymode Start", action="store_true")
 parser.add_argument("--auto", help="Auto Mode", action="store_true")
 parser.add_argument("--manual", help="Manual Mode", action="store_true")
 parser.add_argument("--retag", help="Retag existing files", action="store_true")

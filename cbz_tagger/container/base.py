@@ -3,7 +3,7 @@ from abc import ABC
 from cbz_tagger.scanner.manga_scanner import MangaScanner
 
 
-class BaseContainer(object):
+class BaseContainer:
     def __init__(self):
         self.scanner = None
 

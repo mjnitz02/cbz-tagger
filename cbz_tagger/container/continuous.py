@@ -12,13 +12,13 @@ class ContinuousContainer(BaseAutoContainer):
         print("Container running in Continuous Scan mode.")
         print("Manual scans can also be triggered through the container console.")
         print("Available manual modes: 'auto', 'manual', 'retag'.")
-        print("Continous Monitoring: {}".format(AppEnv.DOWNLOADS))
+        print(f"Continous Monitoring: {AppEnv.DOWNLOADS}")
 
     def _run(self):
-        self.initial_scan()
+        self.scanner.run()
         my_event_handler = PatternMatchingEventHandler(["*"], None, False, True)
 
-        def _run_scan(event):
+        def _run_scan(_):
             print("Change detected - waiting to scan...")
             time.sleep(5)
             self.scanner.run()
@@ -26,7 +26,7 @@ class ContinuousContainer(BaseAutoContainer):
         my_event_handler.on_created = _run_scan
         my_event_handler.on_modified = _run_scan
 
-        my_observer = Observer()
+        my_observer = PollingObserver()
         my_observer.schedule(my_event_handler, AppEnv.DOWNLOADS, recursive=True)
         my_observer.start()
         try:
