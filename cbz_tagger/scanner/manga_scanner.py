@@ -59,6 +59,7 @@ class MangaScanner:
 
             print(f"Scanning Series: {series}")
             for chapter in self.scan_for_chapters(series):
+                chapter = str(chapter)
                 chapter_file = join(self.downloads_path, series, chapter)
 
                 # Check if cover or metadata is missing
@@ -71,7 +72,8 @@ class MangaScanner:
                         self.rebuild_zip_without_metadata(chapter_file)
 
                     self.update_cbz(series, chapter, chapter_file, update_xml, update_cover)
-                    self.move_cbz(series, chapter, chapter_file)
+                    if self.move_files:
+                        self.move_cbz(series, chapter, chapter_file)
                 except BadZipFile:
                     print("Unable to read file... files are either in use or corrupted.")
                     return False

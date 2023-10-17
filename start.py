@@ -12,7 +12,7 @@ parser.add_argument("--retag", help="Retag existing files", action="store_true")
 parser.add_argument("--update", help="Update a database entry", action="store_true")
 args = vars(parser.parse_args())
 
-print("Fast Manga Tagger v1.0")
+print("CBZ Tagger v1.0")
 print("----------------------")
 if args["entrymode"]:
     container = container_factory[AppEnv.CONTAINER_MODE]

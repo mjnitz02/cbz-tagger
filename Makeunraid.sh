@@ -13,7 +13,7 @@ do
     case $opt in
         "Build")
             echo "Building image"
-            docker build -t manga-tag /mnt/user/sync/docker/manga-tag
+            docker build -t manga-tag .
             echo "Stopping container"
             docker stop manga-tag
             echo "Updating container"

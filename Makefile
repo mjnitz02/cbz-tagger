@@ -2,8 +2,12 @@ ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 .PHONY : restart fresh stop clean build run
 
+black:
+	python -m isort --sl --line-length 120 cbz_tagger
+	python -m black --line-length 120 cbz_tagger
+
 lint:
-	python -m isort --sl cbz_tagger --profile black
+	python -m isort --sl --line-length 120 cbz_tagger
 	python -m black --line-length 120 cbz_tagger
 	python -m pylint cbz_tagger
 

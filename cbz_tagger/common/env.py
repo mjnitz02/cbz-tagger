@@ -10,12 +10,12 @@ class AppEnv:
         CONFIG = "\\config"
 
     if os.getenv("DOWNLOADS_PATH") is not None:
-        DOWNLOADS = os.getenv("DOWNLOADS_PATH")
+        DOWNLOADS = str(os.getenv("DOWNLOADS_PATH"))
     else:
         DOWNLOADS = "\\downloads"
 
     if os.getenv("STORAGE_PATH") is not None:
-        STORAGE = os.getenv("STORAGE_PATH")
+        STORAGE = str(os.getenv("STORAGE_PATH"))
     else:
         STORAGE = "\\storage"
 
