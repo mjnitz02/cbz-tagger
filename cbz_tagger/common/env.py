@@ -19,6 +19,16 @@ class AppEnv:
     else:
         STORAGE = "\\storage"
 
+    if os.getenv("IMPORT") is not None:
+        IMPORT = str(os.getenv("IMPORT"))
+    else:
+        IMPORT = "\\import"
+
+    if os.getenv("EXPORT") is not None:
+        EXPORT = str(os.getenv("EXPORT"))
+    else:
+        EXPORT = "\\export"
+
     if os.getenv("ENABLE_TIMER_MODE") == "true":
         CONTAINER_MODE = ContainerMode.TIMER
     elif os.getenv("ENABLE_CONTINUOUS_MODE") == "true":

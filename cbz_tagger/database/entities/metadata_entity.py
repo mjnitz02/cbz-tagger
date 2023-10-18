@@ -1,0 +1,67 @@
+from datetime import datetime
+from typing import List, Optional, Set
+
+from cbz_tagger.database.entities.base_entity import BaseEntity
+
+
+class MetadataEntity(BaseEntity):
+    entity_url: str = f"{BaseEntity.base_url}/manga"
+    paginated: bool = True
+
+    @property
+    def title(self) -> Optional[str]:
+        return next((item for item in self.attributes["title"].values()), None)
+
+    @property
+    def alt_title(self) -> Optional[str]:
+        return next((item["en"] for item in self.attributes["altTitles"] if "en" in item), None)
+
+    @property
+    def all_titles(self) -> List[str]:
+        return [self.title] + list(list(item.values())[0] for item in self.attributes["altTitles"])
+
+    @property
+    def description(self) -> Optional[str]:
+        return next((item for item in self.attributes["description"].values()), None)
+
+    @property
+    def completed(self) -> bool:
+        return self.attributes["status"] == "completed"
+
+    @property
+    def age_rating(self) -> str:
+        if self.attributes["contentRating"] == "suggestive":
+            return "Teen"
+        elif self.attributes["contentRating"] == "erotica":
+            return "Mature 17+"
+        else:
+            return "Everyone"
+
+    @property
+    def author_entities(self) -> List[str]:
+        return list(set(item for item in (self.author_id, self.artist_id, self.creator_id) if item))
+
+    @property
+    def author_id(self) -> Optional[str]:
+        return next((item["id"] for item in self.relationships if item["type"] == "author"), None)
+
+    @property
+    def artist_id(self) -> Optional[str]:
+        return next((item["id"] for item in self.relationships if item["type"] == "artist"), None)
+
+    @property
+    def creator_id(self) -> Optional[str]:
+        return next((item["id"] for item in self.relationships if item["type"] == "creator"), None)
+
+    @property
+    def cover_art_id(self) -> Optional[str]:
+        return next((item["id"] for item in self.relationships if item["type"] == "cover_art"), None)
+
+    @property
+    def created_at(self) -> datetime:
+        return datetime.strptime(self.attributes["createdAt"].split("+")[0], "%Y-%m-%dT%H:%M:%S")
+
+    @property
+    def genres(self) -> Set[str]:
+        tags = list(attr.get("attributes", {}).get("name", {}).get("en") for attr in self.attributes['tags'])
+        return set(tag for tag in tags if tag)
