@@ -1,6 +1,5 @@
 import os
 
-from cbz_tagger.common.env import AppEnv
 from cbz_tagger.database.entity_db import EntityDB
 
 

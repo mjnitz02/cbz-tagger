@@ -4,9 +4,13 @@ from datetime import datetime
 from io import BytesIO
 from os import path
 from time import sleep
-from typing import List, Dict, Optional
+from typing import Dict
+from typing import List
+from typing import Optional
 from xml.dom import minidom
 from xml.etree import ElementTree
+
+from PIL import Image
 
 from cbz_tagger.common.helpers import get_input
 from cbz_tagger.database.base_db import BaseEntityDB
@@ -15,8 +19,6 @@ from cbz_tagger.database.entities.cover_entity import CoverEntity
 from cbz_tagger.database.entities.metadata_entity import MetadataEntity
 from cbz_tagger.database.entities.volume_entity import VolumeEntity
 
-from PIL import Image
-
 
 class AuthorEntityDB(BaseEntityDB):
     entity_class = AuthorEntity
@@ -24,7 +26,7 @@ class AuthorEntityDB(BaseEntityDB):
 
 class CoverEntityDB(BaseEntityDB):
     entity_class = CoverEntity
-    db: Dict[str, List[CoverEntity]]
+    database: Dict[str, List[CoverEntity]]
     query_param_field: str = "manga[]"
 
     def download(self, entity_id: str, filepath: str):
@@ -33,10 +35,10 @@ class CoverEntityDB(BaseEntityDB):
             image_path = path.join(filepath, cover.local_filename)
             if not path.exists(image_path):
                 image = cover.download_file(cover.cover_url)
-                im = Image.open(BytesIO(image))
-                if im.format != "JPEG":
-                    im = im.convert("RGB")
-                im.save(image_path, quality=95, optimize=True)
+                in_memory_image = Image.open(BytesIO(image))
+                if in_memory_image.format != "JPEG":
+                    in_memory_image = in_memory_image.convert("RGB")
+                in_memory_image.save(image_path, quality=95, optimize=True)
                 sleep(0.1)
 
 
@@ -88,6 +90,7 @@ class EntityDB:
         content = json.loads(json_data)
         return cls(
             entity_map=content["entity_map"],
+            entity_names=content["entity_names"],
             metadata=MetadataEntityDB.from_json(content["metadata"]),
             covers=CoverEntityDB.from_json(content["covers"]),
             authors=AuthorEntityDB.from_json(content["authors"]),
@@ -199,8 +202,3 @@ class EntityDB:
         root = self.to_xml_tree(manga_name, chapter_number)
         xmlstr = minidom.parseString(ElementTree.tostring(root)).toprettyxml()
         return xmlstr
-
-    def to_xml_file(self, manga_name, chapter_number, filename):
-        xmlstr = self.to_xml_string(chapter_number)
-        with open(filename, "w", encoding="UTF-8") as write_file:
-            write_file.write(xmlstr)

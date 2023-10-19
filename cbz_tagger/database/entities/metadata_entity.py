@@ -1,5 +1,7 @@
 from datetime import datetime
-from typing import List, Optional, Set
+from typing import List
+from typing import Optional
+from typing import Set
 
 from cbz_tagger.database.entities.base_entity import BaseEntity
 
@@ -32,10 +34,9 @@ class MetadataEntity(BaseEntity):
     def age_rating(self) -> str:
         if self.attributes["contentRating"] == "suggestive":
             return "Teen"
-        elif self.attributes["contentRating"] == "erotica":
+        if self.attributes["contentRating"] == "erotica":
             return "Mature 17+"
-        else:
-            return "Everyone"
+        return "Everyone"
 
     @property
     def author_entities(self) -> List[str]:
@@ -63,5 +64,5 @@ class MetadataEntity(BaseEntity):
 
     @property
     def genres(self) -> Set[str]:
-        tags = list(attr.get("attributes", {}).get("name", {}).get("en") for attr in self.attributes['tags'])
+        tags = list(attr.get("attributes", {}).get("name", {}).get("en") for attr in self.attributes["tags"])
         return set(tag for tag in tags if tag)

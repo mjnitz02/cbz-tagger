@@ -2,9 +2,8 @@ import os
 import re
 import shutil
 import time
-from os.path import join
-from zipfile import BadZipFile
 from zipfile import ZIP_DEFLATED
+from zipfile import BadZipFile
 from zipfile import ZipFile
 
 from cbz_tagger.common.env import AppEnv
@@ -31,9 +30,10 @@ class CbzScanner:
 
     def scan(self):
         print("Starting scan....")
-        files = [list(os.path.join(root, f) for f in filenames if os.path.splitext(f)[-1] == ".cbz") for
-                 (root, _, filenames) in
-                 os.walk(self.import_path)]
+        files = [
+            list(os.path.join(root, f) for f in filenames if os.path.splitext(f)[-1] == ".cbz")
+            for (root, _, filenames) in os.walk(self.import_path)
+        ]
         files = sorted([os.path.relpath(item, self.import_path) for items in files for item in items])
 
         for file in files:
@@ -51,9 +51,9 @@ class CbzScanner:
 
         # Remove all non numeric characters and split by contigous numbers.
         # Take the last seen number as the chapter
-        chapter_number = [
-            num for num in re.sub("[^0-9.]", " ", filepath.replace(".cbz", "")).split(" ") if len(num)
-        ][-1]
+        chapter_number = [num for num in re.sub("[^0-9.]", " ", filepath.replace(".cbz", "")).split(" ") if len(num)][
+            -1
+        ]
         chapter_number = float(chapter_number)
         if chapter_number.is_integer():
             chapter_number = int(chapter_number)
@@ -68,7 +68,9 @@ class CbzScanner:
 
         os.makedirs(os.path.join(self.export_path, entity_name), exist_ok=True)
         read_path = os.path.join(self.import_path, filepath)
-        write_path = os.path.join(self.export_path, entity_name, f"{entity_name} - Chapter {str(chapter_number).zfill(3)}.cbz")
+        write_path = os.path.join(
+            self.export_path, entity_name, f"{entity_name} - Chapter {str(chapter_number).zfill(3)}.cbz"
+        )
         if os.path.exists(write_path):
             print("ERROR >> Destination file already present!")
             return

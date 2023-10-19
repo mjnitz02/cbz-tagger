@@ -1,5 +1,7 @@
 import json
-from typing import Dict, Any, List
+from typing import Any
+from typing import Dict
+from typing import List
 
 import requests
 
@@ -49,4 +51,4 @@ class BaseEntity(BaseEntityObject):
 
     @staticmethod
     def download_file(url):
-        return requests.get(url).content
+        return requests.get(url, timeout=60).content

@@ -1,5 +1,7 @@
 from time import sleep
-from typing import List, Dict, Any
+from typing import Any
+from typing import Dict
+from typing import List
 
 import requests
 
@@ -28,9 +30,7 @@ def unpaginate_request(url, query_params=None, limit=50) -> List[Dict[str, Any]]
         params = {"limit": limit, "offset": offset}
         params.update(query_params)
 
-        response = requests.get(
-            url, params=params
-        ).json()
+        response = requests.get(url, params=params, timeout=60).json()
 
         response_content.extend(response["data"])
 
