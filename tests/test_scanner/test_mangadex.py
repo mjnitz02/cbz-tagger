@@ -1,5 +1,4 @@
-from cbz_tagger.database.cbz_database import CbzDatabase
-from cbz_tagger.database.cbz_scanner import CbzScanner
+from cbz_tagger.container.cbz_scanner import CbzScanner
 
 # title = "Tonikaku Kawaii"
 #

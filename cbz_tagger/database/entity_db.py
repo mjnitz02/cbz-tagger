@@ -55,8 +55,9 @@ class EntityDB:
     authors: AuthorEntityDB
     volumes: VolumeEntityDB
 
-    def __init__(self, entity_map=None, metadata=None, covers=None, authors=None, volumes=None):
+    def __init__(self, entity_map=None, entity_names=None, metadata=None, covers=None, authors=None, volumes=None):
         self.entity_map = {} if entity_map is None else entity_map
+        self.entity_names = {} if entity_names is None else entity_names
         self.metadata = MetadataEntityDB() if metadata is None else metadata
         self.covers = CoverEntityDB() if covers is None else covers
         self.authors = AuthorEntityDB() if authors is None else authors
@@ -74,6 +75,7 @@ class EntityDB:
     def to_json(self):
         content = {
             "entity_map": self.entity_map,
+            "entity_names": self.entity_names,
             "metadata": self.metadata.to_json(),
             "covers": self.covers.to_json(),
             "authors": self.authors.to_json(),
@@ -100,13 +102,20 @@ class EntityDB:
         for manga in meta_entries:
             print(f"{counter+1}. {manga.title} ({manga.alt_title}) - {manga.created_at.year} - {manga.age_rating}")
             counter += 1
+        choice = get_input("Please select the manga that you are searching for in number: ", counter + 1)
+        entity = meta_entries[choice - 1]
+        entity_id = entity.entity_id
 
-        choice = 1
-        if len(meta_entries) > 1:
-            choice = get_input("Please select the manga that you are searching for in number: ", counter + 1)
-        entity_id = meta_entries[choice - 1].entity_id
+        print("Select a storage name for the series:")
+        counter = 0
+        for title in entity.all_titles:
+            print(f"{counter+1}. {title}")
+            counter += 1
+        choice = get_input("Please select the manga that you are searching for in number: ", counter + 1)
+        entity_name = entity.all_titles[choice - 1]
 
         self.entity_map[manga_name] = entity_id
+        self.entity_names[manga_name] = entity_name
 
     def update_manga_entity(self, manga_name, filepath):
         entity_id = self.entity_map.get(manga_name)
@@ -123,10 +132,8 @@ class EntityDB:
             # Update missing covers
             self.covers.download(entity_id, filepath)
 
-    def to_local_name(self, manga_name, chapter_number) -> str:
-        entity_id = self.entity_map.get(manga_name)
-        metadata_entity = self.metadata[entity_id]
-        return metadata_entity.title
+    def to_entity_name(self, manga_name) -> str:
+        return self.entity_names.get(manga_name)
 
     def to_local_image_file(self, manga_name, chapter_number) -> Optional[str]:
         entity_id = self.entity_map.get(manga_name)

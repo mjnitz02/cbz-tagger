@@ -1,6 +1,6 @@
 import os
 
-from cbz_tagger.container.enums import ContainerMode
+from cbz_tagger.common.enums import ContainerMode
 
 
 class AppEnv:
@@ -31,8 +31,6 @@ class AppEnv:
 
     if os.getenv("ENABLE_TIMER_MODE") == "true":
         CONTAINER_MODE = ContainerMode.TIMER
-    elif os.getenv("ENABLE_CONTINUOUS_MODE") == "true":
-        CONTAINER_MODE = ContainerMode.CONTINUOUS
     else:
         CONTAINER_MODE = ContainerMode.MANUAL
 
@@ -40,8 +38,3 @@ class AppEnv:
         TIMER_DELAY = 600
     else:
         TIMER_DELAY = int(os.getenv("TIMER_MODE_DELAY"))
-
-    if os.getenv("MOVE_FILES") is None:
-        MOVE_FILES = False
-    else:
-        MOVE_FILES = os.getenv("MOVE_FILES") == "true"

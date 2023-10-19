@@ -4,6 +4,10 @@ class Mode:
     RETAG = "retag"
     UPDATE = "update"
 
+class ContainerMode:
+    TIMER = "timer"
+    MANUAL = "manual"
+
 
 class MetadataSource:
     url = "https://anilist.co/manga/{}"

@@ -1,14 +1,13 @@
 import os
 
 from cbz_tagger.common.env import AppEnv
-from cbz_tagger.container.enums import ContainerMode
 from cbz_tagger.database.entity_db import EntityDB
 
 
 class CbzDatabase:
-    def __init__(self):
-        self.root_path = os.path.abspath(AppEnv.CONFIG)
-        self.add_missing = AppEnv.CONTAINER_MODE == ContainerMode.MANUAL
+    def __init__(self, root_path, add_missing=True):
+        self.add_missing = add_missing
+        self.root_path = root_path
         self.entity_database = self.load()
 
     @property
@@ -45,10 +44,10 @@ class CbzDatabase:
             self.entity_database.update_manga_entity(manga_name, os.path.join(self.root_path, "images"))
             self.save()
 
-        local_filename = self.entity_database.to_local_name(manga_name, chapter_number)
-        xml = self.entity_database.to_xml_string(manga_name, chapter_number)
-        image_path = self.entity_database.to_local_image_file(manga_name, chapter_number)
-        return local_filename, xml, image_path
+        entity_name = self.entity_database.to_entity_name(manga_name)
+        entity_xml = self.entity_database.to_xml_string(manga_name, chapter_number)
+        entity_image_path = self.entity_database.to_local_image_file(manga_name, chapter_number)
+        return entity_name, entity_xml, entity_image_path
 
     def update_metadata(self, manga_name):
         self.entity_database.update_manga_entity(manga_name, self.image_db_path)
