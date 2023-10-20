@@ -71,4 +71,6 @@ def test_cbz_database_can_raises_error_on_missing_if_add_new_disabled(mock_cbz_d
 def test_cbz_database_update_calls_entity_database_update(mock_cbz_database, manga_name):
     mock_cbz_database.entity_database.update_manga_entity = mock.MagicMock()
     mock_cbz_database.update_metadata(manga_name)
-    mock_cbz_database.entity_database.update_manga_entity.assert_called_once_with(manga_name, mock_cbz_database.image_db_path)
+    mock_cbz_database.entity_database.update_manga_entity.assert_called_once_with(
+        manga_name, mock_cbz_database.image_db_path
+    )
