@@ -9,7 +9,7 @@ black:
 lint:
 	python -m isort --sl --line-length 120 cbz_tagger tests
 	python -m black --line-length 120 cbz_tagger tests
-	python -m pylint cbz_tagger
+	python -m pylint cbz_tagger tests
 
 build:
 	docker build -t manga-tag .
