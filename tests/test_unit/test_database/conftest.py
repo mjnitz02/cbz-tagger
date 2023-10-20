@@ -1,4 +1,5 @@
 import os
+from unittest import mock
 
 import pytest
 
@@ -45,10 +46,10 @@ def mock_volume_db(volume_request_response, manga_request_id):
 
 
 @pytest.fixture
-def mock_entity_db(manga_request_id, mock_author_db, mock_cover_db, mock_metadata_db, mock_volume_db):
+def mock_entity_db(manga_name, manga_request_id, mock_author_db, mock_cover_db, mock_metadata_db, mock_volume_db):
     entity_db = EntityDB()
-    entity_db.entity_map = {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
-    entity_db.entity_names = {"Kanojyo to Himitsu to Koimoyou": "Oshimai"}
+    entity_db.entity_map = {manga_name: manga_request_id}
+    entity_db.entity_names = {manga_name: "Oshimai"}
     entity_db.authors = mock_author_db
     entity_db.covers = mock_cover_db
     entity_db.metadata = mock_metadata_db
@@ -57,7 +58,21 @@ def mock_entity_db(manga_request_id, mock_author_db, mock_cover_db, mock_metadat
 
 
 @pytest.fixture
-def expected_chapter_1_xml(tests_fixtures_path):
+def mock_entity_db_with_mock_updates(mock_entity_db, manga_request_id, manga_request_content):
+    metadata_entity = MetadataEntity(content=manga_request_content)
+
+    # Mock out the actual update calls so we don't have to mock all requests
+    mock_entity_db.authors.update = mock.MagicMock()
+    mock_entity_db.covers.update = mock.MagicMock()
+    mock_entity_db.covers.download = mock.MagicMock()
+    mock_entity_db.metadata.update = mock.MagicMock()
+    mock_entity_db.volumes.update = mock.MagicMock()
+    mock_entity_db.metadata.database[manga_request_id] = metadata_entity
+    return mock_entity_db
+
+
+@pytest.fixture
+def mock_chapter_1_xml(tests_fixtures_path):
     fixture_name = os.path.join(tests_fixtures_path, "expected_chapter_1.xml")
     with open(fixture_name, "r", encoding="UTF-8") as read_file:
         content = read_file.read()
@@ -65,7 +80,7 @@ def expected_chapter_1_xml(tests_fixtures_path):
 
 
 @pytest.fixture
-def expected_chapter_10_xml(tests_fixtures_path):
+def mock_chapter_10_xml(tests_fixtures_path):
     fixture_name = os.path.join(tests_fixtures_path, "expected_chapter_10.xml")
     with open(fixture_name, "r", encoding="UTF-8") as read_file:
         content = read_file.read()

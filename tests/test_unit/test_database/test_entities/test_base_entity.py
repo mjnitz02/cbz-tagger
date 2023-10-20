@@ -1,5 +1,4 @@
 import json
-from unittest import mock
 
 from cbz_tagger.database.entities.base_entity import BaseEntity
 

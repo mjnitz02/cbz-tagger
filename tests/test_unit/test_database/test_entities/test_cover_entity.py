@@ -46,12 +46,6 @@ def test_cover_entity_from_url(cover_request_response):
         mock_request.assert_called_once_with(f"{BaseEntity.base_url}/cover", None)
 
 
-def test_cover_entity_can_store_and_load(cover_request_content):
+def test_cover_entity_can_store_and_load(cover_request_content, check_entity_for_save_and_load):
     entity = CoverEntity(content=cover_request_content)
-
-    json_str = entity.to_json()
-    new_entity = entity.from_json(json_str)
-    assert entity.content == new_entity.content
-
-    new_json_str = new_entity.to_json()
-    assert json_str == new_json_str
+    check_entity_for_save_and_load(entity)

@@ -2,7 +2,6 @@ from unittest import mock
 
 import pytest
 
-from cbz_tagger.database.entities.base_entity import BaseEntity
 from cbz_tagger.database.entities.volume_entity import VolumeEntity
 
 
@@ -88,12 +87,6 @@ def test_volume_entity_from_url(volume_request_response):
         assert entities[0].chapter_count == 21
 
 
-def test_volume_entity_can_store_and_load(volume_request_response):
+def test_volume_entity_can_store_and_load(volume_request_response, check_entity_for_save_and_load):
     entity = VolumeEntity(content=volume_request_response)
-
-    json_str = entity.to_json()
-    new_entity = entity.from_json(json_str)
-    assert entity.content == new_entity.content
-
-    new_json_str = new_entity.to_json()
-    assert json_str == new_json_str
+    check_entity_for_save_and_load(entity)

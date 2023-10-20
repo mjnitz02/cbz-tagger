@@ -123,7 +123,7 @@ class EntityDB:
         self.entity_map[manga_name] = entity_id
         self.entity_names[manga_name] = entity_name
 
-    def update_manga_entity(self, manga_name, filepath):
+    def update_manga_entity(self, manga_name, filepath=None):
         entity_id = self.entity_map.get(manga_name)
         if entity_id is not None:
             # Update the standard collections
@@ -136,7 +136,8 @@ class EntityDB:
             self.authors.update(metadata.author_entities)
 
             # Update missing covers
-            self.covers.download(entity_id, filepath)
+            if filepath is not None:
+                self.covers.download(entity_id, filepath)
 
     def to_entity_name(self, manga_name) -> str:
         return self.entity_names.get(manga_name)

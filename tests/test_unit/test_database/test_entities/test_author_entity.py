@@ -21,12 +21,6 @@ def test_author_entity_from_url(author_request_response):
         mock_request.assert_called_once_with(f"{BaseEntity.base_url}/author", None)
 
 
-def test_author_entity_can_store_and_load(author_request_content):
+def test_author_entity_can_store_and_load(author_request_content, check_entity_for_save_and_load):
     entity = AuthorEntity(content=author_request_content)
-
-    json_str = entity.to_json()
-    new_entity = entity.from_json(json_str)
-    assert entity.content == new_entity.content
-
-    new_json_str = new_entity.to_json()
-    assert json_str == new_json_str
+    check_entity_for_save_and_load(entity)

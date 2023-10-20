@@ -11,4 +11,5 @@ disable=line-too-long,
     too-many-arguments,
     too-few-public-methods,
     too-many-return-statements,
-    too-many-public-methods
+    too-many-public-methods,
+    redefined-outer-name

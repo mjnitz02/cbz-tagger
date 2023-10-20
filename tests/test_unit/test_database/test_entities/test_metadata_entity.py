@@ -43,12 +43,6 @@ def test_metadata_entity_from_url(manga_request_response):
         mock_request.assert_called_once_with(f"{BaseEntity.base_url}/manga", None)
 
 
-def test_metadata_entity_can_store_and_load(manga_request_content):
+def test_metadata_entity_can_store_and_load(manga_request_content, check_entity_for_save_and_load):
     entity = MetadataEntity(content=manga_request_content)
-
-    json_str = entity.to_json()
-    new_entity = entity.from_json(json_str)
-    assert entity.content == new_entity.content
-
-    new_json_str = new_entity.to_json()
-    assert json_str == new_json_str
+    check_entity_for_save_and_load(entity)
