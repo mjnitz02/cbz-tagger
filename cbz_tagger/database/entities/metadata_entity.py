@@ -63,6 +63,6 @@ class MetadataEntity(BaseEntity):
         return datetime.strptime(self.attributes["createdAt"].split("+")[0], "%Y-%m-%dT%H:%M:%S")
 
     @property
-    def genres(self) -> Set[str]:
+    def genres(self) -> List[str]:
         tags = list(attr.get("attributes", {}).get("name", {}).get("en") for attr in self.attributes["tags"])
-        return set(tag for tag in tags if tag)
+        return sorted(set(tag for tag in tags if tag))

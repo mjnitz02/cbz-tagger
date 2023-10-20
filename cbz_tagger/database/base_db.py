@@ -47,4 +47,8 @@ class BaseEntityDB(BaseEntityObject):
                 return
 
             content = self.entity_class.from_server_url(query_params={self.query_param_field: [entity_id]})
-            self.database[entity_id] = content[0] if len(content) == 1 else content
+            self.database[entity_id] = self.format_content_for_entity(content)
+
+    @staticmethod
+    def format_content_for_entity(content):
+        return content[0] if len(content) == 1 else content

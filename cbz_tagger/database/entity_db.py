@@ -29,6 +29,9 @@ class CoverEntityDB(BaseEntityDB):
     database: Dict[str, List[CoverEntity]]
     query_param_field: str = "manga[]"
 
+    def format_content_for_entity(self, content):
+        return content
+
     def download(self, entity_id: str, filepath: str):
         os.makedirs(filepath, exist_ok=True)
         for cover in self[entity_id]:
@@ -192,10 +195,6 @@ class EntityDB:
         assign("Genre", ",".join(self.metadata[entity_id].genres))
         assign("AgeRating", self.metadata[entity_id].age_rating)
         assign("Web", f"https://mangadex.org/title/{entity_id}")
-        assign(
-            "Notes",
-            f"Updated on {datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}.",
-        )
         return root
 
     def to_xml_string(self, manga_name, chapter_number) -> str:

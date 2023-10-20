@@ -30,7 +30,7 @@ def test_metadata_entity(manga_request_content):
     assert entity.creator_id is None
     assert entity.cover_art_id == "be31ba9c-3490-41ea-b1bd-7f31cad7322f"
     assert entity.created_at == datetime.strptime("2020-07-23 14:50:37", "%Y-%m-%d %H:%M:%S")
-    assert entity.genres == {"School Life", "Comedy", "Anthology", "Romance", "Slice of Life"}
+    assert entity.genres == ["Anthology", "Comedy", "Romance", "School Life", "Slice of Life"]
 
 
 def test_metadata_entity_from_url(manga_request_response):

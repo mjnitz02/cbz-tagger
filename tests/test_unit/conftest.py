@@ -2,6 +2,11 @@ import pytest
 
 
 @pytest.fixture
+def manga_name():
+    return "Kanojyo to Himitsu to Koimoyou"
+
+
+@pytest.fixture
 def manga_request_response():
     # Abbreviated response for Kanojyo to Himitsu to Koimoyou
     return {
