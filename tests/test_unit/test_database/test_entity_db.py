@@ -46,14 +46,14 @@ def test_entity_db_to_local_image_file(mock_entity_db, manga_name, chapter_numbe
     assert expected_filename == actual
 
 
-def test_entity_db_to_xml_str_chapter_1(mock_entity_db, manga_name, expected_chapter_1_xml):
+def test_entity_db_to_xml_str_chapter_1(mock_entity_db, manga_name, mock_chapter_1_xml):
     actual = mock_entity_db.to_xml_string(manga_name, "1")
-    assert expected_chapter_1_xml == actual
+    assert mock_chapter_1_xml == actual
 
 
-def test_entity_db_to_xml_str_chapter_10(mock_entity_db, manga_name, expected_chapter_10_xml):
+def test_entity_db_to_xml_str_chapter_10(mock_entity_db, manga_name, mock_chapter_10_xml):
     actual = mock_entity_db.to_xml_string(manga_name, "10")
-    assert expected_chapter_10_xml == actual
+    assert mock_chapter_10_xml == actual
 
 
 @mock.patch("cbz_tagger.database.entity_db.get_input")
@@ -78,21 +78,36 @@ def test_entity_db_add_new_manga(mock_get_input, manga_name, manga_request_id, m
         assert len(entity_db.volumes) == 0
 
 
-# def test_entity_db_update_existing_entity_id(manga_name, manga_request_id, manga_request_response):
-#     with mock.patch.object(CoverEntityDB, "download") as mock_download:
-#         # Simulate an entity database with 1 entry
-#         entity_db = EntityDB()
-#         entity_db.entity_map = {'Kanojyo to Himitsu to Koimoyou': manga_request_id}
-#         entity_db.entity_names = {'Kanojyo to Himitsu to Koimoyou': "Oshimai"}
-#
-#         entity_db.update_manga_entity(manga_name, "image_path")
-#
-#         # Assert the entity maps are populated
-#         assert entity_db.entity_map == {'Kanojyo to Himitsu to Koimoyou': manga_request_id}
-#         assert entity_db.entity_names == {'Kanojyo to Himitsu to Koimoyou': "Oshimai"}
-#
-#         # Assert the individual entity databases have not been updated during the add operation
-#         assert len(entity_db.authors) == 0
-#         assert len(entity_db.covers) == 0
-#         assert len(entity_db.metadata) == 0
-#         assert len(entity_db.volumes) == 0
+def test_entity_db_update_calls_each_entity(mock_entity_db_with_mock_updates, manga_name, manga_request_id):
+    metadata_entity = mock_entity_db_with_mock_updates.metadata[manga_request_id]
+
+    mock_entity_db_with_mock_updates.update_manga_entity(manga_name, "filepath")
+    mock_entity_db_with_mock_updates.authors.update.assert_called_once_with(metadata_entity.author_entities)
+    mock_entity_db_with_mock_updates.covers.update.assert_called_once_with(manga_request_id)
+    mock_entity_db_with_mock_updates.metadata.update.assert_called_once_with(manga_request_id)
+    mock_entity_db_with_mock_updates.volumes.update.assert_called_once_with(manga_request_id)
+    mock_entity_db_with_mock_updates.covers.download.assert_called_once()
+
+
+def test_entity_db_update_calls_each_entity_but_no_download(
+    mock_entity_db_with_mock_updates, manga_name, manga_request_id
+):
+    metadata_entity = mock_entity_db_with_mock_updates.metadata[manga_request_id]
+
+    mock_entity_db_with_mock_updates.update_manga_entity(manga_name)
+    mock_entity_db_with_mock_updates.authors.update.assert_called_once_with(metadata_entity.author_entities)
+    mock_entity_db_with_mock_updates.covers.update.assert_called_once_with(manga_request_id)
+    mock_entity_db_with_mock_updates.metadata.update.assert_called_once_with(manga_request_id)
+    mock_entity_db_with_mock_updates.volumes.update.assert_called_once_with(manga_request_id)
+    mock_entity_db_with_mock_updates.covers.download.assert_not_called()
+
+
+def test_entity_db_update_does_nothing_with_unknown():
+    entity_db = EntityDB()
+    entity_db.update_manga_entity("unknown")
+    assert entity_db.entity_map == {}
+    assert entity_db.entity_names == {}
+    assert len(entity_db.authors) == 0
+    assert len(entity_db.covers) == 0
+    assert len(entity_db.metadata) == 0
+    assert len(entity_db.volumes) == 0
