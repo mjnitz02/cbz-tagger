@@ -1,6 +1,5 @@
 import json
 import os
-from datetime import datetime
 from io import BytesIO
 from os import path
 from time import sleep
@@ -29,7 +28,8 @@ class CoverEntityDB(BaseEntityDB):
     database: Dict[str, List[CoverEntity]]
     query_param_field: str = "manga[]"
 
-    def format_content_for_entity(self, content):
+    @staticmethod
+    def format_content_for_entity(content):
         return content
 
     def download(self, entity_id: str, filepath: str):

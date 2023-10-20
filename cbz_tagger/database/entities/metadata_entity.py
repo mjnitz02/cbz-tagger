@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import List
 from typing import Optional
-from typing import Set
 
 from cbz_tagger.database.entities.base_entity import BaseEntity
 
