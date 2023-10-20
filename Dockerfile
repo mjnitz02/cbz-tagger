@@ -1,15 +1,12 @@
 FROM ghcr.io/linuxserver/baseimage-alpine:3.13
 
 LABEL \
-  maintainer="matt@mattnitzken.com"
+  maintainer="mjnitz02@gmail.com"
 
 ENV \
     DOWNLOADS_PATH="/downloads" \
     STORAGE_PATH="/storage" \
     CONFIG_PATH="/config" \
-    MOVE_FILES="true" \
-    ENABLE_CONTINUOUS_MODE="false" \
-    ENABLE_TIMER_MODE="false" \
     TIMER_MODE_DELAY="600"
 
 ### Upgrade ###
@@ -31,9 +28,7 @@ RUN \
     echo -e '#!/bin/bash\npython3 /app/start.py --auto' > /usr/bin/auto && \
     chmod +x /usr/bin/auto && \
     echo -e '#!/bin/bash\npython3 /app/start.py --manual' > /usr/bin/manual && \
-    chmod +x /usr/bin/manual && \
-    echo -e '#!/bin/bash\npython3 /app/start.py --retag' > /usr/bin/retag && \
-    chmod +x /usr/bin/retag
+    chmod +x /usr/bin/manual
 
 VOLUME /config
 VOLUME /downloads

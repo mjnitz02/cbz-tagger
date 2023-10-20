@@ -28,9 +28,5 @@ class CoverEntity(BaseEntity):
         return filename
 
     @property
-    def description(self) -> str:
-        return self.attributes["description"]
-
-    @property
     def cover_url(self) -> str:
         return f"https://uploads.mangadex.org/covers/{self.manga_id}/{self.filename}"

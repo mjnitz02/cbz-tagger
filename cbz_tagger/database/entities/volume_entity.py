@@ -1,3 +1,5 @@
+from typing import List
+
 import requests
 
 from cbz_tagger.database.entities.base_entity import BaseEntity
@@ -30,11 +32,11 @@ class VolumeEntity(BaseEntity):
         return volumes
 
     @property
-    def chapters(self):
+    def chapters(self) -> List[str]:
         chapters = set()
         for value in self.aggregate.values():
             chapters.update(value["chapters"].keys())
-        return chapters
+        return [chapter for chapter in chapters if chapter != "none"]
 
     @property
     def chapter_count(self):
