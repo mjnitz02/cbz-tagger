@@ -35,7 +35,7 @@ class CbzEntity:
                 for item in zip_read.infolist():
                     if "ComicInfo" not in item.filename and "000_cover.jpg" not in item.filename:
                         zip_write.writestr(item, zip_read.read(item.filename))
-                zip_write.writestr(entity_xml, "ComicInfo.xml")
+                zip_write.writestr("ComicInfo.xml", entity_xml)
                 zip_write.write(cover_image_path, "000_cover.jpg")
 
         if remove_on_write:
