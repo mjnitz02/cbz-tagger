@@ -6,8 +6,8 @@ class Mode:
 
 
 class ContainerMode:
-    TIMER = "timer"
-    MANUAL = "manual"
+    TIMER: str = "timer"
+    MANUAL: str = "manual"
 
 
 class MetadataSource:

@@ -1,37 +1,40 @@
-FROM ghcr.io/linuxserver/baseimage-alpine:3.13
+FROM python:3.11-alpine
 
-LABEL \
-  maintainer="mjnitz02@gmail.com"
+LABEL maintainer="mjnitz02@gmail.com"
 
-ENV \
-    DOWNLOADS_PATH="/downloads" \
-    STORAGE_PATH="/storage" \
-    CONFIG_PATH="/config" \
-    TIMER_MODE_DELAY="600"
+# set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+ENV CONFIG_PATH "/config"
+ENV SCAN_PATH "/scan"
+ENV STORAGE_PATH "/storage"
+ENV TIMER_MODE_DELAY "600"
 
 ### Upgrade ###
-RUN \
-  apk update && apk upgrade
+RUN apk update && apk upgrade
 
 ### Manga Tagger ###
 COPY cbz_tagger /app/cbz_tagger
-COPY start.py /app/start.py
+COPY run.py /app/run.py
 COPY requirements.txt /app/requirements.txt
 
 ### Dependencies ###
-RUN   echo "Install dependencies" && \
-    apk add --no-cache --update python3 py3-pip && \
-    pip3 install --no-cache-dir -r /app/requirements.txt
+RUN   echo "Install dependencies"
+RUN   apk add -u zlib-dev jpeg-dev gcc musl-dev
+RUN   python3 -m pip install --upgrade pip
+# RUN   apk add --no-cache --update python3 py3-pip
+RUN   pip3 install --no-cache-dir -r /app/requirements.txt
 
-RUN \
-    echo "Adding aliases to container" && \
-    echo -e '#!/bin/bash\npython3 /app/start.py --auto' > /usr/bin/auto && \
-    chmod +x /usr/bin/auto && \
-    echo -e '#!/bin/bash\npython3 /app/start.py --manual' > /usr/bin/manual && \
-    chmod +x /usr/bin/manual
+### Container Aliases ###
+RUN echo "Adding aliases to container"
+RUN echo -e '#!/bin/sh\npython3 /app/run.py --auto' > /usr/bin/auto
+RUN chmod +x /usr/bin/auto
+RUN echo -e '#!/bin/sh\npython3 /app/run.py --manual' > /usr/bin/manual
+RUN chmod +x /usr/bin/manual
 
+### Volume Mappings ###
 VOLUME /config
-VOLUME /downloads
+VOLUME /scan
 VOLUME /storage
 
-ENTRYPOINT ["python3", "-u", "/app/start.py", "--entrymode"]
+ENTRYPOINT ["python3", "-u", "/app/run.py", "--entrymode"]
