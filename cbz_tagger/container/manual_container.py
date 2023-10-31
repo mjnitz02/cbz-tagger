@@ -1,6 +1,6 @@
 import time
 
-from cbz_tagger.container.base import BaseContainer
+from cbz_tagger.container.base_container import BaseContainer
 
 
 class ManualContainer(BaseContainer):
