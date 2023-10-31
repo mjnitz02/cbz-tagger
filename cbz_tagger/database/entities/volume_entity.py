@@ -27,9 +27,18 @@ class VolumeEntity(BaseEntity):
             chapters = list(value["chapters"].keys())
             # If a chapter appears in an incorrect volume remove it
             if key != "none":
-                chapters = [c for c in chapters if float(c) >= float(key)]
+                chapters = [c for c in chapters if self.chapter_is_valid(key, c)]
             volumes[key] = chapters
         return volumes
+
+    @staticmethod
+    def chapter_is_valid(volume_number, chapter_number):
+        try:
+            if float(chapter_number) >= float(volume_number):
+                return True
+        except ValueError:
+            pass
+        return False
 
     @property
     def chapters(self) -> List[str]:

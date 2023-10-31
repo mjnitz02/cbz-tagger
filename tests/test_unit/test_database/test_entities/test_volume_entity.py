@@ -47,6 +47,27 @@ def test_volume_entity(volume_request_response):
     }
 
 
+def test_volume_entity_with_broken_chapters(volume_request_response):
+    entity = VolumeEntity(content=volume_request_response)
+
+    # Add partial chapter and none chapter to records
+    entity.content["volumes"]["3"]["chapters"]["3.1"] = (
+        {"chapter": "3.1", "id": "d139dfa2-fcb7-40e4-b567-ce772aa739e2", "others": [], "count": 1},
+    )
+    entity.content["volumes"]["3"]["chapters"]["none"] = (
+        {"chapter": "none", "id": "d139dfa2-fcb7-40e4-b567-ce772aa739e3", "others": [], "count": 1},
+    )
+    assert entity.volumes == {
+        "none": ["none"],
+        "4": ["21", "20", "16", "13"],
+        "3": ["3", "3.1"],
+        "2": ["19", "18", "17", "16", "15", "14", "13", "12", "11", "10", "9", "8", "7", "6", "5", "4", "3", "2"],
+        "1": ["19", "18", "17", "16", "15", "14", "13", "12", "11", "10", "9", "8", "7", "6", "5", "4", "3", "2", "1"],
+    }
+    assert "3.1" in entity.chapters
+    assert entity.get_volume("3.1") == "3"
+
+
 @pytest.mark.parametrize(
     "chapter,expected_volume",
     [
