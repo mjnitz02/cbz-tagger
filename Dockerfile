@@ -31,6 +31,8 @@ RUN echo -e '#!/bin/sh\npython3 /app/run.py --auto' > /usr/bin/auto
 RUN chmod +x /usr/bin/auto
 RUN echo -e '#!/bin/sh\npython3 /app/run.py --manual' > /usr/bin/manual
 RUN chmod +x /usr/bin/manual
+RUN echo -e '#!/bin/sh\npython3 /app/run.py --refresh' > /usr/bin/refresh
+RUN chmod +x /usr/bin/refresh
 
 ### Volume Mappings ###
 VOLUME /config
