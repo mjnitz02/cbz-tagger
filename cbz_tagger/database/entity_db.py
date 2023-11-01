@@ -42,7 +42,8 @@ class CoverEntityDB(BaseEntityDB):
                 if in_memory_image.format != "JPEG":
                     in_memory_image = in_memory_image.convert("RGB")
                 in_memory_image.save(image_path, quality=95, optimize=True)
-                sleep(0.1)
+                # Don't query more than 1 image per second
+                sleep(1)
 
 
 class MetadataEntityDB(BaseEntityDB):
