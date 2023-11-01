@@ -107,6 +107,8 @@ def test_cover_entity_db(cover_request_response, manga_request_id):
 
         assert len(entity_db) == 1
         assert isinstance(entity_db[manga_request_id], list)
+        # The 5th cover entity is a different language and should be ignored
+        assert len(entity_db[manga_request_id]) == 4
         for i in range(len(entity_db)):
             assert entity_db[manga_request_id][i].content == cover_request_response["data"][i]
 

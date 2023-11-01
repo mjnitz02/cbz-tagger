@@ -31,8 +31,19 @@ class CoverEntityDB(BaseEntityDB):
 
     @staticmethod
     def format_content_for_entity(content):
+        def _filter_content(original_content, locale):
+            return [c for c in original_content if c.attributes["locale"] == locale]
+
         # Filter only english and japanese covers
-        return [c for c in content if c.attributes["locale"] in ("en", "ja")]
+        if len(_filter_content(content, "ja")) > 0:
+            return _filter_content(content, "ja")
+        if len(_filter_content(content, "en")) > 0:
+            return _filter_content(content, "en")
+        if len(_filter_content(content, "ko")) > 0:
+            return _filter_content(content, "ko")
+        if len(_filter_content(content, "zh")) > 0:
+            return _filter_content(content, "zh")
+        return content
 
     def download(self, entity_id: str, filepath: str):
         os.makedirs(filepath, exist_ok=True)
