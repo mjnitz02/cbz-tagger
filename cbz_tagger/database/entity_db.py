@@ -103,15 +103,12 @@ class EntityDB:
         )
 
     def add(self, manga_name):
-        print(f">>> SEARCHING MANGADEX FOR NEW SERIES [{manga_name}]")
-        meta_entries = MetadataEntity.from_server_url(query_params={"title": manga_name})
-
-        counter = 0
-        for manga in meta_entries:
-            print(f"{counter+1}. {manga.title} ({manga.alt_title}) - {manga.created_at.year} - {manga.age_rating}")
-            counter += 1
-        choice = get_input("Please select the manga that you are searching for in number: ", counter + 1)
-        entity = meta_entries[choice - 1]
+        search_term = manga_name
+        entity = None
+        while entity is None:
+            entity = self.find_mangadex_entry(search_term)
+            if entity is None:
+                search_term = input("Enter a new name to search for: ")
         entity_id = entity.entity_id
 
         print("Select a storage name for the series:")
@@ -124,6 +121,25 @@ class EntityDB:
 
         self.entity_map[manga_name] = entity_id
         self.entity_names[manga_name] = entity_name
+
+    def find_mangadex_entry(self, search_term):
+        print(f">>> SEARCHING MANGADEX FOR NEW SERIES [{search_term}]")
+        meta_entries = MetadataEntity.from_server_url(query_params={"title": search_term})
+
+        counter = 0
+        for manga in meta_entries:
+            print(f"{counter+1}. {manga.title} ({manga.alt_title}) - {manga.created_at.year} - {manga.age_rating}")
+            counter += 1
+        print(" ")
+        print("!!! INPUT -1 TO ENTER A NEW NAME TO SEARCH FOR IF THESE RESULTS ARE BAD !!!")
+        choice = get_input(
+            "Please select the manga that you are searching for in number: ", counter + 1, allow_negative_exit=True
+        )
+        if choice < 0:
+            return None
+
+        entity = meta_entries[choice - 1]
+        return entity
 
     def update_manga_entity(self, manga_name, filepath=None):
         entity_id = self.entity_map.get(manga_name)
