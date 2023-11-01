@@ -48,5 +48,10 @@ class CbzDatabase:
         entity_image_path = self.entity_database.to_local_image_file(manga_name, chapter_number)
         return entity_name, entity_xml, entity_image_path
 
+    def refresh(self):
+        for manga_name in self.entity_database.entity_map.keys():
+            print(f"Refreshing {manga_name}")
+            self.update_metadata(manga_name)
+
     def update_metadata(self, manga_name):
         self.entity_database.update_manga_entity(manga_name, self.image_db_path)

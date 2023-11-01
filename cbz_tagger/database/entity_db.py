@@ -31,7 +31,8 @@ class CoverEntityDB(BaseEntityDB):
 
     @staticmethod
     def format_content_for_entity(content):
-        return content
+        # Filter only english and japanese covers
+        return [c for c in content if c.attributes["locale"] in ("en", "ja")]
 
     def download(self, entity_id: str, filepath: str):
         os.makedirs(filepath, exist_ok=True)
@@ -172,7 +173,7 @@ class EntityDB:
         volume = self.volumes[entity_id].get_volume(chapter_number)
         cover_entity = None
         if volume != "none":
-            cover_entity = next(cover for cover in self.covers[entity_id] if cover.volume == volume)
+            cover_entity = next((cover for cover in self.covers[entity_id] if cover.volume == volume), None)
         if cover_entity is None:
             cover_art_entity_id = self.metadata[entity_id].cover_art_id
             cover_entity = next(cover for cover in self.covers[entity_id] if cover.entity_id == cover_art_entity_id)
