@@ -18,8 +18,6 @@ class CbzEntity:
     def manga_name(self):
         self.check_path()
         manga_name = os.path.split(self.filepath)[0]
-        manga_name = re.sub(r"[^A-Za-z0-9 ]+", "", manga_name)
-        manga_name = " ".join(manga_name.split())
         return manga_name
 
     @property

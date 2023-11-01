@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from io import BytesIO
 from os import path
 from time import sleep
@@ -157,8 +158,13 @@ class EntityDB:
             if filepath is not None:
                 self.covers.download(entity_id, filepath)
 
-    def to_entity_name(self, manga_name) -> str:
-        return self.entity_names.get(manga_name)
+    def to_entity_name(self, manga_name) -> Optional[str]:
+        entity_name = self.entity_names.get(manga_name)
+        if entity_name is None:
+            return None
+        entity_name = re.sub(r"[^A-Za-z0-9 ]+", " ", entity_name)
+        entity_name = " ".join(entity_name.split())
+        return entity_name
 
     def to_local_image_file(self, manga_name, chapter_number) -> Optional[str]:
         entity_id = self.entity_map.get(manga_name)

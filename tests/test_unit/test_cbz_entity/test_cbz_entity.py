@@ -8,11 +8,12 @@ from cbz_tagger.cbz_entity.cbz_entity import CbzEntity
     [
         ("SimpleName/Simple name file.cbz", "SimpleName"),
         ("Simple Name/Simple name file.cbz", "Simple Name"),
-        ("Simple Name?/Simple name file.cbz", "Simple Name"),
-        ("Simple Name - with hyphen/Simple name file.cbz", "Simple Name with hyphen"),
-        ("Simple Name : with colon/Simple name file.cbz", "Simple Name with colon"),
-        ("Simple Name: with colon/Simple name file.cbz", "Simple Name with colon"),
-        ("Simple Name: with colon @ comic/Simple name file.cbz", "Simple Name with colon comic"),
+        ("Simple Name?/Simple name file.cbz", "Simple Name?"),
+        ("Simple Name - with hyphen/Simple name file.cbz", "Simple Name - with hyphen"),
+        ("Simple Name : with colon/Simple name file.cbz", "Simple Name : with colon"),
+        ("Simple Name: with colon/Simple name file.cbz", "Simple Name: with colon"),
+        ("Simple Name: with colon @ comic/Simple name file.cbz", "Simple Name: with colon @ comic"),
+        ("SOME×CONTENT/Simple name file.cbz", "SOME×CONTENT"),
     ],
 )
 def test_manga_name_parsing(filename, expected):

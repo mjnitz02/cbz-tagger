@@ -33,6 +33,32 @@ def test_entity_db_to_entity_name(mock_entity_db, manga_name):
 
 
 @pytest.mark.parametrize(
+    "entity_name,expected",
+    [
+        ("SimpleName", "SimpleName"),
+        ("Simple Name", "Simple Name"),
+        ("Simple Name?", "Simple Name"),
+        (" Simple Name?", "Simple Name"),
+        ("Simple Name - with hyphen", "Simple Name with hyphen"),
+        ("Simple Name : with colon", "Simple Name with colon"),
+        ("Simple Name: with colon", "Simple Name with colon"),
+        ("Simple Name: with colon @ comic", "Simple Name with colon comic"),
+        ("SOME×CONTENT", "SOME CONTENT"),
+    ],
+)
+def test_entity_db_to_entity_name_cleaning(mock_entity_db, entity_name, expected):
+    mock_entity_db.entity_names = {"manga_name": entity_name}
+    actual = mock_entity_db.to_entity_name("manga_name")
+    assert expected == actual
+
+
+def test_entity_db_to_entity_with_missing(mock_entity_db):
+    mock_entity_db.entity_names = {"manga_name": "something"}
+    actual = mock_entity_db.to_entity_name("missing")
+    assert actual is None
+
+
+@pytest.mark.parametrize(
     "chapter_number,expected_filename",
     [
         ("1", "1d387431-eb38-40e9-bc6e-97e4ea4092dc.jpg"),
