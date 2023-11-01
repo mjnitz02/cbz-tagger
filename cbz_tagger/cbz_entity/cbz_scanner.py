@@ -37,10 +37,15 @@ class CbzScanner:
         self.remove_empty_dirs()
         return True
 
+    def get_files(self):
+        return [(root, filenames) for (root, _, filenames) in os.walk(self.scan_path)]
+
     def get_cbz_files(self):
+        files = self.get_files()
+
         filepaths = [
             list(os.path.join(root, f) for f in filenames if os.path.splitext(f)[-1] == ".cbz")
-            for (root, _, filenames) in os.walk(self.scan_path)
+            for (root, filenames) in files
         ]
         filepaths = sorted([os.path.relpath(item, self.scan_path) for items in filepaths for item in items])
         return filepaths
@@ -71,9 +76,19 @@ class CbzScanner:
 
     def get_entity_write_path(self, entity_name, chapter_number):
         os.makedirs(os.path.join(self.storage_path, entity_name), exist_ok=True)
-        return os.path.join(
-            self.storage_path, entity_name, f"{entity_name} - Chapter {str(chapter_number).zfill(3)}.cbz"
-        )
+        chapter_number_string = str(chapter_number)
+        if "." in chapter_number_string:
+            fill = 5
+            try:
+                decimal_int = int(chapter_number_string.rsplit(".", maxsplit=1)[-1])
+                if decimal_int >= 10:
+                    fill = 6
+            except ValueError:
+                pass
+            chapter_number_string = chapter_number_string.zfill(fill)
+        else:
+            chapter_number_string = chapter_number_string.zfill(3)
+        return os.path.join(self.storage_path, entity_name, f"{entity_name} - Chapter {chapter_number_string}.cbz")
 
     def get_entity_cover_image_path(self, entity_image_path):
         return os.path.join(self.config_path, "images", entity_image_path)

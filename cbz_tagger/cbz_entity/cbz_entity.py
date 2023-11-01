@@ -8,23 +8,42 @@ class CbzEntity:
     def __init__(self, filepath: str):
         self.filepath = filepath
 
+    def check_path(self):
+        if len(os.path.split(self.filepath)) > 2:
+            raise ValueError(
+                "Multiple file path depths found, please ensure files are in format: Series Name/Chapter Name.cbz"
+            )
+
     @property
     def manga_name(self):
+        self.check_path()
         return os.path.split(self.filepath)[0]
 
     @property
-    def chapter_number(self) -> str:
-        # Remove all non numeric characters and split by contigous numbers.
-        # Take the last seen number as the chapter
-        filepath_parts = re.sub("[^0-9.]", " ", self.filepath.replace(".cbz", "")).split(" ")
-        chapter_parts = [num for num in filepath_parts if len(num)]
-        chapter_number = chapter_parts[-1]
-        chapter_number = float(chapter_number)
-        if chapter_number.is_integer():
-            chapter_number = int(chapter_number)
-        chapter_number = str(chapter_number)
+    def chapter_name(self):
+        self.check_path()
+        return os.path.split(self.filepath)[1]
 
-        return chapter_number
+    @property
+    def chapter_number(self) -> str:
+        if "Ch.1.cbz" in self.chapter_name:
+            assert True
+        filename = self.chapter_name.replace(".cbz", "")
+        filename_numeric_only = re.sub("[^0-9.]", " ", filename)
+        valid_parts = [p for p in filename_numeric_only.split(" ") if len(p) > 0]
+        valid_number = valid_parts[-1]
+        # If the chapter number starts with a "." we should skip this first period
+        if valid_number[0] == ".":
+            valid_number = valid_number[1:]
+
+        try:
+            chapter_number = float(valid_number)
+            if chapter_number.is_integer():
+                chapter_number = int(chapter_number)
+        except ValueError:
+            chapter_number = valid_number
+
+        return str(chapter_number)
 
     def get_name_and_chapter(self):
         return self.manga_name, self.chapter_number
