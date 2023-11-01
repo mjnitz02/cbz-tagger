@@ -37,4 +37,6 @@ def unpaginate_request(url, query_params=None, limit=50) -> List[Dict[str, Any]]
         offset += limit
         if offset > response["total"]:
             return response_content
-        sleep(0.1)
+
+        # Only make 2 queries per second
+        sleep(0.5)
