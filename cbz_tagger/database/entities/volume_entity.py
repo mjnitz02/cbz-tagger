@@ -23,29 +23,32 @@ class VolumeEntity(BaseEntity):
     @property
     def volumes(self):
         volumes = {}
-        for key, value in self.aggregate.items():
-            chapters = list(value["chapters"].keys())
-            # If a chapter appears in an incorrect volume remove it
-            if key != "none":
-                chapters = [c for c in chapters if self.chapter_is_valid(key, c)]
-            volumes[key] = chapters
+        for volume_key, volume in self.aggregate.items():
+            volume_chapters = volume["chapters"]
+            if isinstance(volume_chapters, dict):
+                chapters = list(volume_chapters.keys())
+                # If a chapter appears in an incorrect volume remove it
+                chapters = [chapter for chapter in chapters if self.chapter_is_valid(volume_key, chapter)]
+                volumes[volume_key] = chapters
         return volumes
-
-    @staticmethod
-    def chapter_is_valid(volume_number, chapter_number):
-        try:
-            if float(chapter_number) >= float(volume_number):
-                return True
-        except ValueError:
-            pass
-        return False
 
     @property
     def chapters(self) -> List[str]:
         chapters = set()
-        for value in self.aggregate.values():
-            chapters.update(value["chapters"].keys())
-        return [chapter for chapter in chapters if chapter != "none"]
+        for volume_chapters in self.volumes.values():
+            chapters.update(set(volume_chapters))
+        return chapters
+
+    @staticmethod
+    def chapter_is_valid(volume_number, chapter_number):
+        try:
+            if volume_number == "none" and chapter_number != "none":
+                return True
+            if chapter_number != "none" and float(chapter_number) >= float(volume_number):
+                return True
+        except ValueError:
+            pass
+        return False
 
     @property
     def chapter_count(self):

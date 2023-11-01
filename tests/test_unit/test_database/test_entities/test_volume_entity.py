@@ -39,7 +39,7 @@ def test_volume_entity(volume_request_response):
         "9",
     ]
     assert entity.volumes == {
-        "none": ["none"],
+        "none": [],
         "4": ["21", "20", "16", "13"],
         "3": ["3"],
         "2": ["19", "18", "17", "16", "15", "14", "13", "12", "11", "10", "9", "8", "7", "6", "5", "4", "3", "2"],
@@ -57,8 +57,15 @@ def test_volume_entity_with_broken_chapters(volume_request_response):
     entity.content["volumes"]["3"]["chapters"]["none"] = (
         {"chapter": "none", "id": "d139dfa2-fcb7-40e4-b567-ce772aa739e3", "others": [], "count": 1},
     )
+    entity.content["volumes"]["0"] = {
+        "volume": 0,
+        "count": 0,
+        "chapters": [
+            {"chapter": "0", "id": "d139dfa2-fcb7-40e4-b567-ce772aa739e3", "others": [], "count": 1},
+        ],
+    }
     assert entity.volumes == {
-        "none": ["none"],
+        "none": [],
         "4": ["21", "20", "16", "13"],
         "3": ["3", "3.1"],
         "2": ["19", "18", "17", "16", "15", "14", "13", "12", "11", "10", "9", "8", "7", "6", "5", "4", "3", "2"],
