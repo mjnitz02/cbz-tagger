@@ -37,6 +37,7 @@ class CoverEntityDB(BaseEntityDB):
         for cover in self[entity_id]:
             image_path = path.join(filepath, cover.local_filename)
             if not path.exists(image_path):
+                print(f"Downloading: {cover.cover_url}")
                 image = cover.download_file(cover.cover_url)
                 in_memory_image = Image.open(BytesIO(image))
                 if in_memory_image.format != "JPEG":
