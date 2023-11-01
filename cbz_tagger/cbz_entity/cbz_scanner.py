@@ -94,8 +94,7 @@ class CbzScanner:
         return os.path.join(self.config_path, "images", entity_image_path)
 
     def remove_empty_dirs(self):
-        folders = list(os.walk(self.scan_path))[1:]
+        folders = [f[0] for f in list(os.walk(self.scan_path))[1:]]
         for folder in folders:
-            files = [f for f in folder[2] if f != ".DS_Store"]
-            if not files:
-                shutil.rmtree(folder[0])
+            if len(os.listdir(folder)) == 0:
+                shutil.rmtree(folder)
