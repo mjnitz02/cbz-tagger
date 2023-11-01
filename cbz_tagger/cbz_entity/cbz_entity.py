@@ -17,7 +17,8 @@ class CbzEntity:
     @property
     def manga_name(self):
         self.check_path()
-        return os.path.split(self.filepath)[0]
+        manga_name = os.path.split(self.filepath)[0]
+        return manga_name
 
     @property
     def chapter_name(self):

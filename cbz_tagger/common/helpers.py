@@ -6,12 +6,14 @@ from typing import List
 import requests
 
 
-def get_input(desc, max_val):
+def get_input(desc, max_val, allow_negative_exit=False):
     while True:
         user_input = input(desc)
         try:
             user_input = int(user_input)
-            if user_input <= 0 or user_input > max_val:
+            if user_input > max_val:
+                print("Your input is incorrect! Please try again!")
+            elif not allow_negative_exit and user_input <= 0:
                 print("Your input is incorrect! Please try again!")
             else:
                 return user_input
