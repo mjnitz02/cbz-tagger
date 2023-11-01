@@ -601,6 +601,23 @@ def cover_request_response():
                     {"id": "f8cc4f8a-e596-4618-ab05-ef6572980bbf", "type": "user"},
                 ],
             },
+            {
+                "id": "9d64b6fb-0cac-4fa7-b3da-553fea602d2d",
+                "type": "cover_art",
+                "attributes": {
+                    "description": "",
+                    "volume": "1",
+                    "fileName": "1d387431-eb38-40e9-bc6e-97e4ea4092dc.jpg",
+                    "locale": "en",
+                    "createdAt": "2021-05-24T18:04:01+00:00",
+                    "updatedAt": "2021-11-09T20:59:36+00:00",
+                    "version": 2,
+                },
+                "relationships": [
+                    {"id": "831b12b8-2d0e-4397-8719-1efee4c32f40", "type": "manga"},
+                    {"id": "f8cc4f8a-e596-4618-ab05-ef6572980bbf", "type": "user"},
+                ],
+            },
         ],
         "limit": 10,
         "offset": 0,

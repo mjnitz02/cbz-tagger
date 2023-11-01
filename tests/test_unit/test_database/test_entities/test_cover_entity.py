@@ -38,7 +38,8 @@ def test_cover_entity_from_url(cover_request_response):
     with mock.patch("cbz_tagger.database.entities.base_entity.unpaginate_request") as mock_request:
         mock_request.return_value = cover_request_response["data"]
         entities = CoverEntity.from_server_url()
-        assert len(entities) == 4
+        # This test will see the english cover
+        assert len(entities) == 5
         assert entities[0].entity_id == "be31ba9c-3490-41ea-b1bd-7f31cad7322f"
         assert entities[1].entity_id == "5d989a45-0946-4f22-9a79-53cc26e6e958"
         assert entities[2].entity_id == "7be23c33-7b1e-4f2a-a9fe-ad3d6263f30f"
