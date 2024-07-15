@@ -55,21 +55,21 @@ class CbzScanner:
         manga_name, chapter_number = cbz_entity.get_name_and_chapter()
         print(filepath, manga_name, chapter_number)
 
-        try:
-            entity_name, entity_xml, entity_image_path = self.cbz_database.get_metadata(manga_name, chapter_number)
-        except RuntimeError:
-            print(f"ERROR >> {manga_name} not in database. Run manual mode to add new series.")
-            return
-
-        read_path = self.get_entity_read_path(filepath)
-        write_path = self.get_entity_write_path(entity_name, chapter_number)
-        cover_image_path = self.get_entity_cover_image_path(entity_image_path)
-
-        if os.path.exists(write_path):
-            print("ERROR >> Destination file already present!")
-            return
-
-        cbz_entity.build(entity_xml, read_path, write_path, cover_image_path)
+        # try:
+        #     entity_name, entity_xml, entity_image_path = self.cbz_database.get_metadata(manga_name, chapter_number)
+        # except RuntimeError:
+        #     print(f"ERROR >> {manga_name} not in database. Run manual mode to add new series.")
+        #     return
+        #
+        # read_path = self.get_entity_read_path(filepath)
+        # write_path = self.get_entity_write_path(entity_name, chapter_number)
+        # cover_image_path = self.get_entity_cover_image_path(entity_image_path)
+        #
+        # if os.path.exists(write_path):
+        #     print("ERROR >> Destination file already present!")
+        #     return
+        #
+        # cbz_entity.build(entity_xml, read_path, write_path, cover_image_path)
 
     def get_entity_read_path(self, filepath):
         return os.path.join(self.scan_path, filepath)

@@ -94,6 +94,19 @@ def test_chapter_name_parsing(filename, expected):
     ],
 )
 @pytest.mark.parametrize(
+    "chapter_suffix",
+    [
+        "(1)",
+        " (6)",
+        " - some random words",
+        " - some random title with a paren (3)",
+        " - Volume 1 Extras",
+        " - Volume 12 Extras",
+        " - periods.....",
+        " - one period.",
+    ],
+)
+@pytest.mark.parametrize(
     "chapter_number,expected",
     [
         ("1", "1"),
@@ -109,14 +122,16 @@ def test_chapter_name_parsing(filename, expected):
         ("0.2", "0.2"),
     ],
 )
-def test_chapter_number_parsing(chapter_prefix, chapter_delimiter, chapter_number_prefix, chapter_number, expected):
+def test_chapter_number_parsing(
+    chapter_prefix, chapter_delimiter, chapter_number_prefix, chapter_suffix, chapter_number, expected
+):
     # Test / pathing
-    filename = f"{chapter_prefix}/{chapter_prefix}{chapter_delimiter}{chapter_number_prefix}{chapter_number}.cbz"
+    filename = f"{chapter_prefix}/{chapter_prefix}{chapter_delimiter}{chapter_number_prefix}{chapter_number}{chapter_suffix}.cbz"
     entity = CbzEntity(filename)
     assert entity.chapter_number == expected
 
     # Test \\ pathing
-    filename = f"{chapter_prefix}\\{chapter_prefix}{chapter_delimiter}{chapter_number_prefix}{chapter_number}.cbz"
+    filename = f"{chapter_prefix}\\{chapter_prefix}{chapter_delimiter}{chapter_number_prefix}{chapter_number}{chapter_suffix}.cbz"
     entity = CbzEntity(filename)
     assert entity.chapter_number == expected
 
