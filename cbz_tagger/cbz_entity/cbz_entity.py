@@ -25,13 +25,32 @@ class CbzEntity:
         self.check_path()
         return os.path.split(self.filepath)[1]
 
+    @staticmethod
+    def convert_to_number(value):
+        try:
+            float(value)
+            return value
+        except ValueError:
+            # If the chapter number starts with a "." we should skip this first period
+            if value[0] == ".":
+                try:
+                    float(value[1:])
+                    return value[1:]
+                except ValueError:
+                    return None
+            return None
+
     @property
     def chapter_number(self) -> str:
         if "Ch.1.cbz" in self.chapter_name:
             assert True
         filename = self.chapter_name.replace(".cbz", "")
-        filename_numeric_only = re.sub("[^0-9.]", " ", filename)
+        filename = re.sub(r"\.\.+", "", filename)
+        filename = re.sub(r"\(.*\)", "", filename)
+        filename = re.sub(r"Volume [0-9.].* ", "", filename)
+        filename_numeric_only = re.sub(r"[^0-9.]", " ", filename)
         valid_parts = [p for p in filename_numeric_only.split(" ") if len(p) > 0]
+        valid_parts = [self.convert_to_number(p) for p in valid_parts if self.convert_to_number(p) is not None]
         valid_number = valid_parts[-1]
         # If the chapter number starts with a "." we should skip this first period
         if valid_number[0] == ".":
