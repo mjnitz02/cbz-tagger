@@ -36,7 +36,7 @@ class CbzDatabase:
             write_file.write(entity_database_json)
 
     def check_manga_missing(self, manga_name):
-        return manga_name in self.entity_database.keys()
+        return manga_name not in self.entity_database.keys()
 
     def get_metadata(self, manga_name, chapter_number):
         if self.check_manga_missing(manga_name):
