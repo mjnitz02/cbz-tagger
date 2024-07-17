@@ -14,8 +14,10 @@ class CbzScanner:
         self.storage_path = storage_path
 
         self.cbz_database = CbzDatabase(root_path=self.config_path, add_missing=add_missing)
+        self.recently_updated = []
 
     def run(self):
+        self.recently_updated = []
         while True:
             completed = self.scan()
             if not completed:
@@ -56,6 +58,11 @@ class CbzScanner:
         print(filepath, manga_name, chapter_number)
 
         try:
+            # If we haven't updated the metadata on this scan, update the metadata records
+            if manga_name not in self.recently_updated:
+                self.cbz_database.update_metadata(manga_name)
+                self.recently_updated.append(manga_name)
+
             entity_name, entity_xml, entity_image_path = self.cbz_database.get_metadata(manga_name, chapter_number)
         except RuntimeError:
             print(f"ERROR >> {manga_name} not in database. Run manual mode to add new series.")
