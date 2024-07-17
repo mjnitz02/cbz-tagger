@@ -52,6 +52,7 @@ class CbzDatabase:
         for manga_name in self.entity_database.entity_map.keys():
             print(f"Refreshing {manga_name}")
             self.update_metadata(manga_name)
+        self.entity_database.clean(self.image_db_path)
         self.save()
 
     def update_metadata(self, manga_name):

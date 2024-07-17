@@ -29,6 +29,26 @@ class CoverEntityDB(BaseEntityDB):
     database: Dict[str, List[CoverEntity]]
     query_param_field: str = "manga[]"
 
+    def get_indexed_covers(self) -> List[str]:
+        covers = []
+        for _, cover_list in self.database.items():
+            for cover_entity in cover_list:
+                covers.append(cover_entity.local_filename)
+        return sorted(covers)
+
+    def get_local_covers(self, image_db_path) -> List[str]:
+        return sorted(os.listdir(image_db_path))
+
+    def get_orphaned_covers(self, image_db_path) -> List[str]:
+        indexed_covers = self.get_indexed_covers()
+        local_covers = self.get_local_covers(image_db_path)
+        return [cover for cover in local_covers if cover not in indexed_covers]
+
+    def remove_orphaned_covers(self, image_db_path):
+        orphaned_covers = self.get_orphaned_covers(image_db_path)
+        for cover in orphaned_covers:
+            os.remove(path.join(image_db_path, cover))
+
     @staticmethod
     def format_content_for_entity(content):
         def _filter_content(original_content, locale):
@@ -56,8 +76,8 @@ class CoverEntityDB(BaseEntityDB):
                 if in_memory_image.format != "JPEG":
                     in_memory_image = in_memory_image.convert("RGB")
                 in_memory_image.save(image_path, quality=95, optimize=True)
-                # Don't query more than 1 image per second
-                sleep(1)
+                # Don't query more than 2 images per second
+                sleep(0.5)
 
 
 class MetadataEntityDB(BaseEntityDB):
@@ -169,6 +189,10 @@ class EntityDB:
             # Update missing covers
             if filepath is not None:
                 self.covers.download(entity_id, filepath)
+
+    def clean(self, image_db_path):
+        print("Cleaning orphaned covers...")
+        self.covers.remove_orphaned_covers(image_db_path)
 
     def to_entity_name(self, manga_name) -> Optional[str]:
         entity_name = self.entity_names.get(manga_name)
