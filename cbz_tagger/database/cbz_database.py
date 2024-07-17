@@ -55,9 +55,11 @@ class CbzDatabase:
         self.entity_database.clean(self.image_db_path)
         self.save()
 
-    def update_metadata(self, manga_name):
+    def update_metadata(self, manga_name, save=False):
         if manga_name not in self.entity_database.keys():
             if not self.add_missing:
                 raise RuntimeError("Manual mode must be enabled for adding missing manga to the database.")
 
         self.entity_database.update_manga_entity(manga_name, self.image_db_path)
+        if save:
+            self.save()

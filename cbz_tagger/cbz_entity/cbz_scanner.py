@@ -60,7 +60,7 @@ class CbzScanner:
         try:
             # If we haven't updated the metadata on this scan, update the metadata records
             if manga_name not in self.recently_updated:
-                self.cbz_database.update_metadata(manga_name)
+                self.cbz_database.update_metadata(manga_name, save=True)
                 self.recently_updated.append(manga_name)
 
             entity_name, entity_xml, entity_image_path = self.cbz_database.get_metadata(manga_name, chapter_number)
