@@ -1,3 +1,4 @@
+from json import JSONDecodeError
 from time import sleep
 from typing import Any
 from typing import Dict
@@ -28,17 +29,20 @@ def unpaginate_request(url, query_params=None, limit=50) -> List[Dict[str, Any]]
 
     response_content = []
     offset = 0
-    while True:
-        params = {"limit": limit, "offset": offset}
-        params.update(query_params)
+    try:
+        while True:
+            params = {"limit": limit, "offset": offset}
+            params.update(query_params)
 
-        response = requests.get(url, params=params, timeout=60).json()
+            response = requests.get(url, params=params, timeout=60).json()
 
-        response_content.extend(response["data"])
+            response_content.extend(response["data"])
 
-        offset += limit
-        if offset > response["total"]:
-            return response_content
+            offset += limit
+            if offset > response["total"]:
+                return response_content
 
-        # Only make 2 queries per second
-        sleep(0.5)
+            # Only make 2 queries per second
+            sleep(0.5)
+    except JSONDecodeError as exc:
+        raise EnvironmentError("Mangadex API is down! Please try again later!") from exc

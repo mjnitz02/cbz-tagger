@@ -62,6 +62,9 @@ class CbzDatabase:
         if self.check_manga_missing(manga_name):
             return
 
-        self.entity_database.update_manga_entity(manga_name, self.image_db_path)
-        if save:
-            self.save()
+        try:
+            self.entity_database.update_manga_entity(manga_name, self.image_db_path)
+            if save:
+                self.save()
+        except EnvironmentError:
+            print(f"Mangadex API Down >> Unable to update {manga_name} metadata.")
