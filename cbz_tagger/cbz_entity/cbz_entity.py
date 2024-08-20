@@ -47,7 +47,7 @@ class CbzEntity:
         # Check if mangadex formatting with chapter title, if so remove the word title
         if filename.find("-") != filename.rfind("-") and filename.find("-") != -1 and filename.rfind("-") != -1:
             chapter_pos = filename.find("Ch")
-            if chapter_pos > filename.find("-") and chapter_pos < filename.rfind("-"):
+            if filename.find("-") < chapter_pos < filename.rfind("-"):
                 filename = filename[: filename.rfind("-")]
 
         filename = re.sub(r"\.\.+", "", filename)
