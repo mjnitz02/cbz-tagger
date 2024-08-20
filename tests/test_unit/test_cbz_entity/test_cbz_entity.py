@@ -136,6 +136,19 @@ def test_chapter_number_parsing(
     assert entity.chapter_number == expected
 
 
+@pytest.mark.parametrize(
+    "template_name, expected_chapter",
+    [
+        ("TITLE - Vol. 01 Ch. 008 -  some naming 2", "8"),
+        ("TITLE - Vol. 02 Ch. 008 - some (other word) Part 2", "8"),
+    ],
+)
+def test_one_off_chapter_number_parsing(template_name, expected_chapter):
+    # Test / pathing
+    entity = CbzEntity(template_name)
+    assert entity.chapter_number == expected_chapter
+
+
 def test_get_name_and_chapter():
     entity = CbzEntity("Simple Name/Simple name - 001.cbz")
     assert entity.get_name_and_chapter() == ("Simple Name", "1")

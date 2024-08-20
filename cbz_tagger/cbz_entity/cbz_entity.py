@@ -42,12 +42,18 @@ class CbzEntity:
 
     @property
     def chapter_number(self) -> str:
-        if "Ch.1.cbz" in self.chapter_name:
-            assert True
         filename = self.chapter_name.replace(".cbz", "")
+
+        # Check if mangadex formatting with chapter title, if so remove the word title
+        if filename.find("-") != filename.rfind("-") and filename.find("-") != -1 and filename.rfind("-") != -1:
+            chapter_pos = filename.find("Ch")
+            if chapter_pos > filename.find("-") and chapter_pos < filename.rfind("-"):
+                filename = filename[: filename.rfind("-")]
+
         filename = re.sub(r"\.\.+", "", filename)
         filename = re.sub(r"\(.*\)", "", filename)
         filename = re.sub(r"Volume [0-9.].* ", "", filename)
+        filename = re.sub(r"Part [0-9.]", "", filename)
         filename_numeric_only = re.sub(r"[^0-9.]", " ", filename)
         valid_parts = [p for p in filename_numeric_only.split(" ") if len(p) > 0]
         valid_parts = [self.convert_to_number(p) for p in valid_parts if self.convert_to_number(p) is not None]
