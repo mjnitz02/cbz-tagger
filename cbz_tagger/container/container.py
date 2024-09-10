@@ -26,11 +26,13 @@ def get_environment_variables():
     env_vars : dict
             Environment variables as a dictionary
     """
+    env = AppEnv()
     env_vars = {
-        "config_path": os.path.abspath(AppEnv.CONFIG_PATH),
-        "scan_path": os.path.abspath(AppEnv.SCAN_PATH),
-        "storage_path": os.path.abspath(AppEnv.STORAGE_PATH),
-        "timer_delay": AppEnv.TIMER_DELAY,
+        "config_path": os.path.abspath(env.CONFIG_PATH),
+        "scan_path": os.path.abspath(env.SCAN_PATH),
+        "storage_path": os.path.abspath(env.STORAGE_PATH),
+        "timer_delay": env.TIMER_DELAY,
+        "environment": env.get_user_environment(),
     }
 
     print("Environment Variables:")

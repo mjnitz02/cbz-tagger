@@ -1,6 +1,7 @@
 import os
 import shutil
 import time
+from typing import Dict
 from zipfile import BadZipFile
 
 from cbz_tagger.cbz_entity.cbz_entity import CbzEntity
@@ -8,10 +9,13 @@ from cbz_tagger.database.cbz_database import CbzDatabase
 
 
 class CbzScanner:
-    def __init__(self, config_path, scan_path, storage_path, add_missing=True) -> None:
+    def __init__(
+        self, config_path, scan_path, storage_path, add_missing=True, environment: Dict[str, str] = None
+    ) -> None:
         self.config_path = config_path
         self.scan_path = scan_path
         self.storage_path = storage_path
+        self.environment = environment
 
         self.cbz_database = CbzDatabase(root_path=self.config_path, add_missing=add_missing)
         self.recently_updated = []
@@ -76,7 +80,7 @@ class CbzScanner:
             print("ERROR >> Destination file already present!")
             return
 
-        cbz_entity.build(entity_xml, read_path, write_path, cover_image_path)
+        cbz_entity.build(entity_xml, read_path, write_path, cover_image_path, self.environment)
 
     def get_entity_read_path(self, filepath):
         return os.path.join(self.scan_path, filepath)

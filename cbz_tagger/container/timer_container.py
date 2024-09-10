@@ -4,8 +4,8 @@ from cbz_tagger.container.base_container import BaseContainer
 
 
 class TimerContainer(BaseContainer):
-    def __init__(self, config_path, scan_path, storage_path, timer_delay):
-        super().__init__(config_path, scan_path, storage_path, timer_delay)
+    def __init__(self, config_path, scan_path, storage_path, timer_delay, environment=None):
+        super().__init__(config_path, scan_path, storage_path, timer_delay, environment=environment)
         # Disable automatic adding of series
         self.scanner.cbz_database.add_missing = False
 

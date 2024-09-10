@@ -74,7 +74,7 @@ class CbzEntity:
     def get_name_and_chapter(self):
         return self.manga_name, self.chapter_number
 
-    def build(self, entity_xml, read_path, write_path, cover_image_path, remove_on_write=True):
+    def build(self, entity_xml, read_path, write_path, cover_image_path, remove_on_write=True, environment=None):
         with ZipFile(read_path, "r") as zip_read:
             with ZipFile(write_path, "w", ZIP_DEFLATED) as zip_write:
                 for item in zip_read.infolist():
@@ -85,3 +85,10 @@ class CbzEntity:
 
         if remove_on_write:
             os.remove(read_path)
+
+        if environment:
+            try:
+                os.chown(write_path, environment.get("puid"), environment.get("pgid"))
+                os.chmod(write_path, 0o644)
+            except PermissionError:
+                print(f"ERROR >> Unable to set permissions on {write_path}")

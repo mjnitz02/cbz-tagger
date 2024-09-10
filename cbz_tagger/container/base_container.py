@@ -8,13 +8,16 @@ class BaseContainer:
     timer_delay: int
     scanner: CbzScanner
 
-    def __init__(self, config_path, scan_path, storage_path, timer_delay):
+    def __init__(self, config_path, scan_path, storage_path, timer_delay, environment=None):
         self.config_path = config_path
         self.scan_path = scan_path
         self.storage_path = storage_path
         self.timer_delay = timer_delay
         self.scanner = CbzScanner(
-            config_path=self.config_path, scan_path=self.scan_path, storage_path=self.storage_path
+            config_path=self.config_path,
+            scan_path=self.scan_path,
+            storage_path=self.storage_path,
+            environment=environment,
         )
 
     def run(self):

@@ -4,6 +4,21 @@ from cbz_tagger.common.enums import ContainerMode
 
 
 class AppEnv:
+    if os.getenv("PUID") is not None:
+        PUID = os.getenv("PUID")
+    else:
+        PUID = "99"
+
+    if os.getenv("PGID") is not None:
+        PGID = os.getenv("PGID")
+    else:
+        PGID = "100"
+
+    if os.getenv("UMASK") is not None:
+        UMASK = os.getenv("UMASK")
+    else:
+        UMASK = "022"
+
     if os.getenv("CONFIG_PATH") is not None:
         CONFIG_PATH = os.getenv("CONFIG_PATH")
     else:
@@ -28,3 +43,10 @@ class AppEnv:
         TIMER_DELAY = 600
     else:
         TIMER_DELAY = int(os.getenv("TIMER_DELAY"))
+
+    def get_user_environment(self):
+        return {
+            "PUID": self.PUID,
+            "PGID": self.PGID,
+            "UMASK": self.UMASK,
+        }
