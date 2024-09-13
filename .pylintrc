@@ -12,4 +12,5 @@ disable=line-too-long,
     too-few-public-methods,
     too-many-return-statements,
     too-many-public-methods,
+    too-many-instance-attributes,
     redefined-outer-name

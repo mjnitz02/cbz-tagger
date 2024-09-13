@@ -27,23 +27,26 @@ class VolumeEntityDB(BaseEntityDB):
 
 
 class EntityDB:
-    entity_map: Dict[str, str]
-    metadata: MetadataEntityDB
-    covers: CoverEntityDB
-    authors: AuthorEntityDB
-    volumes: VolumeEntityDB
-    chapters: ChapterEntityDB
-
     def __init__(
-        self, entity_map=None, entity_names=None, metadata=None, covers=None, authors=None, volumes=None, chapters=None
+        self,
+        entity_map=None,
+        entity_names=None,
+        entity_downloads=None,
+        metadata=None,
+        covers=None,
+        authors=None,
+        volumes=None,
+        chapters=None,
     ):
-        self.entity_map = {} if entity_map is None else entity_map
-        self.entity_names = {} if entity_names is None else entity_names
-        self.metadata = MetadataEntityDB() if metadata is None else metadata
-        self.covers = CoverEntityDB() if covers is None else covers
-        self.authors = AuthorEntityDB() if authors is None else authors
-        self.volumes = VolumeEntityDB() if volumes is None else volumes
-        self.chapters = ChapterEntityDB() if volumes is None else chapters
+        self.entity_map: Dict[str, str] = {} if entity_map is None else entity_map
+        self.entity_names: Dict[str, str] = {} if entity_names is None else entity_names
+        self.entity_downloads = [] if entity_downloads is None else entity_downloads
+
+        self.metadata: MetadataEntityDB = MetadataEntityDB() if metadata is None else metadata
+        self.covers: CoverEntityDB = CoverEntityDB() if covers is None else covers
+        self.authors: AuthorEntityDB = AuthorEntityDB() if authors is None else authors
+        self.volumes: VolumeEntityDB = VolumeEntityDB() if volumes is None else volumes
+        self.chapters: ChapterEntityDB = ChapterEntityDB() if volumes is None else chapters
 
     def __getitem__(self, manga_name) -> str:
         return self.entity_map.get(manga_name)
@@ -58,6 +61,7 @@ class EntityDB:
         content = {
             "entity_map": self.entity_map,
             "entity_names": self.entity_names,
+            "entity_downloads": self.entity_downloads,
             "metadata": self.metadata.to_json(),
             "covers": self.covers.to_json(),
             "authors": self.authors.to_json(),
@@ -72,6 +76,7 @@ class EntityDB:
         return cls(
             entity_map=content["entity_map"],
             entity_names=content["entity_names"],
+            entity_downloads=content["entity_downloads"],
             metadata=MetadataEntityDB.from_json(content["metadata"]),
             covers=CoverEntityDB.from_json(content["covers"]),
             authors=AuthorEntityDB.from_json(content["authors"]),
