@@ -1,9 +1,13 @@
 import json
+import os
 import re
+import shutil
 from typing import Dict
 from typing import Optional
 from xml.dom import minidom
 from xml.etree import ElementTree
+from zipfile import ZIP_DEFLATED
+from zipfile import ZipFile
 
 from cbz_tagger.common.helpers import get_input
 from cbz_tagger.database.base_db import BaseEntityDB
@@ -40,7 +44,7 @@ class EntityDB:
     ):
         self.entity_map: Dict[str, str] = {} if entity_map is None else entity_map
         self.entity_names: Dict[str, str] = {} if entity_names is None else entity_names
-        self.entity_downloads = [] if entity_downloads is None else entity_downloads
+        self.entity_downloads = set() if entity_downloads is None else entity_downloads
 
         self.metadata: MetadataEntityDB = MetadataEntityDB() if metadata is None else metadata
         self.covers: CoverEntityDB = CoverEntityDB() if covers is None else covers
@@ -61,7 +65,7 @@ class EntityDB:
         content = {
             "entity_map": self.entity_map,
             "entity_names": self.entity_names,
-            "entity_downloads": self.entity_downloads,
+            "entity_downloads": list(self.entity_downloads),
             "metadata": self.metadata.to_json(),
             "covers": self.covers.to_json(),
             "authors": self.authors.to_json(),
@@ -76,7 +80,7 @@ class EntityDB:
         return cls(
             entity_map=content["entity_map"],
             entity_names=content["entity_names"],
-            entity_downloads=content["entity_downloads"],
+            entity_downloads=set(tuple(item) for item in content["entity_downloads"]),
             metadata=MetadataEntityDB.from_json(content["metadata"]),
             covers=CoverEntityDB.from_json(content["covers"]),
             authors=AuthorEntityDB.from_json(content["authors"]),
@@ -152,6 +156,44 @@ class EntityDB:
             # Update missing covers
             if filepath is not None:
                 self.covers.download(entity_id, filepath)
+
+    def download_chapter(self, entity_id, chapter_item, config_path, storage_path):
+        if (entity_id, chapter_item.entity_id) in self.entity_downloads:
+            return
+
+        manga_name = next(iter(name for name, id in self.entity_map.items() if id == entity_id))
+        chapter_name = f"{manga_name} - {chapter_item.chapter_string}"
+        chapter_filepath = os.path.join(storage_path, manga_name, chapter_name)
+        try:
+            os.makedirs(chapter_filepath, exist_ok=True)
+            # Write the comicinfo.xml file
+            entity_xml = self.to_xml_string(manga_name, chapter_item.chapter_string)
+            with open(os.path.join(chapter_filepath, "ComicInfo.xml"), "w", encoding="UTF-8") as write_file:
+                write_file.write(entity_xml)
+
+            # Write the cover image
+            cover_path = self.to_local_image_file(manga_name, chapter_item.chapter_string)
+            entity_image_path = os.path.join(config_path, "images", cover_path)
+            with open(os.path.join(chapter_filepath, "000_cover.jpg"), "wb") as write_file:
+                with open(entity_image_path, "rb") as read_file:
+                    write_file.write(read_file.read())
+
+            # Download the chapter images and write them to the folder
+            self.chapters.download(entity_id, chapter_item.entity_id, chapter_filepath)
+
+            cbz_files = sorted(f for f in os.listdir(chapter_filepath) if os.path.splitext(f)[-1] in (".jpg", ".xml"))
+            with ZipFile(f"{chapter_filepath}.cbz", "w", ZIP_DEFLATED) as zip_write:
+                for cbz_file in cbz_files:
+                    zip_write.write(os.path.join(chapter_filepath, cbz_file), cbz_file)
+            # Mark cbz creation as successful
+            self.entity_downloads.add((entity_id, chapter_item.entity_id))
+            # Cleanup excess
+            shutil.rmtree(chapter_filepath)
+        except EnvironmentError as e:
+            print(f"Could not download chapter: {entity_id}, {chapter_item.entity_id}", e)
+
+        # for chapter in self.chapters[entity_id]:
+        #     self.chapters.download(entity_id, chapter.entity_id, os.path.join(filepath, "temp"))
 
     def clean(self, image_db_path):
         print("Cleaning orphaned covers...")

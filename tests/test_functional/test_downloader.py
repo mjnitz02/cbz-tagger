@@ -1,4 +1,5 @@
 import os
+import shutil
 
 from cbz_tagger.cbz_entity.cbz_scanner import CbzScanner
 from cbz_tagger.container.container import get_environment_variables
@@ -14,15 +15,16 @@ os.makedirs(config_path, exist_ok=True)
 os.makedirs(scan_path, exist_ok=True)
 os.makedirs(storage_path, exist_ok=True)
 
-try:
-    scanner = CbzScanner(
-        config_path=config_path,
-        scan_path=scan_path,
-        storage_path=storage_path,
-        environment=env_vars["environment"],
-    )
-    scanner.add()
-finally:
-    os.rmdir(config_path)
-    os.rmdir(scan_path)
-    os.rmdir(storage_path)
+# try:
+scanner = CbzScanner(
+    config_path=config_path,
+    scan_path=scan_path,
+    storage_path=storage_path,
+    environment=env_vars["environment"],
+)
+scanner.add()
+scanner.download_chapters()
+# finally:
+#     # shutil.rmtree(config_path)
+#     shutil.rmtree(scan_path)
+#     shutil.rmtree(storage_path)

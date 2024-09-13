@@ -1,7 +1,6 @@
 import os
 from io import BytesIO
 from os import path
-from time import sleep
 from typing import Dict
 from typing import List
 
@@ -64,5 +63,3 @@ class CoverEntityDB(BaseEntityDB):
                 if in_memory_image.format != "JPEG":
                     in_memory_image = in_memory_image.convert("RGB")
                 in_memory_image.save(image_path, quality=95, optimize=True)
-                # Don't query more than 2 images per second
-                sleep(0.5)

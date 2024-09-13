@@ -41,9 +41,16 @@ class ChapterEntityDB(BaseEntityDB):
                         filtered_chapters.append(entry)
                         break
 
-        return list_of_chapters
+        return filtered_chapters
 
     def format_content_for_entity(self, content, entity_id: Optional[str] = None):
         content.extend(self.database.get(entity_id, []))
         filtered_content = self.remove_chapter_duplicate_entries(content)
         return filtered_content
+
+    def download(self, entity_id: str, chapter_id: str, filepath: str):
+        chapter = next(iter(c for c in self[entity_id] if c.entity_id == chapter_id), None)
+        if chapter is not None:
+            return chapter.download_chapter(filepath)
+
+        raise EnvironmentError(f"Chapter {chapter_id} not found for {entity_id}")

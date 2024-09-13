@@ -40,6 +40,9 @@ class CbzScanner:
         )
         self.cbz_database.save()
 
+    def download_chapters(self):
+        self.cbz_database.download_chapters(self.config_path, self.storage_path)
+
     def scan(self):
         print("Starting scan....")
         for filepath in self.get_cbz_files():

@@ -1,3 +1,6 @@
+MANGADEX_DELAY_PER_REQUEST = 0.5
+
+
 class Mode:
     AUTO = "auto"
     MANUAL = "manual"

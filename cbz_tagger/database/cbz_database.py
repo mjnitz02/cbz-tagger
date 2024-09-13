@@ -51,6 +51,17 @@ class CbzDatabase:
         entity_image_path = self.entity_database.to_local_image_file(manga_name, chapter_number)
         return entity_name, entity_xml, entity_image_path
 
+    def download_chapters(self, config_path, storage_path):
+        for entity_id, chapter_items in self.entity_database.chapters.database.items():
+            for chapter_item in chapter_items:
+                key = (entity_id, chapter_item.entity_id)
+                if key not in self.entity_database.entity_downloads:
+                    try:
+                        self.entity_database.download_chapter(entity_id, chapter_item, config_path, storage_path)
+                        self.save()
+                    except EnvironmentError as e:
+                        print(f"Could not download chapter: {entity_id}, {chapter_item.entity_id}", e)
+
     def refresh(self):
         for manga_name in self.entity_database.entity_map.keys():
             print(f"Refreshing {manga_name}")

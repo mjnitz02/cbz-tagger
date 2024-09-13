@@ -6,6 +6,8 @@ from typing import List
 
 import requests
 
+from cbz_tagger.common.enums import MANGADEX_DELAY_PER_REQUEST
+
 
 def get_input(desc, max_val, allow_negative_exit=False):
     while True:
@@ -43,6 +45,6 @@ def unpaginate_request(url, query_params=None, limit=50) -> List[Dict[str, Any]]
                 return response_content
 
             # Only make 2 queries per second
-            sleep(0.5)
+            sleep(MANGADEX_DELAY_PER_REQUEST)
     except JSONDecodeError as exc:
         raise EnvironmentError("Mangadex API is down! Please try again later!") from exc
