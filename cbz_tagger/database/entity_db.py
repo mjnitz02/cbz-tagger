@@ -1,23 +1,15 @@
 import json
-import os
 import re
-from collections import defaultdict
-from io import BytesIO
-from os import path
-from time import sleep
 from typing import Dict
-from typing import List
 from typing import Optional
 from xml.dom import minidom
 from xml.etree import ElementTree
 
-from PIL import Image
-
 from cbz_tagger.common.helpers import get_input
 from cbz_tagger.database.base_db import BaseEntityDB
+from cbz_tagger.database.chapter_entity_db import ChapterEntityDB
+from cbz_tagger.database.cover_entity_db import CoverEntityDB
 from cbz_tagger.database.entities.author_entity import AuthorEntity
-from cbz_tagger.database.entities.chapter_entity import ChapterEntity
-from cbz_tagger.database.entities.cover_entity import CoverEntity
 from cbz_tagger.database.entities.metadata_entity import MetadataEntity
 from cbz_tagger.database.entities.volume_entity import VolumeEntity
 
@@ -26,111 +18,12 @@ class AuthorEntityDB(BaseEntityDB):
     entity_class = AuthorEntity
 
 
-class CoverEntityDB(BaseEntityDB):
-    entity_class = CoverEntity
-    database: Dict[str, List[CoverEntity]]
-    query_param_field: str = "manga[]"
-
-    def get_indexed_covers(self) -> List[str]:
-        covers = []
-        for _, cover_list in self.database.items():
-            for cover_entity in cover_list:
-                covers.append(cover_entity.local_filename)
-        return sorted(covers)
-
-    def get_local_covers(self, image_db_path) -> List[str]:
-        return sorted(os.listdir(image_db_path))
-
-    def get_orphaned_covers(self, image_db_path) -> List[str]:
-        indexed_covers = self.get_indexed_covers()
-        local_covers = self.get_local_covers(image_db_path)
-        return [cover for cover in local_covers if cover not in indexed_covers]
-
-    def remove_orphaned_covers(self, image_db_path):
-        orphaned_covers = self.get_orphaned_covers(image_db_path)
-        for cover in orphaned_covers:
-            os.remove(path.join(image_db_path, cover))
-
-    def format_content_for_entity(self, content, entity_id=None):
-        _ = entity_id
-
-        def _filter_content(original_content, locale):
-            return [c for c in original_content if c.attributes["locale"] == locale]
-
-        # Filter only english and japanese covers
-        if len(_filter_content(content, "ja")) > 0:
-            return _filter_content(content, "ja")
-        if len(_filter_content(content, "en")) > 0:
-            return _filter_content(content, "en")
-        if len(_filter_content(content, "ko")) > 0:
-            return _filter_content(content, "ko")
-        if len(_filter_content(content, "zh")) > 0:
-            return _filter_content(content, "zh")
-        return content
-
-    def download(self, entity_id: str, filepath: str):
-        os.makedirs(filepath, exist_ok=True)
-        for cover in self[entity_id]:
-            image_path = path.join(filepath, cover.local_filename)
-            if not path.exists(image_path):
-                print(f"Downloading: {cover.cover_url}")
-                image = cover.download_file(cover.cover_url)
-                in_memory_image = Image.open(BytesIO(image))
-                if in_memory_image.format != "JPEG":
-                    in_memory_image = in_memory_image.convert("RGB")
-                in_memory_image.save(image_path, quality=95, optimize=True)
-                # Don't query more than 2 images per second
-                sleep(0.5)
-
-
 class MetadataEntityDB(BaseEntityDB):
     entity_class = MetadataEntity
 
 
 class VolumeEntityDB(BaseEntityDB):
     entity_class = VolumeEntity
-
-
-class ChapterEntityDB(BaseEntityDB):
-    database: Dict[str, List[ChapterEntity]]
-    entity_class = ChapterEntity
-
-    @staticmethod
-    def remove_chapter_duplicate_entries(list_of_chapters) -> List[Optional[str]]:
-        scanlation_groups = []
-        grouped_chapters = defaultdict(list)
-        for chapter in list_of_chapters:
-            if chapter.translated_language != "en":
-                continue
-            grouped_chapters[chapter.chapter_number].append(chapter)
-            scanlation_groups.append(chapter.scanlation_group)
-
-        scanlation_group_frequency = {group: scanlation_groups.count(group) for group in scanlation_groups}
-        priority_groups = [
-            group
-            for _, group in sorted(
-                [(value, group) for group, value in scanlation_group_frequency.items()], reverse=True
-            )
-        ]
-
-        filtered_chapters = []
-        for key in sorted(grouped_chapters.keys()):
-            entries = grouped_chapters[key]
-            if len(entries) == 1:
-                filtered_chapters.append(entries[0])
-            else:
-                for group in priority_groups:
-                    entry = next((entry for entry in entries if entry.scanlation_group == group), None)
-                    if entry is not None:
-                        filtered_chapters.append(entry)
-                        break
-
-        return list_of_chapters
-
-    def format_content_for_entity(self, content, entity_id: Optional[str] = None):
-        content.extend(self.database.get(entity_id, []))
-        filtered_content = self.remove_chapter_duplicate_entries(content)
-        return filtered_content
 
 
 class EntityDB:
