@@ -31,6 +31,15 @@ class CbzScanner:
             else:
                 return
 
+    def add(self):
+        entity_id, entity_name = self.cbz_database.entity_database.search()
+        manga_name = self.cbz_database.entity_database.clean_entity_name(entity_name)
+        self.cbz_database.entity_database.add_without_search(manga_name, entity_name, entity_id)
+        self.cbz_database.entity_database.update_manga_entity(
+            manga_name, os.path.join(self.cbz_database.root_path, "images")
+        )
+        self.cbz_database.save()
+
     def scan(self):
         print("Starting scan....")
         for filepath in self.get_cbz_files():
