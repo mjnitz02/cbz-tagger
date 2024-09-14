@@ -36,6 +36,7 @@ class EntityDB:
         entity_map=None,
         entity_names=None,
         entity_downloads=None,
+        entity_tracked=None,
         metadata=None,
         covers=None,
         authors=None,
@@ -45,6 +46,7 @@ class EntityDB:
         self.entity_map: Dict[str, str] = {} if entity_map is None else entity_map
         self.entity_names: Dict[str, str] = {} if entity_names is None else entity_names
         self.entity_downloads = set() if entity_downloads is None else entity_downloads
+        self.entity_tracked = set() if entity_tracked is None else entity_tracked
 
         self.metadata: MetadataEntityDB = MetadataEntityDB() if metadata is None else metadata
         self.covers: CoverEntityDB = CoverEntityDB() if covers is None else covers
@@ -66,6 +68,7 @@ class EntityDB:
             "entity_map": self.entity_map,
             "entity_names": self.entity_names,
             "entity_downloads": list(self.entity_downloads),
+            "entity_tracked": list(self.entity_tracked),
             "metadata": self.metadata.to_json(),
             "covers": self.covers.to_json(),
             "authors": self.authors.to_json(),
@@ -81,12 +84,16 @@ class EntityDB:
             entity_map=content["entity_map"],
             entity_names=content["entity_names"],
             entity_downloads=set(tuple(item) for item in content["entity_downloads"]),
+            entity_tracked=set(content["entity_tracked"]),
             metadata=MetadataEntityDB.from_json(content["metadata"]),
             covers=CoverEntityDB.from_json(content["covers"]),
             authors=AuthorEntityDB.from_json(content["authors"]),
             volumes=VolumeEntityDB.from_json(content["volumes"]),
             chapters=ChapterEntityDB.from_json(content["chapters"]),
         )
+
+    def check_manga_missing(self, manga_name):
+        return manga_name not in self.keys()
 
     def search(self, search_term: Optional[str] = None):
         if search_term is None:
@@ -114,12 +121,26 @@ class EntityDB:
         self.entity_map[manga_name] = entity_id
         self.entity_names[manga_name] = entity_name
 
-    def add_without_search(self, manga_name, entity_name, entity_id):
+    def add_and_update(self, manga_name, root_path):
+        entity_id, entity_name = self.search(manga_name)
+        self.entity_map[manga_name] = entity_id
+        self.entity_names[manga_name] = entity_name
+
+        self.update_manga_entity(manga_name, os.path.join(root_path, "images"))
+
+    def add_and_track(self, root_path):
+        entity_id, entity_name = self.search()
+        manga_name = self.clean_entity_name(entity_name)
+
         if manga_name in self.entity_map:
             print(f"Entity {manga_name} already exists in the database.")
             return
+
+        self.entity_tracked.add(entity_id)
         self.entity_map[manga_name] = entity_id
         self.entity_names[manga_name] = entity_name
+
+        self.update_manga_entity(manga_name, os.path.join(root_path, "images"))
 
     def find_mangadex_entry(self, search_term):
         print(f">>> SEARCHING MANGADEX FOR NEW SERIES [{search_term}]")
@@ -191,9 +212,6 @@ class EntityDB:
             shutil.rmtree(chapter_filepath)
         except EnvironmentError as e:
             print(f"Could not download chapter: {entity_id}, {chapter_item.entity_id}", e)
-
-        # for chapter in self.chapters[entity_id]:
-        #     self.chapters.download(entity_id, chapter.entity_id, os.path.join(filepath, "temp"))
 
     def clean(self, image_db_path):
         print("Cleaning orphaned covers...")
@@ -270,3 +288,11 @@ class EntityDB:
         root = self.to_xml_tree(manga_name, chapter_number)
         xmlstr = minidom.parseString(ElementTree.tostring(root)).toprettyxml()
         return xmlstr
+
+    def get_comicinfo_and_image(self, manga_name, chapter_number):
+        entity_name = self.to_entity_name(manga_name)
+        if entity_name is None:
+            raise (None, None, None)
+        entity_xml = self.to_xml_string(manga_name, chapter_number)
+        entity_image_path = self.to_local_image_file(manga_name, chapter_number)
+        return entity_name, entity_xml, entity_image_path

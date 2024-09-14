@@ -35,21 +35,14 @@ class CbzDatabase:
         with open(self.entity_db_path, "w", encoding="UTF-8") as write_file:
             write_file.write(entity_database_json)
 
-    def check_manga_missing(self, manga_name):
-        return manga_name not in self.entity_database.keys()
-
     def get_metadata(self, manga_name, chapter_number):
-        if self.check_manga_missing(manga_name):
+        if self.entity_database.check_manga_missing(manga_name):
             if not self.add_missing:
                 raise RuntimeError("Manual mode must be enabled for adding missing manga to the database.")
-            self.entity_database.add(manga_name)
-            self.entity_database.update_manga_entity(manga_name, os.path.join(self.root_path, "images"))
+            self.entity_database.add_and_update(manga_name, self.root_path)
             self.save()
 
-        entity_name = self.entity_database.to_entity_name(manga_name)
-        entity_xml = self.entity_database.to_xml_string(manga_name, chapter_number)
-        entity_image_path = self.entity_database.to_local_image_file(manga_name, chapter_number)
-        return entity_name, entity_xml, entity_image_path
+        return self.entity_database.get_comicinfo_and_image(manga_name, chapter_number)
 
     def download_chapters(self, config_path, storage_path):
         for entity_id, chapter_items in self.entity_database.chapters.database.items():
@@ -70,7 +63,7 @@ class CbzDatabase:
         self.save()
 
     def update_metadata(self, manga_name, save=False):
-        if self.check_manga_missing(manga_name):
+        if self.entity_database.check_manga_missing(manga_name):
             return
 
         try:
