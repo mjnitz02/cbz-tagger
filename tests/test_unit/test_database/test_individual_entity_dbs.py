@@ -1,11 +1,11 @@
 from unittest import mock
 
+from cbz_tagger.database.author_entity_db import AuthorEntityDB
 from cbz_tagger.database.base_db import BaseEntityDB
 from cbz_tagger.database.chapter_entity_db import ChapterEntityDB
 from cbz_tagger.database.cover_entity_db import CoverEntityDB
-from cbz_tagger.database.entity_db import AuthorEntityDB
-from cbz_tagger.database.entity_db import MetadataEntityDB
-from cbz_tagger.database.entity_db import VolumeEntityDB
+from cbz_tagger.database.metadata_entity_db import MetadataEntityDB
+from cbz_tagger.database.volume_entity_db import VolumeEntityDB
 from cbz_tagger.entities.author_entity import AuthorEntity
 from cbz_tagger.entities.chapter_entity import ChapterEntity
 from cbz_tagger.entities.cover_entity import CoverEntity

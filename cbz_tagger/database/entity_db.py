@@ -11,24 +11,12 @@ from zipfile import ZIP_DEFLATED
 from zipfile import ZipFile
 
 from cbz_tagger.common.helpers import get_input
-from cbz_tagger.database.base_db import BaseEntityDB
+from cbz_tagger.database.author_entity_db import AuthorEntityDB
 from cbz_tagger.database.chapter_entity_db import ChapterEntityDB
 from cbz_tagger.database.cover_entity_db import CoverEntityDB
-from cbz_tagger.entities.author_entity import AuthorEntity
+from cbz_tagger.database.metadata_entity_db import MetadataEntityDB
+from cbz_tagger.database.volume_entity_db import VolumeEntityDB
 from cbz_tagger.entities.metadata_entity import MetadataEntity
-from cbz_tagger.entities.volume_entity import VolumeEntity
-
-
-class AuthorEntityDB(BaseEntityDB):
-    entity_class = AuthorEntity
-
-
-class MetadataEntityDB(BaseEntityDB):
-    entity_class = MetadataEntity
-
-
-class VolumeEntityDB(BaseEntityDB):
-    entity_class = VolumeEntity
 
 
 class EntityDB:
