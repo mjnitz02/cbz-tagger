@@ -282,3 +282,10 @@ def test_entity_database_has_missing_chapters_with_tracked_entities(mock_entity_
         "831b12b8-2d0e-4397-8719-1efee4c32f40",
         "831b12b8-2d0e-4397-8719-1efee4c32f40",
     ]
+
+
+def test_entity_database_calls_downloads_for_missing_chapters(mock_entity_db, manga_request_id):
+    mock_entity_db.entity_tracked.add(manga_request_id)
+    mock_entity_db.download_chapter = mock.MagicMock()
+    mock_entity_db.download_missing_chapters("storage_path")
+    assert mock_entity_db.download_chapter.call_count == 4
