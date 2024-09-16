@@ -7,6 +7,13 @@ from cbz_tagger.database.entity_db import EntityDB
 from cbz_tagger.entities.metadata_entity import MetadataEntity
 
 
+@pytest.fixture
+def simple_mock_entity_db():
+    entity_db = EntityDB("mock")
+    entity_db.save = mock.MagicMock()
+    return entity_db
+
+
 def test_entity_db_can_store_and_load(mock_entity_db, manga_request_id):
     assert mock_entity_db.entity_map == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
     assert mock_entity_db.entity_names == {manga_request_id: "Oshimai"}
@@ -83,62 +90,63 @@ def test_entity_db_to_xml_str_chapter_10(mock_entity_db, manga_name, mock_chapte
 
 
 @mock.patch("cbz_tagger.database.entity_db.get_input")
-def test_entity_db_search(mock_get_input, manga_name, manga_request_id, manga_request_response):
+def test_entity_db_search(mock_get_input, simple_mock_entity_db, manga_name, manga_request_id, manga_request_response):
     with mock.patch.object(MetadataEntity, "from_server_url") as mock_from_server_url:
         mock_from_server_url.return_value = [MetadataEntity(data) for data in manga_request_response["data"]]
 
         # Simulate user selecting 1 for each input
         mock_get_input.return_value = 1
 
-        entity_db = EntityDB("mock")
-        entity_id, entity_name = entity_db.search(manga_name)
+        entity_id, entity_name = simple_mock_entity_db.search(manga_name)
 
         assert entity_id == manga_request_id
         assert entity_name == "Oshimai"
 
 
-def test_entity_db_add_new_manga_without_update(manga_name, manga_request_id, manga_request_response):
+def test_entity_db_add_new_manga_without_update(
+    simple_mock_entity_db, manga_name, manga_request_id, manga_request_response
+):
     with mock.patch.object(MetadataEntity, "from_server_url") as mock_from_server_url:
         mock_from_server_url.return_value = [MetadataEntity(data) for data in manga_request_response["data"]]
 
-        entity_db = EntityDB("mock")
-        entity_db.search = mock.MagicMock(return_value=(manga_request_id, "Oshimai"))
-        entity_db.update_manga_entity_id = mock.MagicMock()
-        entity_db.add(manga_name, update=False)
+        simple_mock_entity_db.search = mock.MagicMock(return_value=(manga_request_id, "Oshimai"))
+        simple_mock_entity_db.update_manga_entity_id = mock.MagicMock()
+        simple_mock_entity_db.add(manga_name, update=False)
 
         # Assert the entity maps are populated
-        assert entity_db.entity_map == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
-        assert entity_db.entity_names == {manga_request_id: "Oshimai"}
+        assert simple_mock_entity_db.entity_map == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
+        assert simple_mock_entity_db.entity_names == {manga_request_id: "Oshimai"}
 
         # Assert the individual entity databases have not been updated during the add operation
-        assert len(entity_db.authors) == 0
-        assert len(entity_db.covers) == 0
-        assert len(entity_db.metadata) == 0
-        assert len(entity_db.volumes) == 0
-        assert len(entity_db.chapters) == 0
+        assert len(simple_mock_entity_db.authors) == 0
+        assert len(simple_mock_entity_db.covers) == 0
+        assert len(simple_mock_entity_db.metadata) == 0
+        assert len(simple_mock_entity_db.volumes) == 0
+        assert len(simple_mock_entity_db.chapters) == 0
 
-        entity_db.update_manga_entity_id.assert_not_called()
+        simple_mock_entity_db.update_manga_entity_id.assert_not_called()
 
 
-def test_entity_db_add_new_manga_with_update(manga_name, manga_request_id, manga_request_response):
+def test_entity_db_add_new_manga_with_update(
+    simple_mock_entity_db, manga_name, manga_request_id, manga_request_response
+):
     with mock.patch.object(MetadataEntity, "from_server_url") as mock_from_server_url:
         mock_from_server_url.return_value = [MetadataEntity(data) for data in manga_request_response["data"]]
 
-        entity_db = EntityDB("mock")
-        entity_db.search = mock.MagicMock(return_value=(manga_request_id, "Oshimai"))
-        entity_db.update_manga_entity_id = mock.MagicMock()
-        entity_db.add(manga_name, update=True)
+        simple_mock_entity_db.search = mock.MagicMock(return_value=(manga_request_id, "Oshimai"))
+        simple_mock_entity_db.update_manga_entity_id = mock.MagicMock()
+        simple_mock_entity_db.add(manga_name, update=True)
 
         # Assert the entity maps are populated
-        assert entity_db.entity_map == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
-        assert entity_db.entity_names == {manga_request_id: "Oshimai"}
+        assert simple_mock_entity_db.entity_map == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
+        assert simple_mock_entity_db.entity_names == {manga_request_id: "Oshimai"}
 
-        entity_db.update_manga_entity_id.assert_called_once_with(manga_request_id)
+        simple_mock_entity_db.update_manga_entity_id.assert_called_once_with(manga_request_id)
 
 
 @mock.patch("cbz_tagger.database.entity_db.get_input")
 def test_entity_db_add_new_manga_with_tracking_and_mark_all_downloaded(
-    mock_get_input, mock_chapter_db, manga_name, manga_request_id, manga_request_response
+    mock_get_input, simple_mock_entity_db, mock_chapter_db, manga_name, manga_request_id, manga_request_response
 ):
     with mock.patch.object(MetadataEntity, "from_server_url") as mock_from_server_url:
         mock_from_server_url.return_value = [MetadataEntity(data) for data in manga_request_response["data"]]
@@ -146,17 +154,16 @@ def test_entity_db_add_new_manga_with_tracking_and_mark_all_downloaded(
         # Simulate user selecting 1 for each input
         mock_get_input.return_value = 1
 
-        entity_db = EntityDB("mock")
-        entity_db.search = mock.MagicMock(return_value=(manga_request_id, "Oshimai"))
-        entity_db.update_manga_entity_id = mock.MagicMock()
-        entity_db.chapters = mock_chapter_db
-        entity_db.add(manga_name, track=True)
+        simple_mock_entity_db.search = mock.MagicMock(return_value=(manga_request_id, "Oshimai"))
+        simple_mock_entity_db.update_manga_entity_id = mock.MagicMock()
+        simple_mock_entity_db.chapters = mock_chapter_db
+        simple_mock_entity_db.add(manga_name, track=True)
 
         # Assert the entity maps are populated
-        assert entity_db.entity_map == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
-        assert entity_db.entity_names == {manga_request_id: "Oshimai"}
-        assert entity_db.entity_tracked == {"831b12b8-2d0e-4397-8719-1efee4c32f40"}
-        assert entity_db.entity_downloads == {
+        assert simple_mock_entity_db.entity_map == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
+        assert simple_mock_entity_db.entity_names == {manga_request_id: "Oshimai"}
+        assert simple_mock_entity_db.entity_tracked == {"831b12b8-2d0e-4397-8719-1efee4c32f40"}
+        assert simple_mock_entity_db.entity_downloads == {
             ("831b12b8-2d0e-4397-8719-1efee4c32f40", "01c86808-46fb-4108-aa5d-4e87aee8b2f1"),
             ("831b12b8-2d0e-4397-8719-1efee4c32f40", "057c0bce-fd18-44ea-ad64-cefa92378d49"),
             ("831b12b8-2d0e-4397-8719-1efee4c32f40", "1361d404-d03c-4fd9-97b4-2c297914b098"),
@@ -166,7 +173,7 @@ def test_entity_db_add_new_manga_with_tracking_and_mark_all_downloaded(
 
 @mock.patch("cbz_tagger.database.entity_db.get_input")
 def test_entity_db_add_new_manga_with_tracking(
-    mock_get_input, mock_chapter_db, manga_name, manga_request_id, manga_request_response
+    mock_get_input, simple_mock_entity_db, mock_chapter_db, manga_name, manga_request_id, manga_request_response
 ):
     with mock.patch.object(MetadataEntity, "from_server_url") as mock_from_server_url:
         mock_from_server_url.return_value = [MetadataEntity(data) for data in manga_request_response["data"]]
@@ -174,17 +181,16 @@ def test_entity_db_add_new_manga_with_tracking(
         # Simulate user selecting 1 for each input
         mock_get_input.return_value = 0
 
-        entity_db = EntityDB("mock")
-        entity_db.search = mock.MagicMock(return_value=(manga_request_id, "Oshimai"))
-        entity_db.update_manga_entity_id = mock.MagicMock()
-        entity_db.chapters = mock_chapter_db
-        entity_db.add(manga_name, track=True)
+        simple_mock_entity_db.search = mock.MagicMock(return_value=(manga_request_id, "Oshimai"))
+        simple_mock_entity_db.update_manga_entity_id = mock.MagicMock()
+        simple_mock_entity_db.chapters = mock_chapter_db
+        simple_mock_entity_db.add(manga_name, track=True)
 
         # Assert the entity maps are populated
-        assert entity_db.entity_map == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
-        assert entity_db.entity_names == {manga_request_id: "Oshimai"}
-        assert entity_db.entity_tracked == {"831b12b8-2d0e-4397-8719-1efee4c32f40"}
-        assert entity_db.entity_downloads == set()
+        assert simple_mock_entity_db.entity_map == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
+        assert simple_mock_entity_db.entity_names == {manga_request_id: "Oshimai"}
+        assert simple_mock_entity_db.entity_tracked == {"831b12b8-2d0e-4397-8719-1efee4c32f40"}
+        assert simple_mock_entity_db.entity_downloads == set()
 
 
 def test_entity_db_update_calls_update_manga_entity_id_from_update_name(
@@ -235,7 +241,7 @@ def test_entity_db_update_calls_each_entity_when_no_existing_metadata(
 def test_entity_db_refresh_calls_all_entities(mock_entity_db_with_mock_updates, manga_request_id):
     mock_entity_db_with_mock_updates.update_manga_entity_id = mock.MagicMock()
     mock_entity_db_with_mock_updates.covers.remove_orphaned_covers = mock.MagicMock()
-    mock_entity_db_with_mock_updates.refresh()
+    mock_entity_db_with_mock_updates.refresh("storage")
 
     mock_entity_db_with_mock_updates.update_manga_entity_id.assert_called_once_with(manga_request_id)
     mock_entity_db_with_mock_updates.covers.remove_orphaned_covers.assert_called_once()
