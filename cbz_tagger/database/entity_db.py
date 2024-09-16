@@ -55,6 +55,9 @@ class EntityDB:
     def keys(self):
         return self.entity_map.keys()
 
+    def entity_keys(self):
+        return self.metadata.keys()
+
     @property
     def image_db_path(self) -> str:
         return os.path.join(self.root_path, "images")
@@ -135,15 +138,14 @@ class EntityDB:
         if manga_name is None:
             manga_name = self.clean_entity_name(entity_name)
 
-        if manga_name in self.entity_map:
+        if manga_name not in self.entity_map:
+            self.entity_map[manga_name] = entity_id
+            self.entity_names[entity_id] = self.clean_entity_name(entity_name)
+        else:
             print(f"Entity {manga_name} already exists in the database.")
-            return
-
-        self.entity_map[manga_name] = entity_id
-        self.entity_names[entity_id] = self.clean_entity_name(entity_name)
 
         if update:
-            self.update_manga_entity(manga_name)
+            self.update_manga_entity_id(entity_id)
 
         if track:
             self.entity_tracked.add(entity_id)
@@ -170,23 +172,47 @@ class EntityDB:
         entity = meta_entries[choice - 1]
         return entity
 
-    def update_manga_entity(self, manga_name):
+    def update_manga_entity_name(self, manga_name):
         entity_id = self.entity_map.get(manga_name)
+        self.update_manga_entity_id(entity_id)
+
+    def update_manga_entity_id(self, entity_id):
+        manga_name = self.entity_names.get(entity_id)
         if entity_id is not None:
-            # Update the standard collections
-            self.chapters.update(entity_id)
-            self.metadata.update(entity_id)
-            self.volumes.update(entity_id)
-            self.covers.update(entity_id)
+            try:
+                print(f"Checking for updates {manga_name}: {entity_id}")
+                last_updated = None
+                if self.metadata[entity_id] is not None:
+                    last_updated = self.metadata[entity_id].updated
 
-            # Get authors from the metadata
-            metadata = self.metadata[entity_id]
-            self.authors.update(metadata.author_entities)
+                self.metadata.update(entity_id)
+                if last_updated == self.metadata[entity_id].updated:
+                    return
 
-            # Update missing covers
-            self.covers.download(entity_id, self.image_db_path)
+                # Update the collections
+                print(f"Updating {manga_name}: {entity_id}")
+                self.chapters.update(entity_id)
+                self.volumes.update(entity_id)
+                self.covers.update(entity_id)
+                self.authors.update(self.metadata[entity_id].author_entities)
 
-    def download_chapter(self, entity_id, chapter_item, config_path, storage_path):
+                # Update missing covers
+                self.covers.download(entity_id, self.image_db_path)
+
+                # Save database on successful update
+                self.save()
+
+            except EnvironmentError:
+                print(f"Mangadex API Down >> Unable to update {manga_name} metadata.")
+
+    def refresh(self):
+        print("Refreshing database...")
+        for entity_id in self.metadata.keys():
+            self.update_manga_entity_name(self.metadata[entity_id].title)
+        print("Cleaning orphaned covers...")
+        self.covers.remove_orphaned_covers(self.image_db_path)
+
+    def download_chapter(self, entity_id, chapter_item, storage_path):
         if (entity_id, chapter_item.entity_id) in self.entity_downloads:
             return
 
@@ -202,7 +228,7 @@ class EntityDB:
 
             # Write the cover image
             cover_path = self.to_local_image_file(manga_name, chapter_item.chapter_string)
-            entity_image_path = os.path.join(config_path, "images", cover_path)
+            entity_image_path = os.path.join(self.image_db_path, cover_path)
             with open(os.path.join(chapter_filepath, "000_cover.jpg"), "wb") as write_file:
                 with open(entity_image_path, "rb") as read_file:
                     write_file.write(read_file.read())
@@ -216,14 +242,12 @@ class EntityDB:
                     zip_write.write(os.path.join(chapter_filepath, cbz_file), cbz_file)
             # Mark cbz creation as successful
             self.entity_downloads.add((entity_id, chapter_item.entity_id))
+            # Save that the chapter was downloaded
+            self.save()
             # Cleanup excess
             shutil.rmtree(chapter_filepath)
         except EnvironmentError as err:
             print(f"Could not download chapter: {entity_id}, {chapter_item.entity_id}", err)
-
-    def clean(self):
-        print("Cleaning orphaned covers...")
-        self.covers.remove_orphaned_covers(self.image_db_path)
 
     @staticmethod
     def clean_entity_name(entity_name):
@@ -305,3 +329,14 @@ class EntityDB:
         entity_xml = self.to_xml_string(manga_name, chapter_number)
         entity_image_path = self.to_local_image_file(manga_name, chapter_number)
         return entity_name, entity_xml, entity_image_path
+
+    def get_missing_chapters(self):
+        missing_chapters = []
+        for entity_id, chapter_items in self.chapters.database.items():
+            if entity_id not in self.entity_tracked:
+                continue
+            for chapter_item in chapter_items:
+                key = (entity_id, chapter_item.entity_id)
+                if key not in self.entity_downloads:
+                    missing_chapters.append((entity_id, chapter_item))
+        return missing_chapters

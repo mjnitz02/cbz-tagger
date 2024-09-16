@@ -26,6 +26,10 @@ class MetadataEntity(BaseEntity):
         return next((item for item in self.attributes["description"].values()), None)
 
     @property
+    def updated(self) -> str:
+        return self.attributes.get("updatedAt")
+
+    @property
     def completed(self) -> bool:
         return self.attributes["status"] == "completed"
 

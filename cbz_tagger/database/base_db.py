@@ -21,6 +21,9 @@ class BaseEntityDB(BaseEntityObject):
     def __len__(self):
         return len(self.database)
 
+    def keys(self):
+        return self.database.keys()
+
     def to_json(self):
         content = {}
         for key, value in self.database.items():

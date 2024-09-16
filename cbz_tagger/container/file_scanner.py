@@ -118,19 +118,18 @@ class FileScanner:
         if self.entity_database.check_manga_missing(manga_name):
             if not self.add_missing:
                 raise RuntimeError("Manual mode must be enabled for adding missing manga to the database.")
-            self.entity_database.add_and_update(manga_name)
-            self.entity_database.save()
+            self.entity_database.add(manga_name)
 
         return self.entity_database.get_comicinfo_and_image(manga_name, chapter_number)
 
     def download_chapters(self, config_path, storage_path):
+        missing_chapters = self.entity_database.get_missing_chapters()
         for entity_id, chapter_items in self.entity_database.chapters.database.items():
             for chapter_item in chapter_items:
                 key = (entity_id, chapter_item.entity_id)
                 if key not in self.entity_database.entity_downloads:
                     try:
-                        self.entity_database.download_chapter(entity_id, chapter_item, config_path, storage_path)
-                        self.entity_database.save()
+                        self.entity_database.download_chapter(entity_id, chapter_item, storage_path)
                     except EnvironmentError as err:
                         print(f"Could not download chapter: {entity_id}, {chapter_item.entity_id}", err)
 
@@ -146,7 +145,7 @@ class FileScanner:
             return
 
         try:
-            self.entity_database.update_manga_entity(manga_name)
+            self.entity_database.update_manga_entity_name(manga_name)
             if save:
                 self.entity_database.save()
         except EnvironmentError:

@@ -151,7 +151,7 @@ def test_chapter_entity_db(chapter_request_response, manga_request_id):
 
         assert len(entity_db) == 1
         assert isinstance(entity_db[manga_request_id], list)
-        # 2 responses are duplicates, and 2 are unique. We should have only 2 real chapters
+        # 2 responses are not english. We should have only 2 real chapters.
         assert len(entity_db[manga_request_id]) == 2
         for i in range(len(entity_db)):
             assert entity_db[manga_request_id][i].content == chapter_request_response["data"][i]
