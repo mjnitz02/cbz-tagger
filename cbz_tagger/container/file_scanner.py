@@ -22,6 +22,11 @@ class FileScanner:
         self.recently_updated = []
 
     def run(self):
+        # Reload the entity database at the start of a run to make sure it is up to date
+        self.entity_database = EntityDB.load(root_path=self.config_path)
+        self.run_scan()
+
+    def run_scan(self):
         self.recently_updated = []
         while True:
             completed = self.scan()
@@ -62,60 +67,33 @@ class FileScanner:
         return filepaths
 
     def process(self, filepath):
-        cbz_entity = CbzEntity(filepath)
+        cbz_entity = CbzEntity(filepath, self.config_path, self.scan_path, self.storage_path)
+        entity_name, entity_xml, entity_image_path = self.get_cbz_comicinfo_and_image(cbz_entity)
+        cbz_entity.build(entity_name, entity_xml, entity_image_path, environment=self.environment)
+
+    def get_cbz_comicinfo_and_image(self, cbz_entity: CbzEntity):
         manga_name, chapter_number = cbz_entity.get_name_and_chapter()
-        print(filepath, manga_name, chapter_number)
+        print(cbz_entity.filepath, manga_name, chapter_number)
 
         try:
             # If we haven't updated the metadata on this scan, update the metadata records
+            if self.entity_database.check_manga_missing(manga_name):
+                if not self.add_missing:
+                    raise RuntimeError("Manual mode must be enabled for adding missing manga to the database.")
+                self.entity_database.add(manga_name)
+
             if manga_name not in self.recently_updated:
                 self.entity_database.update_manga_entity_name(manga_name)
                 self.recently_updated.append(manga_name)
 
-            entity_name, entity_xml, entity_image_path = self.get_metadata(manga_name, chapter_number)
-        except RuntimeError:
+            entity_name, entity_xml, entity_image_path = self.entity_database.get_comicinfo_and_image(
+                manga_name, chapter_number
+            )
+            return entity_name, entity_xml, entity_image_path
+
+        except (RuntimeError, EnvironmentError):
             print(f"ERROR >> {manga_name} not in database. Run manual mode to add new series.")
-            return
-
-        read_path = self.get_entity_read_path(filepath)
-        write_path = self.get_entity_write_path(entity_name, chapter_number)
-        cover_image_path = self.get_entity_cover_image_path(entity_image_path)
-
-        if os.path.exists(write_path):
-            print("ERROR >> Destination file already present!")
-            return
-
-        cbz_entity.build(entity_xml, read_path, write_path, cover_image_path, self.environment)
-
-    def get_entity_cover_image_path(self, image_filename):
-        return os.path.join(self.config_path, "images", image_filename)
-
-    def get_entity_read_path(self, filepath):
-        return os.path.join(self.scan_path, filepath)
-
-    def get_entity_write_path(self, entity_name, chapter_number):
-        os.makedirs(os.path.join(self.storage_path, entity_name), exist_ok=True)
-        chapter_number_string = str(chapter_number)
-        if "." in chapter_number_string:
-            fill = 5
-            try:
-                decimal_int = int(chapter_number_string.rsplit(".", maxsplit=1)[-1])
-                if decimal_int >= 10:
-                    fill = 6
-            except ValueError:
-                pass
-            chapter_number_string = chapter_number_string.zfill(fill)
-        else:
-            chapter_number_string = chapter_number_string.zfill(3)
-        return os.path.join(self.storage_path, entity_name, f"{entity_name} - Chapter {chapter_number_string}.cbz")
-
-    def get_metadata(self, manga_name, chapter_number):
-        if self.entity_database.check_manga_missing(manga_name):
-            if not self.add_missing:
-                raise RuntimeError("Manual mode must be enabled for adding missing manga to the database.")
-            self.entity_database.add(manga_name)
-
-        return self.entity_database.get_comicinfo_and_image(manga_name, chapter_number)
+            return None, None, None
 
     def add_tracked_entity(self, entity_name):
         self.entity_database.add(entity_name, track=True)

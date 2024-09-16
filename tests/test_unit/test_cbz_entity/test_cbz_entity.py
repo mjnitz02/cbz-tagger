@@ -1,6 +1,59 @@
+import os
+from unittest import mock
+
 import pytest
 
 from cbz_tagger.entities.cbz_entity import CbzEntity
+
+
+@pytest.fixture
+def mock_cbz_entity():
+    return CbzEntity("series name/series name - chapter 1.cbz", "/config_path/", "/scan_path", "/storage_path")
+
+
+def test_get_entity_read_path(mock_cbz_entity):
+    actual = mock_cbz_entity.get_entity_read_path()
+    assert actual == "/scan_path/series name/series name - chapter 1.cbz"
+
+
+def test_get_entity_cover_image_path(mock_cbz_entity):
+    actual = mock_cbz_entity.get_entity_cover_image_path("image_filename.jpg")
+    assert actual == "/config_path/images/image_filename.jpg"
+
+
+@mock.patch("os.makedirs")
+def test_get_entity_write_path(mock_os_makedirs, mock_cbz_entity):
+    actual = mock_cbz_entity.get_entity_write_path("series name", "1")
+    assert actual == "/storage_path/series name/series name - Chapter 001.cbz"
+    mock_os_makedirs.assert_called_once_with(os.path.join("/storage_path", "series name"), exist_ok=True)
+
+    actual = mock_cbz_entity.get_entity_write_path("series name", "10")
+    assert actual == "/storage_path/series name/series name - Chapter 010.cbz"
+
+    actual = mock_cbz_entity.get_entity_write_path("series name", "1.1")
+    assert actual == "/storage_path/series name/series name - Chapter 001.1.cbz"
+
+    actual = mock_cbz_entity.get_entity_write_path("series name", "1.10")
+    assert actual == "/storage_path/series name/series name - Chapter 001.10.cbz"
+
+    actual = mock_cbz_entity.get_entity_write_path("series name", "10.1")
+    assert actual == "/storage_path/series name/series name - Chapter 010.1.cbz"
+
+    actual = mock_cbz_entity.get_entity_write_path("series name", "10.12")
+    assert actual == "/storage_path/series name/series name - Chapter 010.12.cbz"
+
+    actual = mock_cbz_entity.get_entity_write_path("series name", "100.1")
+    assert actual == "/storage_path/series name/series name - Chapter 100.1.cbz"
+
+    actual = mock_cbz_entity.get_entity_write_path("series name", "100.12")
+    assert actual == "/storage_path/series name/series name - Chapter 100.12.cbz"
+
+    # If there is trash we do the best we can to format the chapter
+    actual = mock_cbz_entity.get_entity_write_path("series name", "1.1a")
+    assert actual == "/storage_path/series name/series name - Chapter 01.1a.cbz"
+
+    actual = mock_cbz_entity.get_entity_write_path("series name", "1.10b")
+    assert actual == "/storage_path/series name/series name - Chapter 1.10b.cbz"
 
 
 @pytest.mark.parametrize(
