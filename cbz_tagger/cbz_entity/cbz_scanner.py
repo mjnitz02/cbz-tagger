@@ -5,7 +5,7 @@ from typing import Dict
 from zipfile import BadZipFile
 
 from cbz_tagger.cbz_entity.cbz_entity import CbzEntity
-from cbz_tagger.database.cbz_database import CbzDatabase
+from cbz_tagger.database.entity_db import EntityDB
 
 
 class CbzScanner:
@@ -17,7 +17,8 @@ class CbzScanner:
         self.storage_path = storage_path
         self.environment = environment
 
-        self.cbz_database = CbzDatabase(root_path=self.config_path, add_missing=add_missing)
+        self.add_missing = add_missing
+        self.entity_database = EntityDB.load(root_path=self.config_path)
         self.recently_updated = []
 
     def run(self):
@@ -32,16 +33,11 @@ class CbzScanner:
                 return
 
     def add(self):
-        entity_id, entity_name = self.cbz_database.entity_database.search()
-        manga_name = self.cbz_database.entity_database.clean_entity_name(entity_name)
-        self.cbz_database.entity_database.add_without_search(manga_name, entity_name, entity_id)
-        self.cbz_database.entity_database.update_manga_entity(
-            manga_name, os.path.join(self.cbz_database.root_path, "images")
-        )
-        self.cbz_database.save()
-
-    def download_chapters(self):
-        self.cbz_database.download_chapters(self.config_path, self.storage_path)
+        _, entity_name = self.entity_database.search()
+        manga_name = self.entity_database.clean_entity_name(entity_name)
+        self.entity_database.add_and_update(manga_name)
+        self.entity_database.update_manga_entity(manga_name)
+        self.entity_database.save()
 
     def scan(self):
         print("Starting scan....")
@@ -76,10 +72,10 @@ class CbzScanner:
         try:
             # If we haven't updated the metadata on this scan, update the metadata records
             if manga_name not in self.recently_updated:
-                self.cbz_database.update_metadata(manga_name, save=True)
+                self.update_metadata(manga_name, save=True)
                 self.recently_updated.append(manga_name)
 
-            entity_name, entity_xml, entity_image_path = self.cbz_database.get_metadata(manga_name, chapter_number)
+            entity_name, entity_xml, entity_image_path = self.get_metadata(manga_name, chapter_number)
         except RuntimeError:
             print(f"ERROR >> {manga_name} not in database. Run manual mode to add new series.")
             return
@@ -121,3 +117,41 @@ class CbzScanner:
         for folder in folders:
             if len(os.listdir(folder)) == 0:
                 shutil.rmtree(folder)
+
+    def get_metadata(self, manga_name, chapter_number):
+        if self.entity_database.check_manga_missing(manga_name):
+            if not self.add_missing:
+                raise RuntimeError("Manual mode must be enabled for adding missing manga to the database.")
+            self.entity_database.add_and_update(manga_name)
+            self.entity_database.save()
+
+        return self.entity_database.get_comicinfo_and_image(manga_name, chapter_number)
+
+    def download_chapters(self, config_path, storage_path):
+        for entity_id, chapter_items in self.entity_database.chapters.database.items():
+            for chapter_item in chapter_items:
+                key = (entity_id, chapter_item.entity_id)
+                if key not in self.entity_database.entity_downloads:
+                    try:
+                        self.entity_database.download_chapter(entity_id, chapter_item, config_path, storage_path)
+                        self.entity_database.save()
+                    except EnvironmentError as err:
+                        print(f"Could not download chapter: {entity_id}, {chapter_item.entity_id}", err)
+
+    def refresh(self):
+        for manga_name in self.entity_database.entity_map.keys():
+            print(f"Refreshing {manga_name}")
+            self.update_metadata(manga_name)
+        self.entity_database.clean()
+        self.entity_database.save()
+
+    def update_metadata(self, manga_name, save=False):
+        if self.entity_database.check_manga_missing(manga_name):
+            return
+
+        try:
+            self.entity_database.update_manga_entity(manga_name)
+            if save:
+                self.entity_database.save()
+        except EnvironmentError:
+            print(f"Mangadex API Down >> Unable to update {manga_name} metadata.")

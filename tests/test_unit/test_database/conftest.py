@@ -46,10 +46,13 @@ def mock_volume_db(volume_request_response, manga_request_id):
 
 
 @pytest.fixture
-def mock_entity_db(manga_name, manga_request_id, mock_author_db, mock_cover_db, mock_metadata_db, mock_volume_db):
-    entity_db = EntityDB()
+def mock_entity_db(
+    temp_dir, manga_name, manga_request_id, mock_author_db, mock_cover_db, mock_metadata_db, mock_volume_db
+):
+    entity_db = EntityDB(temp_dir)
     entity_db.entity_map = {manga_name: manga_request_id}
     entity_db.entity_names = {manga_name: "Oshimai"}
+    entity_db.entity_tracked = {}
     entity_db.authors = mock_author_db
     entity_db.covers = mock_cover_db
     entity_db.metadata = mock_metadata_db

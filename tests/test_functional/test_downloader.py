@@ -1,5 +1,4 @@
 import os
-import shutil
 
 from cbz_tagger.cbz_entity.cbz_scanner import CbzScanner
 from cbz_tagger.container.container import get_environment_variables
@@ -23,7 +22,7 @@ scanner = CbzScanner(
     environment=env_vars["environment"],
 )
 scanner.add()
-scanner.download_chapters()
+scanner.download_chapters(config_path, storage_path)
 # finally:
 #     # shutil.rmtree(config_path)
 #     shutil.rmtree(scan_path)

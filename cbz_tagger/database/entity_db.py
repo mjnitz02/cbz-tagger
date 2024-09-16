@@ -4,6 +4,7 @@ import re
 import shutil
 from typing import Dict
 from typing import Optional
+from typing import Self
 from xml.dom import minidom
 from xml.etree import ElementTree
 from zipfile import ZIP_DEFLATED
@@ -33,6 +34,7 @@ class VolumeEntityDB(BaseEntityDB):
 class EntityDB:
     def __init__(
         self,
+        root_path: str,
         entity_map=None,
         entity_names=None,
         entity_downloads=None,
@@ -43,6 +45,8 @@ class EntityDB:
         volumes=None,
         chapters=None,
     ):
+        self.root_path = root_path
+
         self.entity_map: Dict[str, str] = {} if entity_map is None else entity_map
         self.entity_names: Dict[str, str] = {} if entity_names is None else entity_names
         self.entity_downloads = set() if entity_downloads is None else entity_downloads
@@ -63,6 +67,18 @@ class EntityDB:
     def keys(self):
         return self.entity_map.keys()
 
+    @property
+    def image_db_path(self) -> str:
+        return os.path.join(self.root_path, "images")
+
+    def save(self) -> None:
+        entity_db_path = os.path.join(self.root_path, "entity_db.json")
+        entity_database_json = self.to_json()
+
+        os.makedirs(self.root_path, exist_ok=True)
+        with open(entity_db_path, "w", encoding="UTF-8") as write_file:
+            write_file.write(entity_database_json)
+
     def to_json(self):
         content = {
             "entity_map": self.entity_map,
@@ -78,9 +94,19 @@ class EntityDB:
         return json.dumps(content)
 
     @classmethod
-    def from_json(cls, json_data):
+    def load(cls, root_path) -> Self:
+        entity_db_path = os.path.join(root_path, "entity_db.json")
+        if os.path.exists(entity_db_path):
+            with open(entity_db_path, "r", encoding="UTF-8") as read_file:
+                json_data = read_file.read()
+            return EntityDB.from_json(root_path, json_data)
+        return EntityDB(root_path)
+
+    @classmethod
+    def from_json(cls, root_path, json_data):
         content = json.loads(json_data)
         return cls(
+            root_path=root_path,
             entity_map=content["entity_map"],
             entity_names=content["entity_names"],
             entity_downloads=set(tuple(item) for item in content["entity_downloads"]),
@@ -121,14 +147,14 @@ class EntityDB:
         self.entity_map[manga_name] = entity_id
         self.entity_names[manga_name] = entity_name
 
-    def add_and_update(self, manga_name, root_path):
+    def add_and_update(self, manga_name):
         entity_id, entity_name = self.search(manga_name)
         self.entity_map[manga_name] = entity_id
         self.entity_names[manga_name] = entity_name
 
-        self.update_manga_entity(manga_name, os.path.join(root_path, "images"))
+        self.update_manga_entity(manga_name)
 
-    def add_and_track(self, root_path):
+    def add_and_track(self):
         entity_id, entity_name = self.search()
         manga_name = self.clean_entity_name(entity_name)
 
@@ -140,9 +166,10 @@ class EntityDB:
         self.entity_map[manga_name] = entity_id
         self.entity_names[manga_name] = entity_name
 
-        self.update_manga_entity(manga_name, os.path.join(root_path, "images"))
+        self.update_manga_entity(manga_name)
 
-    def find_mangadex_entry(self, search_term):
+    @staticmethod
+    def find_mangadex_entry(search_term):
         print(f">>> SEARCHING MANGADEX FOR NEW SERIES [{search_term}]")
         meta_entries = MetadataEntity.from_server_url(query_params={"title": search_term})
 
@@ -161,7 +188,7 @@ class EntityDB:
         entity = meta_entries[choice - 1]
         return entity
 
-    def update_manga_entity(self, manga_name, filepath=None):
+    def update_manga_entity(self, manga_name):
         entity_id = self.entity_map.get(manga_name)
         if entity_id is not None:
             # Update the standard collections
@@ -175,8 +202,7 @@ class EntityDB:
             self.authors.update(metadata.author_entities)
 
             # Update missing covers
-            if filepath is not None:
-                self.covers.download(entity_id, filepath)
+            self.covers.download(entity_id, self.image_db_path)
 
     def download_chapter(self, entity_id, chapter_item, config_path, storage_path):
         if (entity_id, chapter_item.entity_id) in self.entity_downloads:
@@ -210,12 +236,12 @@ class EntityDB:
             self.entity_downloads.add((entity_id, chapter_item.entity_id))
             # Cleanup excess
             shutil.rmtree(chapter_filepath)
-        except EnvironmentError as e:
-            print(f"Could not download chapter: {entity_id}, {chapter_item.entity_id}", e)
+        except EnvironmentError as err:
+            print(f"Could not download chapter: {entity_id}, {chapter_item.entity_id}", err)
 
-    def clean(self, image_db_path):
+    def clean(self):
         print("Cleaning orphaned covers...")
-        self.covers.remove_orphaned_covers(image_db_path)
+        self.covers.remove_orphaned_covers(self.image_db_path)
 
     def clean_entity_name(self, entity_name):
         entity_name = re.sub(r"[^A-Za-z0-9 ]+", " ", entity_name)
@@ -292,7 +318,7 @@ class EntityDB:
     def get_comicinfo_and_image(self, manga_name, chapter_number):
         entity_name = self.to_entity_name(manga_name)
         if entity_name is None:
-            raise (None, None, None)
+            return None, None, None
         entity_xml = self.to_xml_string(manga_name, chapter_number)
         entity_image_path = self.to_local_image_file(manga_name, chapter_number)
         return entity_name, entity_xml, entity_image_path

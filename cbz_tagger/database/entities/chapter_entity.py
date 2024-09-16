@@ -34,7 +34,7 @@ class ChapterEntity(BaseEntity):
             else:
                 chapter_number = self.chapter_number
             return str(chapter_number)
-        except ValueError:
+        except (ValueError, TypeError):
             return str(self.chapter_number)
 
     @property

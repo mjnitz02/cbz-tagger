@@ -66,6 +66,6 @@ def run_container(**kwargs):
     else:
         container = ManualContainer(**env_vars)
         if kwargs["refresh"]:
-            container.scanner.cbz_database.refresh()
+            container.scanner.refresh()
         else:
             container.scanner.run()
