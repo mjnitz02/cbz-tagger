@@ -8,6 +8,9 @@ from unittest import mock
 def test_download_cbz_files_with_mark_all_tracked(
     mock_download_file, mock_get_raw_input, mock_get_input, integration_scanner, manga_name
 ):
+    """This test will add a new entry and mark it as fully downloaded. It will then attempt a refresh
+    to verify that no files are downloaded or attempted to be downloaded during the refresh."""
+
     def capture_input(test_input, *args, **kwargs):
         _ = args, kwargs
         if test_input == "Enter a new name to search for: ":
@@ -53,6 +56,10 @@ def test_download_cbz_files_with_mark_all_tracked(
 def test_download_cbz_files_without_mark_all_tracked(
     mock_download_file, mock_get_raw_input, mock_get_input, integration_scanner, manga_name
 ):
+    """This test will add a new entry and mark it as not downloaded. It will then attempt a refresh
+    to verify that each chapter is acquired, cleaned, and processed into the correct filename. The
+    actual retrieval of any real files is mocked, so no files are actually downloaded."""
+
     def capture_input(test_input, *args, **kwargs):
         _ = args, kwargs
         if test_input == "Enter a new name to search for: ":

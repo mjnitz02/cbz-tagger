@@ -4,6 +4,10 @@ from unittest import mock
 
 @mock.patch("cbz_tagger.database.entity_db.get_input")
 def test_process_cbz_files(mock_get_input, integration_scanner, build_test_cbz):
+    """This test will generate a fake cached cbz file, and then process it with the scanner.
+    The output should place the cleaned and parsed file into the storage after hitting all the
+    real APIs. Inputs are mocked to automatically select a template manga and chapter."""
+
     def capture_input(test_input, *args, **kwargs):
         _ = args, kwargs
         if test_input == "Please select the manga that you are searching for in number: ":
@@ -49,4 +53,7 @@ def test_process_cbz_files(mock_get_input, integration_scanner, build_test_cbz):
 
 
 def test_process_cbz_files_with_no_files(integration_scanner):
+    """This test will process the full scanner when no outputs are present. It should do nothing."""
+    integration_scanner.process = mock.MagicMock()
     integration_scanner.run_scan()
+    integration_scanner.process.assert_not_called()
