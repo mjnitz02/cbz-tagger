@@ -208,7 +208,7 @@ class EntityDB:
     def refresh(self):
         print("Refreshing database...")
         for entity_id in self.metadata.keys():
-            self.update_manga_entity_name(self.metadata[entity_id].title)
+            self.update_manga_entity_id(entity_id)
         print("Cleaning orphaned covers...")
         self.covers.remove_orphaned_covers(self.image_db_path)
 

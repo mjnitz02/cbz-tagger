@@ -149,6 +149,15 @@ def test_entity_db_update_calls_each_entity_when_no_existing_metadata(
     mock_entity_db_with_metadata_update.covers.download.assert_called_once()
 
 
+def test_entity_db_refresh_calls_all_entities(mock_entity_db_with_mock_updates, manga_request_id):
+    mock_entity_db_with_mock_updates.update_manga_entity_id = mock.MagicMock()
+    mock_entity_db_with_mock_updates.covers.remove_orphaned_covers = mock.MagicMock()
+    mock_entity_db_with_mock_updates.refresh()
+
+    mock_entity_db_with_mock_updates.update_manga_entity_id.assert_called_once_with(manga_request_id)
+    mock_entity_db_with_mock_updates.covers.remove_orphaned_covers.assert_called_once()
+
+
 def test_entity_db_update_does_nothing_with_unknown():
     entity_db = EntityDB("mock")
     entity_db.update_manga_entity_name("unknown")

@@ -22,7 +22,7 @@ scanner = FileScanner(
     environment=env_vars["environment"],
 )
 scanner.add()
-scanner.download_chapters(config_path, storage_path)
+scanner.download_chapters(storage_path)
 # finally:
 #     # shutil.rmtree(config_path)
 #     shutil.rmtree(scan_path)

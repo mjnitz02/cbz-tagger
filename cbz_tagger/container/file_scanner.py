@@ -68,7 +68,7 @@ class FileScanner:
         try:
             # If we haven't updated the metadata on this scan, update the metadata records
             if manga_name not in self.recently_updated:
-                self.update_metadata(manga_name, save=True)
+                self.entity_database.update_manga_entity_name(manga_name)
                 self.recently_updated.append(manga_name)
 
             entity_name, entity_xml, entity_image_path = self.get_metadata(manga_name, chapter_number)
@@ -122,7 +122,10 @@ class FileScanner:
 
         return self.entity_database.get_comicinfo_and_image(manga_name, chapter_number)
 
-    def download_chapters(self, config_path, storage_path):
+    def refresh(self):
+        self.entity_database.refresh()
+
+    def download_chapters(self, storage_path):
         missing_chapters = self.entity_database.get_missing_chapters()
         for entity_id, chapter_items in self.entity_database.chapters.database.items():
             for chapter_item in chapter_items:
@@ -132,21 +135,3 @@ class FileScanner:
                         self.entity_database.download_chapter(entity_id, chapter_item, storage_path)
                     except EnvironmentError as err:
                         print(f"Could not download chapter: {entity_id}, {chapter_item.entity_id}", err)
-
-    def refresh(self):
-        for manga_name in self.entity_database.entity_map.keys():
-            print(f"Refreshing {manga_name}")
-            self.update_metadata(manga_name)
-        self.entity_database.clean()
-        self.entity_database.save()
-
-    def update_metadata(self, manga_name, save=False):
-        if self.entity_database.check_manga_missing(manga_name):
-            return
-
-        try:
-            self.entity_database.update_manga_entity_name(manga_name)
-            if save:
-                self.entity_database.save()
-        except EnvironmentError:
-            print(f"Mangadex API Down >> Unable to update {manga_name} metadata.")

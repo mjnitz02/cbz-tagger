@@ -101,13 +101,11 @@ def test_file_scanner_can_get_metadata_for_present_series(scanner, manga_name, m
 
 def test_file_scanner_can_add_missing_on_get_metadata_not_found(scanner):
     scanner.entity_database.add = mock.MagicMock()
-    scanner.entity_database.save = mock.MagicMock()
     scanner.entity_database.get_comicinfo_and_image = mock.MagicMock()
 
     scanner.get_metadata("unknown manga", "1")
 
     scanner.entity_database.add.assert_called_once()
-    scanner.entity_database.save.assert_called_once()
     scanner.entity_database.get_comicinfo_and_image.assert_called_once()
 
 
@@ -117,10 +115,3 @@ def test_file_scanner_can_raises_error_on_missing_if_add_new_disabled(scanner):
     msg = "Manual mode must be enabled for adding missing manga to the database."
     with pytest.raises(RuntimeError, match=msg):
         scanner.get_metadata("unknown manga", "1")
-
-
-def test_file_scanner_update_calls_entity_database_update(scanner, manga_name):
-    scanner.entity_database.check_manga_missing = mock.MagicMock(return_value=False)
-    scanner.entity_database.update_manga_entity_name = mock.MagicMock()
-    scanner.update_metadata(manga_name)
-    scanner.entity_database.update_manga_entity_name.assert_called_once_with(manga_name)
