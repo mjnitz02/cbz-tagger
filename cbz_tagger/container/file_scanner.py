@@ -32,9 +32,6 @@ class FileScanner:
             else:
                 return
 
-    def add(self):
-        self.entity_database.add(manga_name=None, update=True, track=True)
-
     def scan(self):
         print("Starting scan....")
         for filepath in self.get_cbz_files():
@@ -44,7 +41,11 @@ class FileScanner:
                 print("Unable to read file... files are either in use or corrupted.")
                 return False
 
-        self.remove_empty_dirs()
+        # Remove empty directories
+        folders = [f[0] for f in list(os.walk(self.scan_path))[1:]]
+        for folder in folders:
+            if len(os.listdir(folder)) == 0:
+                shutil.rmtree(folder)
         return True
 
     def get_files(self):
@@ -86,6 +87,9 @@ class FileScanner:
 
         cbz_entity.build(entity_xml, read_path, write_path, cover_image_path, self.environment)
 
+    def get_entity_cover_image_path(self, image_filename):
+        return os.path.join(self.config_path, "images", image_filename)
+
     def get_entity_read_path(self, filepath):
         return os.path.join(self.scan_path, filepath)
 
@@ -105,15 +109,6 @@ class FileScanner:
             chapter_number_string = chapter_number_string.zfill(3)
         return os.path.join(self.storage_path, entity_name, f"{entity_name} - Chapter {chapter_number_string}.cbz")
 
-    def get_entity_cover_image_path(self, entity_image_path):
-        return os.path.join(self.config_path, "images", entity_image_path)
-
-    def remove_empty_dirs(self):
-        folders = [f[0] for f in list(os.walk(self.scan_path))[1:]]
-        for folder in folders:
-            if len(os.listdir(folder)) == 0:
-                shutil.rmtree(folder)
-
     def get_metadata(self, manga_name, chapter_number):
         if self.entity_database.check_manga_missing(manga_name):
             if not self.add_missing:
@@ -121,6 +116,9 @@ class FileScanner:
             self.entity_database.add(manga_name)
 
         return self.entity_database.get_comicinfo_and_image(manga_name, chapter_number)
+
+    def add_tracked_entity(self, entity_name):
+        self.entity_database.add(entity_name, track=True)
 
     def refresh(self):
         self.entity_database.refresh()

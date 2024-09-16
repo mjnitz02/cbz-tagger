@@ -133,7 +133,7 @@ class EntityDB:
 
         return entity_id, entity_name
 
-    def add(self, manga_name: Optional[str], update=False, track=False):
+    def add(self, manga_name: Optional[str], update=True, track=False):
         entity_id, entity_name = self.search(manga_name)
         if manga_name is None:
             manga_name = self.clean_entity_name(entity_name)

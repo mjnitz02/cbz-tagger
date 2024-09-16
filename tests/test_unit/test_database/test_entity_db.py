@@ -104,7 +104,7 @@ def test_entity_db_add_new_manga_without_update(manga_name, manga_request_id, ma
         entity_db = EntityDB("mock")
         entity_db.search = mock.MagicMock(return_value=(manga_request_id, "Oshimai"))
         entity_db.update_manga_entity_id = mock.MagicMock()
-        entity_db.add(manga_name)
+        entity_db.add(manga_name, update=False)
 
         # Assert the entity maps are populated
         assert entity_db.entity_map == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
@@ -148,6 +148,7 @@ def test_entity_db_add_new_manga_with_tracking_and_mark_all_downloaded(
 
         entity_db = EntityDB("mock")
         entity_db.search = mock.MagicMock(return_value=(manga_request_id, "Oshimai"))
+        entity_db.update_manga_entity_id = mock.MagicMock()
         entity_db.chapters = mock_chapter_db
         entity_db.add(manga_name, track=True)
 
@@ -175,6 +176,7 @@ def test_entity_db_add_new_manga_with_tracking(
 
         entity_db = EntityDB("mock")
         entity_db.search = mock.MagicMock(return_value=(manga_request_id, "Oshimai"))
+        entity_db.update_manga_entity_id = mock.MagicMock()
         entity_db.chapters = mock_chapter_db
         entity_db.add(manga_name, track=True)
 
