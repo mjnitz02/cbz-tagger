@@ -1,0 +1,52 @@
+import os
+from unittest import mock
+
+
+@mock.patch("cbz_tagger.database.entity_db.get_input")
+def test_process_cbz_files(mock_get_input, integration_scanner, build_test_cbz):
+    def capture_input(test_input, *args, **kwargs):
+        _ = args, kwargs
+        if test_input == "Please select the manga that you are searching for in number: ":
+            return 1
+        if test_input == "Please select the manga that you are searching for in number: ":
+            return 1
+        return 0
+
+    mock_get_input.side_effect = capture_input
+
+    # Create a test cbz file for chapter 1, automatically select the metadata and process it
+    build_test_cbz(1)
+    integration_scanner.run_scan()
+
+    # Assert the scanned files are all processed
+    assert len(os.listdir(os.path.join(integration_scanner.config_path, "images"))) == 2
+    assert os.listdir(integration_scanner.scan_path) == []
+    storage_results = [
+        os.path.relpath(str(os.path.join(root, name)), integration_scanner.storage_path)
+        for root, dirs, files in os.walk(integration_scanner.storage_path)
+        for name in files
+    ]
+    assert storage_results == [
+        "Touto Sugite Yome na a a a a a a i 4P Short Stories/"
+        "Touto Sugite Yome na a a a a a a i 4P Short Stories - Chapter 001.cbz"
+    ]
+
+    # Create a test cbz file for chapter 2, use existing metadata and process it
+    build_test_cbz(2)
+    integration_scanner.add_missing = False
+    integration_scanner.run_scan()
+    storage_results = [
+        os.path.relpath(str(os.path.join(root, name)), integration_scanner.storage_path)
+        for root, dirs, files in os.walk(integration_scanner.storage_path)
+        for name in files
+    ]
+    assert storage_results == [
+        "Touto Sugite Yome na a a a a a a i 4P Short Stories/"
+        "Touto Sugite Yome na a a a a a a i 4P Short Stories - Chapter 001.cbz",
+        "Touto Sugite Yome na a a a a a a i 4P Short Stories/"
+        "Touto Sugite Yome na a a a a a a i 4P Short Stories - Chapter 002.cbz",
+    ]
+
+
+def test_process_cbz_files_with_no_files(integration_scanner):
+    integration_scanner.run_scan()

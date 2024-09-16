@@ -25,6 +25,10 @@ def get_input(desc, max_val, allow_negative_exit=False):
             print("Your input is incorrect! Please try again!")
 
 
+def get_raw_input(desc):
+    return input(desc)
+
+
 def unpaginate_request(url, query_params=None, limit=50) -> List[Dict[str, Any]]:
     if query_params is None:
         query_params = {}

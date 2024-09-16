@@ -11,6 +11,7 @@ from zipfile import ZIP_DEFLATED
 from zipfile import ZipFile
 
 from cbz_tagger.common.helpers import get_input
+from cbz_tagger.common.helpers import get_raw_input
 from cbz_tagger.database.author_entity_db import AuthorEntityDB
 from cbz_tagger.database.chapter_entity_db import ChapterEntityDB
 from cbz_tagger.database.cover_entity_db import CoverEntityDB
@@ -114,13 +115,13 @@ class EntityDB:
 
     def search(self, search_term: Optional[str] = None):
         if search_term is None:
-            search_term = input("Enter a new name to search for: ")
+            search_term = get_raw_input("Enter a new name to search for: ")
 
         entity = None
         while entity is None:
             entity = self.find_mangadex_entry(search_term)
             if entity is None:
-                search_term = input("Enter a new name to search for: ")
+                search_term = get_raw_input("Enter a new name to search for: ")
         entity_id = entity.entity_id
 
         print("Select a storage name for the series:")
