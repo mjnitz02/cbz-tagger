@@ -126,12 +126,4 @@ class FileScanner:
         self.entity_database.refresh()
 
     def download_chapters(self, storage_path):
-        missing_chapters = self.entity_database.get_missing_chapters()
-        for entity_id, chapter_items in self.entity_database.chapters.database.items():
-            for chapter_item in chapter_items:
-                key = (entity_id, chapter_item.entity_id)
-                if key not in self.entity_database.entity_downloads:
-                    try:
-                        self.entity_database.download_chapter(entity_id, chapter_item, storage_path)
-                    except EnvironmentError as err:
-                        print(f"Could not download chapter: {entity_id}, {chapter_item.entity_id}", err)
+        self.entity_database.download_missing_chapters(storage_path)

@@ -149,8 +149,14 @@ class EntityDB:
 
         if track:
             self.entity_tracked.add(entity_id)
+            if self.should_mark_all_tracked(manga_name):
+                self.entity_downloads.update((entity_id, chapter.entity_id) for chapter in self.chapters[entity_id])
 
         self.save()
+
+    @staticmethod
+    def should_mark_all_tracked(manga_name):
+        return get_input(f"Mark all chapters for {manga_name} as tracked? (y/n): ", 2) == 1
 
     @staticmethod
     def find_mangadex_entry(search_term):
@@ -219,6 +225,7 @@ class EntityDB:
         manga_name = next(iter(name for name, id in self.entity_map.items() if id == entity_id))
         chapter_name = f"{manga_name} - {chapter_item.chapter_string}"
         chapter_filepath = os.path.join(storage_path, manga_name, chapter_name)
+        print(f"Downloading {chapter_name}...")
         try:
             os.makedirs(chapter_filepath, exist_ok=True)
             # Write the comicinfo.xml file
@@ -339,4 +346,13 @@ class EntityDB:
                 key = (entity_id, chapter_item.entity_id)
                 if key not in self.entity_downloads:
                     missing_chapters.append((entity_id, chapter_item))
+        return missing_chapters
+
+    def download_missing_chapters(self, storage_path):
+        missing_chapters = self.get_missing_chapters()
+        for entity_id, chapter_item in missing_chapters:
+            try:
+                self.download_chapter(entity_id, chapter_item, storage_path)
+            except EnvironmentError as err:
+                print(f"Could not download chapter: {entity_id}, {chapter_item.entity_id}", err)
         return missing_chapters
