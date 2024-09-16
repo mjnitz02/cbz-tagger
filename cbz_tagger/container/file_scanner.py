@@ -27,6 +27,7 @@ class FileScanner:
         self.run_scan()
 
     def run_scan(self):
+        self.entity_database = EntityDB.load(root_path=self.config_path)
         self.recently_updated = []
         while True:
             completed = self.scan()
@@ -95,11 +96,11 @@ class FileScanner:
             print(f"ERROR >> {manga_name} not in database. Run manual mode to add new series.")
             return None, None, None
 
-    def add_tracked_entity(self, entity_name):
-        self.entity_database.add(entity_name, track=True)
+    def add_tracked_entity(self):
+        self.entity_database.add(None, track=True)
 
     def refresh(self):
-        self.entity_database.refresh()
+        self.entity_database.refresh(self.storage_path)
 
     def download_chapters(self, storage_path):
         self.entity_database.download_missing_chapters(storage_path)

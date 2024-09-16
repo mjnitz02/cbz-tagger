@@ -100,6 +100,7 @@ class CbzEntity:
         return os.path.join(self.storage_path, entity_name, f"{entity_name} - Chapter {chapter_number_string}.cbz")
 
     def build(self, entity_name, entity_xml, entity_image_path, remove_on_write=True, environment=None):
+        _ = environment
         read_path = self.get_entity_read_path()
         write_path = self.get_entity_write_path(entity_name, self.chapter_number)
         cover_image_path = self.get_entity_cover_image_path(entity_image_path)
@@ -119,9 +120,9 @@ class CbzEntity:
         if remove_on_write:
             os.remove(read_path)
 
-        if environment:
-            try:
-                os.chown(write_path, environment.get("puid"), environment.get("pgid"))
-                os.chmod(write_path, 0o644)
-            except PermissionError:
-                print(f"ERROR >> Unable to set permissions on {write_path}")
+        # if environment:
+        #     try:
+        #         os.chown(write_path, environment.get("puid"), environment.get("pgid"))
+        #         os.chmod(write_path, 0o644)
+        #     except PermissionError:
+        #         print(f"ERROR >> Unable to set permissions on {write_path}")

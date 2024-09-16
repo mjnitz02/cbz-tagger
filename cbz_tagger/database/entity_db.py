@@ -211,12 +211,14 @@ class EntityDB:
             except EnvironmentError:
                 print(f"Mangadex API Down >> Unable to update {manga_name} metadata.")
 
-    def refresh(self):
+    def refresh(self, storage_path):
         print("Refreshing database...")
         for entity_id in self.metadata.keys():
             self.update_manga_entity_id(entity_id)
         print("Cleaning orphaned covers...")
         self.covers.remove_orphaned_covers(self.image_db_path)
+        print("Downloading missing chapters...")
+        self.download_missing_chapters(storage_path)
 
     def download_chapter(self, entity_id, chapter_item, storage_path):
         if (entity_id, chapter_item.entity_id) in self.entity_downloads:
