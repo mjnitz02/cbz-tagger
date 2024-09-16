@@ -142,31 +142,25 @@ class EntityDB:
 
         return entity_id, entity_name
 
-    def add(self, manga_name):
+    def add(self, manga_name: Optional[str], update=False, track=False):
         entity_id, entity_name = self.search(manga_name)
-        self.entity_map[manga_name] = entity_id
-        self.entity_names[manga_name] = entity_name
-
-    def add_and_update(self, manga_name):
-        entity_id, entity_name = self.search(manga_name)
-        self.entity_map[manga_name] = entity_id
-        self.entity_names[manga_name] = entity_name
-
-        self.update_manga_entity(manga_name)
-
-    def add_and_track(self):
-        entity_id, entity_name = self.search()
-        manga_name = self.clean_entity_name(entity_name)
+        if manga_name is None:
+            manga_name = self.clean_entity_name(entity_name)
 
         if manga_name in self.entity_map:
             print(f"Entity {manga_name} already exists in the database.")
             return
 
-        self.entity_tracked.add(entity_id)
         self.entity_map[manga_name] = entity_id
-        self.entity_names[manga_name] = entity_name
+        self.entity_names[entity_id] = self.clean_entity_name(entity_name)
 
-        self.update_manga_entity(manga_name)
+        if update:
+            self.update_manga_entity(manga_name)
+
+        if track:
+            self.entity_tracked.add(entity_id)
+
+        self.save()
 
     @staticmethod
     def find_mangadex_entry(search_term):
@@ -243,16 +237,17 @@ class EntityDB:
         print("Cleaning orphaned covers...")
         self.covers.remove_orphaned_covers(self.image_db_path)
 
-    def clean_entity_name(self, entity_name):
+    @staticmethod
+    def clean_entity_name(entity_name):
         entity_name = re.sub(r"[^A-Za-z0-9 ]+", " ", entity_name)
         entity_name = " ".join(entity_name.split())
         return entity_name
 
     def to_entity_name(self, manga_name) -> Optional[str]:
-        entity_name = self.entity_names.get(manga_name)
-        if entity_name is None:
+        entity_id = self.entity_map.get(manga_name)
+        if entity_id is None:
             return None
-        return self.clean_entity_name(entity_name)
+        return self.entity_names.get(entity_id)
 
     def to_local_image_file(self, manga_name, chapter_number) -> Optional[str]:
         entity_id = self.entity_map.get(manga_name)

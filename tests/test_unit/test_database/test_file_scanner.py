@@ -90,13 +90,13 @@ def test_get_entity_write_path(mock_os_makedirs, scanner):
 
 
 def test_file_scanner_can_get_metadata_for_present_series(scanner, manga_name, mock_chapter_1_xml):
-    scanner.entity_database.add_and_update = mock.MagicMock()
+    scanner.entity_database.add = mock.MagicMock()
     entity_name, entity_xml, entity_image_path = scanner.get_metadata(manga_name, "1")
 
     assert entity_name == "Oshimai"
     assert entity_image_path == "1d387431-eb38-40e9-bc6e-97e4ea4092dc.jpg"
     assert entity_xml == mock_chapter_1_xml
-    scanner.entity_database.add_and_update.assert_not_called()
+    scanner.entity_database.add.assert_not_called()
 
 
 def test_file_scanner_can_add_missing_on_get_metadata_not_found(scanner):

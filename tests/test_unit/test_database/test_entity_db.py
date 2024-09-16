@@ -1,3 +1,4 @@
+import os
 from unittest import mock
 
 import pytest
@@ -8,7 +9,7 @@ from cbz_tagger.entities.metadata_entity import MetadataEntity
 
 def test_entity_db_can_store_and_load(mock_entity_db, manga_request_id):
     assert mock_entity_db.entity_map == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
-    assert mock_entity_db.entity_names == {"Kanojyo to Himitsu to Koimoyou": "Oshimai"}
+    assert mock_entity_db.entity_names == {manga_request_id: "Oshimai"}
     assert len(mock_entity_db.authors) == 1
     assert len(mock_entity_db.covers) == 1
     assert len(mock_entity_db.metadata) == 1
@@ -17,7 +18,7 @@ def test_entity_db_can_store_and_load(mock_entity_db, manga_request_id):
     json_str = mock_entity_db.to_json()
     new_mock_entity_db = EntityDB.from_json("mock", json_str)
     assert new_mock_entity_db.entity_map == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
-    assert new_mock_entity_db.entity_names == {"Kanojyo to Himitsu to Koimoyou": "Oshimai"}
+    assert new_mock_entity_db.entity_names == {manga_request_id: "Oshimai"}
     assert len(new_mock_entity_db.authors) == 1
     assert len(new_mock_entity_db.covers) == 1
     assert len(new_mock_entity_db.metadata) == 1
@@ -47,8 +48,7 @@ def test_entity_db_to_entity_name(mock_entity_db, manga_name):
     ],
 )
 def test_entity_db_to_entity_name_cleaning(mock_entity_db, entity_name, expected):
-    mock_entity_db.entity_names = {"manga_name": entity_name}
-    actual = mock_entity_db.to_entity_name("manga_name")
+    actual = mock_entity_db.clean_entity_name(entity_name)
     assert expected == actual
 
 
@@ -95,7 +95,7 @@ def test_entity_db_add_new_manga(mock_get_input, manga_name, manga_request_id, m
 
         # Assert the entity maps are populated
         assert entity_db.entity_map == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
-        assert entity_db.entity_names == {"Kanojyo to Himitsu to Koimoyou": "Oshimai"}
+        assert entity_db.entity_names == {manga_request_id: "Oshimai"}
 
         # Assert the individual entity databases have not been updated during the add operation
         assert len(entity_db.authors) == 0
@@ -124,3 +124,21 @@ def test_entity_db_update_does_nothing_with_unknown():
     assert len(entity_db.covers) == 0
     assert len(entity_db.metadata) == 0
     assert len(entity_db.volumes) == 0
+
+
+def test_entity_database_image_db_path(mock_entity_db, temp_folder_path):
+    expected = os.path.join(temp_folder_path, "images")
+    assert expected == mock_entity_db.image_db_path
+
+
+def test_entity_database_creates_new_database_with_none_present(temp_folder_path):
+    entity_database = EntityDB(temp_folder_path)
+    assert entity_database.entity_map == {}
+
+
+def test_entity_database_can_save_and_load(mock_entity_db, temp_dir):
+    mock_entity_db.save()
+    entity_database = EntityDB.load(root_path=temp_dir)
+
+    # Restored database will likely match, but check the json dumps to ensure they are the same
+    assert mock_entity_db.to_json() == entity_database.to_json()

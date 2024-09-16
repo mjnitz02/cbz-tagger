@@ -3,11 +3,13 @@ from unittest import mock
 
 import pytest
 
+from cbz_tagger.database.chapter_entity_db import ChapterEntityDB
 from cbz_tagger.database.entity_db import AuthorEntityDB
 from cbz_tagger.database.entity_db import EntityDB
 from cbz_tagger.database.entity_db import MetadataEntityDB
 from cbz_tagger.database.entity_db import VolumeEntityDB
 from cbz_tagger.entities.author_entity import AuthorEntity
+from cbz_tagger.entities.chapter_entity import ChapterEntity
 from cbz_tagger.entities.cover_entity import CoverEntity
 from cbz_tagger.entities.metadata_entity import MetadataEntity
 from cbz_tagger.entities.volume_entity import VolumeEntity
@@ -46,17 +48,33 @@ def mock_volume_db(volume_request_response, manga_request_id):
 
 
 @pytest.fixture
+def mock_chapter_db(chapter_request_response, manga_request_id):
+    entities = [ChapterEntity(data) for data in chapter_request_response["data"]]
+    entity_db = ChapterEntityDB()
+    entity_db.database[manga_request_id] = entities
+    return entity_db
+
+
+@pytest.fixture
 def mock_entity_db(
-    temp_dir, manga_name, manga_request_id, mock_author_db, mock_cover_db, mock_metadata_db, mock_volume_db
+    temp_dir,
+    manga_name,
+    manga_request_id,
+    mock_author_db,
+    mock_cover_db,
+    mock_metadata_db,
+    mock_volume_db,
+    mock_chapter_db,
 ):
     entity_db = EntityDB(temp_dir)
     entity_db.entity_map = {manga_name: manga_request_id}
-    entity_db.entity_names = {manga_name: "Oshimai"}
+    entity_db.entity_names = {manga_request_id: "Oshimai"}
     entity_db.entity_tracked = {}
     entity_db.authors = mock_author_db
     entity_db.covers = mock_cover_db
     entity_db.metadata = mock_metadata_db
     entity_db.volumes = mock_volume_db
+    entity_db.chapters = mock_chapter_db
     return entity_db
 
 
@@ -70,6 +88,7 @@ def mock_entity_db_with_mock_updates(mock_entity_db, manga_request_id, manga_req
     mock_entity_db.covers.download = mock.MagicMock()
     mock_entity_db.metadata.update = mock.MagicMock()
     mock_entity_db.volumes.update = mock.MagicMock()
+    mock_entity_db.chapters.update = mock.MagicMock()
     mock_entity_db.metadata.database[manga_request_id] = metadata_entity
     return mock_entity_db
 

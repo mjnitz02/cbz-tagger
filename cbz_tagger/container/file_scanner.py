@@ -33,11 +33,7 @@ class FileScanner:
                 return
 
     def add(self):
-        _, entity_name = self.entity_database.search()
-        manga_name = self.entity_database.clean_entity_name(entity_name)
-        self.entity_database.add_and_update(manga_name)
-        self.entity_database.update_manga_entity(manga_name)
-        self.entity_database.save()
+        self.entity_database.add(manga_name=None, update=True, track=True)
 
     def scan(self):
         print("Starting scan....")
