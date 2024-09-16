@@ -1,6 +1,6 @@
 from os import path
 
-from cbz_tagger.database.entities.base_entity import BaseEntity
+from cbz_tagger.entities.base_entity import BaseEntity
 
 
 class CoverEntity(BaseEntity):

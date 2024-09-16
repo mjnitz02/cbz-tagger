@@ -3,7 +3,7 @@ from typing import Dict
 from typing import List
 from typing import Union
 
-from cbz_tagger.database.entities.base_entity import BaseEntityObject
+from cbz_tagger.entities.base_entity import BaseEntityObject
 
 
 class BaseEntityDB(BaseEntityObject):

@@ -4,7 +4,7 @@ from typing import List
 from typing import Optional
 
 from cbz_tagger.database.base_db import BaseEntityDB
-from cbz_tagger.database.entities.chapter_entity import ChapterEntity
+from cbz_tagger.entities.chapter_entity import ChapterEntity
 
 
 class ChapterEntityDB(BaseEntityDB):

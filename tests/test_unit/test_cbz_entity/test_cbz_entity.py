@@ -1,6 +1,6 @@
 import pytest
 
-from cbz_tagger.cbz_entity.cbz_entity import CbzEntity
+from cbz_tagger.entities.cbz_entity import CbzEntity
 
 
 @pytest.mark.parametrize(

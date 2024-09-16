@@ -4,11 +4,11 @@ import time
 from typing import Dict
 from zipfile import BadZipFile
 
-from cbz_tagger.cbz_entity.cbz_entity import CbzEntity
 from cbz_tagger.database.entity_db import EntityDB
+from cbz_tagger.entities.cbz_entity import CbzEntity
 
 
-class CbzScanner:
+class FileScanner:
     def __init__(
         self, config_path, scan_path, storage_path, add_missing=True, environment: Dict[str, str] = None
     ) -> None:

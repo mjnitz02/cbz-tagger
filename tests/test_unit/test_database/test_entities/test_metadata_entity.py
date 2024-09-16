@@ -1,8 +1,8 @@
 from datetime import datetime
 from unittest import mock
 
-from cbz_tagger.database.entities.base_entity import BaseEntity
-from cbz_tagger.database.entities.metadata_entity import MetadataEntity
+from cbz_tagger.entities.base_entity import BaseEntity
+from cbz_tagger.entities.metadata_entity import MetadataEntity
 
 
 def test_metadata_entity(manga_request_content):
@@ -34,7 +34,7 @@ def test_metadata_entity(manga_request_content):
 
 
 def test_metadata_entity_from_url(manga_request_response):
-    with mock.patch("cbz_tagger.database.entities.base_entity.unpaginate_request") as mock_request:
+    with mock.patch("cbz_tagger.entities.base_entity.unpaginate_request") as mock_request:
         mock_request.return_value = manga_request_response["data"]
         entities = MetadataEntity.from_server_url()
         assert len(entities) == 2

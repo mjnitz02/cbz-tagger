@@ -2,13 +2,13 @@ from unittest import mock
 
 from cbz_tagger.database.base_db import BaseEntityDB
 from cbz_tagger.database.cover_entity_db import CoverEntityDB
-from cbz_tagger.database.entities.author_entity import AuthorEntity
-from cbz_tagger.database.entities.cover_entity import CoverEntity
-from cbz_tagger.database.entities.metadata_entity import MetadataEntity
-from cbz_tagger.database.entities.volume_entity import VolumeEntity
 from cbz_tagger.database.entity_db import AuthorEntityDB
 from cbz_tagger.database.entity_db import MetadataEntityDB
 from cbz_tagger.database.entity_db import VolumeEntityDB
+from cbz_tagger.entities.author_entity import AuthorEntity
+from cbz_tagger.entities.cover_entity import CoverEntity
+from cbz_tagger.entities.metadata_entity import MetadataEntity
+from cbz_tagger.entities.volume_entity import VolumeEntity
 
 
 def test_base_entity_db():

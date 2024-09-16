@@ -6,7 +6,7 @@ import requests
 from PIL import Image
 
 from cbz_tagger.common.helpers import unpaginate_request
-from cbz_tagger.database.entities.base_entity import BaseEntity
+from cbz_tagger.entities.base_entity import BaseEntity
 
 
 class ChapterEntity(BaseEntity):

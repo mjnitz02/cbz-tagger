@@ -2,8 +2,8 @@ from unittest import mock
 
 import pytest
 
-from cbz_tagger.database.entities.metadata_entity import MetadataEntity
 from cbz_tagger.database.entity_db import EntityDB
+from cbz_tagger.entities.metadata_entity import MetadataEntity
 
 
 def test_entity_db_can_store_and_load(mock_entity_db, manga_request_id):

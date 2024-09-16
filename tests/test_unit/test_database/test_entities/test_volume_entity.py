@@ -2,7 +2,7 @@ from unittest import mock
 
 import pytest
 
-from cbz_tagger.database.entities.volume_entity import VolumeEntity
+from cbz_tagger.entities.volume_entity import VolumeEntity
 
 
 def test_volume_entity(volume_request_response):
@@ -108,7 +108,7 @@ def test_volume_entity_get_volume_for_chapter(volume_request_response, chapter, 
 
 
 def test_volume_entity_from_url(volume_request_response):
-    with mock.patch("cbz_tagger.database.entities.volume_entity.requests") as mock_request:
+    with mock.patch("cbz_tagger.entities.volume_entity.requests") as mock_request:
         mock_request.get.return_value = mock.Mock(json=mock.MagicMock(return_value=volume_request_response))
         entities = VolumeEntity.from_server_url(query_params={"ids[]": ["831b12b8-2d0e-4397-8719-1efee4c32f40"]})
         assert len(entities) == 1

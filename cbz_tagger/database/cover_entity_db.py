@@ -7,7 +7,7 @@ from typing import List
 from PIL import Image
 
 from cbz_tagger.database.base_db import BaseEntityDB
-from cbz_tagger.database.entities.cover_entity import CoverEntity
+from cbz_tagger.entities.cover_entity import CoverEntity
 
 
 class CoverEntityDB(BaseEntityDB):

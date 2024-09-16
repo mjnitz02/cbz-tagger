@@ -1,7 +1,7 @@
 import os
 
-from cbz_tagger.cbz_entity.cbz_scanner import CbzScanner
 from cbz_tagger.container.container import get_environment_variables
+from cbz_tagger.container.file_scanner import FileScanner
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 env_vars = get_environment_variables()
@@ -15,7 +15,7 @@ os.makedirs(scan_path, exist_ok=True)
 os.makedirs(storage_path, exist_ok=True)
 
 # try:
-scanner = CbzScanner(
+scanner = FileScanner(
     config_path=config_path,
     scan_path=scan_path,
     storage_path=storage_path,
