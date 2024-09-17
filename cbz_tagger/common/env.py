@@ -40,7 +40,7 @@ class AppEnv:
         CONTAINER_MODE = ContainerMode.MANUAL
 
     if os.getenv("TIMER_DELAY") is None:
-        TIMER_DELAY = 600
+        TIMER_DELAY = 6000
     else:
         TIMER_DELAY = int(os.getenv("TIMER_DELAY"))
 

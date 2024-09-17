@@ -1,6 +1,6 @@
 import json
 
-from cbz_tagger.database.entities.base_entity import BaseEntity
+from cbz_tagger.entities.base_entity import BaseEntity
 
 
 def test_base_entity(manga_request_content):

@@ -5,8 +5,11 @@ from zipfile import ZipFile
 
 
 class CbzEntity:
-    def __init__(self, filepath: str):
+    def __init__(self, filepath: str, config_path: str = "", scan_path: str = "", storage_path: str = ""):
         self.filepath = filepath
+        self.config_path = config_path
+        self.scan_path = scan_path
+        self.storage_path = storage_path
 
     def check_path(self):
         if len(os.path.split(self.filepath)) > 2:
@@ -74,7 +77,38 @@ class CbzEntity:
     def get_name_and_chapter(self):
         return self.manga_name, self.chapter_number
 
-    def build(self, entity_xml, read_path, write_path, cover_image_path, remove_on_write=True, environment=None):
+    def get_entity_cover_image_path(self, image_filename):
+        return os.path.join(self.config_path, "images", image_filename)
+
+    def get_entity_read_path(self):
+        return os.path.join(self.scan_path, self.filepath)
+
+    def get_entity_write_path(self, entity_name, chapter_number):
+        os.makedirs(os.path.join(self.storage_path, entity_name), exist_ok=True)
+        chapter_number_string = str(chapter_number)
+        if "." in chapter_number_string:
+            fill = 5
+            try:
+                decimal_int = int(chapter_number_string.rsplit(".", maxsplit=1)[-1])
+                if decimal_int >= 10:
+                    fill = 6
+            except ValueError:
+                pass
+            chapter_number_string = chapter_number_string.zfill(fill)
+        else:
+            chapter_number_string = chapter_number_string.zfill(3)
+        return os.path.join(self.storage_path, entity_name, f"{entity_name} - Chapter {chapter_number_string}.cbz")
+
+    def build(self, entity_name, entity_xml, entity_image_path, remove_on_write=True, environment=None):
+        _ = environment
+        read_path = self.get_entity_read_path()
+        write_path = self.get_entity_write_path(entity_name, self.chapter_number)
+        cover_image_path = self.get_entity_cover_image_path(entity_image_path)
+
+        if os.path.exists(write_path):
+            print("ERROR >> Destination file already present!")
+            return
+
         with ZipFile(read_path, "r") as zip_read:
             with ZipFile(write_path, "w", ZIP_DEFLATED) as zip_write:
                 for item in zip_read.infolist():
@@ -86,9 +120,9 @@ class CbzEntity:
         if remove_on_write:
             os.remove(read_path)
 
-        if environment:
-            try:
-                os.chown(write_path, environment.get("puid"), environment.get("pgid"))
-                os.chmod(write_path, 0o644)
-            except PermissionError:
-                print(f"ERROR >> Unable to set permissions on {write_path}")
+        # if environment:
+        #     try:
+        #         os.chown(write_path, environment.get("puid"), environment.get("pgid"))
+        #         os.chmod(write_path, 0o644)
+        #     except PermissionError:
+        #         print(f"ERROR >> Unable to set permissions on {write_path}")

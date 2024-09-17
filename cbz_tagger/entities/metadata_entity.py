@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import List
 from typing import Optional
 
-from cbz_tagger.database.entities.base_entity import BaseEntity
+from cbz_tagger.entities.base_entity import BaseEntity
 
 
 class MetadataEntity(BaseEntity):
@@ -24,6 +24,10 @@ class MetadataEntity(BaseEntity):
     @property
     def description(self) -> Optional[str]:
         return next((item for item in self.attributes["description"].values()), None)
+
+    @property
+    def updated(self) -> str:
+        return self.attributes.get("updatedAt")
 
     @property
     def completed(self) -> bool:

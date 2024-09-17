@@ -7,7 +7,7 @@ class TimerContainer(BaseContainer):
     def __init__(self, config_path, scan_path, storage_path, timer_delay, environment=None):
         super().__init__(config_path, scan_path, storage_path, timer_delay, environment=environment)
         # Disable automatic adding of series
-        self.scanner.cbz_database.add_missing = False
+        self.scanner.add_missing = False
 
     def _info(self):
         print("Container running in Timer Scan mode.")

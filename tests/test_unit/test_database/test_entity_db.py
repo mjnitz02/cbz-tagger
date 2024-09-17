@@ -1,23 +1,31 @@
+import os
 from unittest import mock
 
 import pytest
 
-from cbz_tagger.database.entities.metadata_entity import MetadataEntity
 from cbz_tagger.database.entity_db import EntityDB
+from cbz_tagger.entities.metadata_entity import MetadataEntity
+
+
+@pytest.fixture
+def simple_mock_entity_db():
+    entity_db = EntityDB("mock")
+    entity_db.save = mock.MagicMock()
+    return entity_db
 
 
 def test_entity_db_can_store_and_load(mock_entity_db, manga_request_id):
     assert mock_entity_db.entity_map == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
-    assert mock_entity_db.entity_names == {"Kanojyo to Himitsu to Koimoyou": "Oshimai"}
+    assert mock_entity_db.entity_names == {manga_request_id: "Oshimai"}
     assert len(mock_entity_db.authors) == 1
     assert len(mock_entity_db.covers) == 1
     assert len(mock_entity_db.metadata) == 1
     assert len(mock_entity_db.volumes) == 1
 
     json_str = mock_entity_db.to_json()
-    new_mock_entity_db = EntityDB.from_json(json_str)
+    new_mock_entity_db = EntityDB.from_json("mock", json_str)
     assert new_mock_entity_db.entity_map == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
-    assert new_mock_entity_db.entity_names == {"Kanojyo to Himitsu to Koimoyou": "Oshimai"}
+    assert new_mock_entity_db.entity_names == {manga_request_id: "Oshimai"}
     assert len(new_mock_entity_db.authors) == 1
     assert len(new_mock_entity_db.covers) == 1
     assert len(new_mock_entity_db.metadata) == 1
@@ -47,8 +55,7 @@ def test_entity_db_to_entity_name(mock_entity_db, manga_name):
     ],
 )
 def test_entity_db_to_entity_name_cleaning(mock_entity_db, entity_name, expected):
-    mock_entity_db.entity_names = {"manga_name": entity_name}
-    actual = mock_entity_db.to_entity_name("manga_name")
+    actual = mock_entity_db.clean_entity_name(entity_name)
     assert expected == actual
 
 
@@ -83,57 +90,210 @@ def test_entity_db_to_xml_str_chapter_10(mock_entity_db, manga_name, mock_chapte
 
 
 @mock.patch("cbz_tagger.database.entity_db.get_input")
-def test_entity_db_add_new_manga(mock_get_input, manga_name, manga_request_id, manga_request_response):
+def test_entity_db_search(mock_get_input, simple_mock_entity_db, manga_name, manga_request_id, manga_request_response):
     with mock.patch.object(MetadataEntity, "from_server_url") as mock_from_server_url:
         mock_from_server_url.return_value = [MetadataEntity(data) for data in manga_request_response["data"]]
 
         # Simulate user selecting 1 for each input
         mock_get_input.return_value = 1
 
-        entity_db = EntityDB()
-        entity_db.add(manga_name)
+        entity_id, entity_name = simple_mock_entity_db.search(manga_name)
+
+        assert entity_id == manga_request_id
+        assert entity_name == "Oshimai"
+
+
+def test_entity_db_add_new_manga_without_update(
+    simple_mock_entity_db, manga_name, manga_request_id, manga_request_response
+):
+    with mock.patch.object(MetadataEntity, "from_server_url") as mock_from_server_url:
+        mock_from_server_url.return_value = [MetadataEntity(data) for data in manga_request_response["data"]]
+
+        simple_mock_entity_db.search = mock.MagicMock(return_value=(manga_request_id, "Oshimai"))
+        simple_mock_entity_db.update_manga_entity_id = mock.MagicMock()
+        simple_mock_entity_db.add(manga_name, update=False)
 
         # Assert the entity maps are populated
-        assert entity_db.entity_map == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
-        assert entity_db.entity_names == {"Kanojyo to Himitsu to Koimoyou": "Oshimai"}
+        assert simple_mock_entity_db.entity_map == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
+        assert simple_mock_entity_db.entity_names == {manga_request_id: "Oshimai"}
 
         # Assert the individual entity databases have not been updated during the add operation
-        assert len(entity_db.authors) == 0
-        assert len(entity_db.covers) == 0
-        assert len(entity_db.metadata) == 0
-        assert len(entity_db.volumes) == 0
+        assert len(simple_mock_entity_db.authors) == 0
+        assert len(simple_mock_entity_db.covers) == 0
+        assert len(simple_mock_entity_db.metadata) == 0
+        assert len(simple_mock_entity_db.volumes) == 0
+        assert len(simple_mock_entity_db.chapters) == 0
+
+        simple_mock_entity_db.update_manga_entity_id.assert_not_called()
 
 
-def test_entity_db_update_calls_each_entity(mock_entity_db_with_mock_updates, manga_name, manga_request_id):
-    metadata_entity = mock_entity_db_with_mock_updates.metadata[manga_request_id]
+def test_entity_db_add_new_manga_with_update(
+    simple_mock_entity_db, manga_name, manga_request_id, manga_request_response
+):
+    with mock.patch.object(MetadataEntity, "from_server_url") as mock_from_server_url:
+        mock_from_server_url.return_value = [MetadataEntity(data) for data in manga_request_response["data"]]
 
-    mock_entity_db_with_mock_updates.update_manga_entity(manga_name, "filepath")
-    mock_entity_db_with_mock_updates.authors.update.assert_called_once_with(metadata_entity.author_entities)
-    mock_entity_db_with_mock_updates.covers.update.assert_called_once_with(manga_request_id)
-    mock_entity_db_with_mock_updates.metadata.update.assert_called_once_with(manga_request_id)
-    mock_entity_db_with_mock_updates.volumes.update.assert_called_once_with(manga_request_id)
-    mock_entity_db_with_mock_updates.covers.download.assert_called_once()
+        simple_mock_entity_db.search = mock.MagicMock(return_value=(manga_request_id, "Oshimai"))
+        simple_mock_entity_db.update_manga_entity_id = mock.MagicMock()
+        simple_mock_entity_db.add(manga_name, update=True)
+
+        # Assert the entity maps are populated
+        assert simple_mock_entity_db.entity_map == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
+        assert simple_mock_entity_db.entity_names == {manga_request_id: "Oshimai"}
+
+        simple_mock_entity_db.update_manga_entity_id.assert_called_once_with(manga_request_id)
 
 
-def test_entity_db_update_calls_each_entity_but_no_download(
+@mock.patch("cbz_tagger.database.entity_db.get_input")
+def test_entity_db_add_new_manga_with_tracking_and_mark_all_downloaded(
+    mock_get_input, simple_mock_entity_db, mock_chapter_db, manga_name, manga_request_id, manga_request_response
+):
+    with mock.patch.object(MetadataEntity, "from_server_url") as mock_from_server_url:
+        mock_from_server_url.return_value = [MetadataEntity(data) for data in manga_request_response["data"]]
+
+        # Simulate user selecting 1 for each input
+        mock_get_input.return_value = 1
+
+        simple_mock_entity_db.search = mock.MagicMock(return_value=(manga_request_id, "Oshimai"))
+        simple_mock_entity_db.update_manga_entity_id = mock.MagicMock()
+        simple_mock_entity_db.chapters = mock_chapter_db
+        simple_mock_entity_db.add(manga_name, track=True)
+
+        # Assert the entity maps are populated
+        assert simple_mock_entity_db.entity_map == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
+        assert simple_mock_entity_db.entity_names == {manga_request_id: "Oshimai"}
+        assert simple_mock_entity_db.entity_tracked == {"831b12b8-2d0e-4397-8719-1efee4c32f40"}
+        assert simple_mock_entity_db.entity_downloads == {
+            ("831b12b8-2d0e-4397-8719-1efee4c32f40", "01c86808-46fb-4108-aa5d-4e87aee8b2f1"),
+            ("831b12b8-2d0e-4397-8719-1efee4c32f40", "057c0bce-fd18-44ea-ad64-cefa92378d49"),
+            ("831b12b8-2d0e-4397-8719-1efee4c32f40", "1361d404-d03c-4fd9-97b4-2c297914b098"),
+            ("831b12b8-2d0e-4397-8719-1efee4c32f40", "19020b28-67b1-48a2-82a6-9b7ad18a5c37"),
+        }
+
+
+@mock.patch("cbz_tagger.database.entity_db.get_input")
+def test_entity_db_add_new_manga_with_tracking(
+    mock_get_input, simple_mock_entity_db, mock_chapter_db, manga_name, manga_request_id, manga_request_response
+):
+    with mock.patch.object(MetadataEntity, "from_server_url") as mock_from_server_url:
+        mock_from_server_url.return_value = [MetadataEntity(data) for data in manga_request_response["data"]]
+
+        # Simulate user selecting 1 for each input
+        mock_get_input.return_value = 0
+
+        simple_mock_entity_db.search = mock.MagicMock(return_value=(manga_request_id, "Oshimai"))
+        simple_mock_entity_db.update_manga_entity_id = mock.MagicMock()
+        simple_mock_entity_db.chapters = mock_chapter_db
+        simple_mock_entity_db.add(manga_name, track=True)
+
+        # Assert the entity maps are populated
+        assert simple_mock_entity_db.entity_map == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
+        assert simple_mock_entity_db.entity_names == {manga_request_id: "Oshimai"}
+        assert simple_mock_entity_db.entity_tracked == {"831b12b8-2d0e-4397-8719-1efee4c32f40"}
+        assert simple_mock_entity_db.entity_downloads == set()
+
+
+def test_entity_db_update_calls_update_manga_entity_id_from_update_name(
     mock_entity_db_with_mock_updates, manga_name, manga_request_id
 ):
-    metadata_entity = mock_entity_db_with_mock_updates.metadata[manga_request_id]
+    mock_entity_db_with_mock_updates.update_manga_entity_id = mock.MagicMock()
+    mock_entity_db_with_mock_updates.update_manga_entity_name(manga_name)
+    mock_entity_db_with_mock_updates.update_manga_entity_id.assert_called_once_with(manga_request_id)
 
-    mock_entity_db_with_mock_updates.update_manga_entity(manga_name)
-    mock_entity_db_with_mock_updates.authors.update.assert_called_once_with(metadata_entity.author_entities)
-    mock_entity_db_with_mock_updates.covers.update.assert_called_once_with(manga_request_id)
+
+def test_entity_db_update_calls_only_metadata_if_no_updates(mock_entity_db_with_mock_updates, manga_request_id):
+    mock_entity_db_with_mock_updates.update_manga_entity_id(manga_request_id)
+
     mock_entity_db_with_mock_updates.metadata.update.assert_called_once_with(manga_request_id)
-    mock_entity_db_with_mock_updates.volumes.update.assert_called_once_with(manga_request_id)
+    mock_entity_db_with_mock_updates.authors.update.assert_not_called()
+    mock_entity_db_with_mock_updates.covers.update.assert_not_called()
+    mock_entity_db_with_mock_updates.volumes.update.assert_not_called()
+    mock_entity_db_with_mock_updates.chapters.update.assert_not_called()
     mock_entity_db_with_mock_updates.covers.download.assert_not_called()
 
 
+def test_entity_db_update_calls_each_entity_when_updates_available(
+    mock_entity_db_with_mock_updates_out_of_date, manga_request_id
+):
+    metadata_entity = mock_entity_db_with_mock_updates_out_of_date.metadata[manga_request_id]
+
+    mock_entity_db_with_mock_updates_out_of_date.update_manga_entity_id(manga_request_id)
+    mock_entity_db_with_mock_updates_out_of_date.authors.update.assert_called_once_with(metadata_entity.author_entities)
+    mock_entity_db_with_mock_updates_out_of_date.covers.update.assert_called_once_with(manga_request_id)
+    mock_entity_db_with_mock_updates_out_of_date.volumes.update.assert_called_once_with(manga_request_id)
+    mock_entity_db_with_mock_updates_out_of_date.chapters.update.assert_called_once_with(manga_request_id)
+    mock_entity_db_with_mock_updates_out_of_date.covers.download.assert_called_once()
+
+
+def test_entity_db_update_calls_each_entity_when_no_existing_metadata(
+    mock_entity_db_with_metadata_update, manga_request_id, manga_request_content
+):
+    mock_entity_db_with_metadata_update.update_manga_entity_id(manga_request_id)
+    mock_entity_db_with_metadata_update.authors.update.assert_called_once_with(
+        MetadataEntity(content=manga_request_content).author_entities
+    )
+    mock_entity_db_with_metadata_update.covers.update.assert_called_once_with(manga_request_id)
+    mock_entity_db_with_metadata_update.volumes.update.assert_called_once_with(manga_request_id)
+    mock_entity_db_with_metadata_update.chapters.update.assert_called_once_with(manga_request_id)
+    mock_entity_db_with_metadata_update.covers.download.assert_called_once()
+
+
+def test_entity_db_refresh_calls_all_entities(mock_entity_db_with_mock_updates, manga_request_id):
+    mock_entity_db_with_mock_updates.update_manga_entity_id = mock.MagicMock()
+    mock_entity_db_with_mock_updates.covers.remove_orphaned_covers = mock.MagicMock()
+    mock_entity_db_with_mock_updates.refresh("storage")
+
+    mock_entity_db_with_mock_updates.update_manga_entity_id.assert_called_once_with(manga_request_id)
+    mock_entity_db_with_mock_updates.covers.remove_orphaned_covers.assert_called_once()
+
+
 def test_entity_db_update_does_nothing_with_unknown():
-    entity_db = EntityDB()
-    entity_db.update_manga_entity("unknown")
+    entity_db = EntityDB("mock")
+    entity_db.update_manga_entity_name("unknown")
     assert entity_db.entity_map == {}
     assert entity_db.entity_names == {}
     assert len(entity_db.authors) == 0
     assert len(entity_db.covers) == 0
     assert len(entity_db.metadata) == 0
     assert len(entity_db.volumes) == 0
+
+
+def test_entity_database_image_db_path(mock_entity_db, temp_folder_path):
+    expected = os.path.join(temp_folder_path, "images")
+    assert expected == mock_entity_db.image_db_path
+
+
+def test_entity_database_creates_new_database_with_none_present(temp_folder_path):
+    entity_database = EntityDB(temp_folder_path)
+    assert entity_database.entity_map == {}
+
+
+def test_entity_database_can_save_and_load(mock_entity_db_with_saving, temp_dir):
+    mock_entity_db_with_saving.save()
+    entity_database = EntityDB.load(root_path=temp_dir)
+
+    # Restored database will likely match, but check the json dumps to ensure they are the same
+    assert mock_entity_db_with_saving.to_json() == entity_database.to_json()
+
+
+def test_entity_database_no_missing_chapters_with_no_tracked_entities(mock_entity_db):
+    missing_chapters = mock_entity_db.get_missing_chapters()
+    assert missing_chapters == []
+
+
+def test_entity_database_has_missing_chapters_with_tracked_entities(mock_entity_db, manga_request_id):
+    mock_entity_db.entity_tracked.add(manga_request_id)
+    missing_chapters = mock_entity_db.get_missing_chapters()
+    assert [chapter_id for (chapter_id, _) in missing_chapters] == [
+        "831b12b8-2d0e-4397-8719-1efee4c32f40",
+        "831b12b8-2d0e-4397-8719-1efee4c32f40",
+        "831b12b8-2d0e-4397-8719-1efee4c32f40",
+        "831b12b8-2d0e-4397-8719-1efee4c32f40",
+    ]
+
+
+def test_entity_database_calls_downloads_for_missing_chapters(mock_entity_db, manga_request_id):
+    mock_entity_db.entity_tracked.add(manga_request_id)
+    mock_entity_db.download_chapter = mock.MagicMock()
+    mock_entity_db.download_missing_chapters("storage_path")
+    assert mock_entity_db.download_chapter.call_count == 4

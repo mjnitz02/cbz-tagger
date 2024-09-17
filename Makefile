@@ -11,6 +11,9 @@ lint:
 	python -m black --line-length 120 cbz_tagger tests
 	python -m pylint cbz_tagger tests
 
+test:
+	python -m pytest tests/
+
 build:
 	docker build -t manga-tag .
 

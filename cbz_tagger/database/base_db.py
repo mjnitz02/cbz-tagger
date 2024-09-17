@@ -3,7 +3,7 @@ from typing import Dict
 from typing import List
 from typing import Union
 
-from cbz_tagger.database.entities.base_entity import BaseEntityObject
+from cbz_tagger.entities.base_entity import BaseEntityObject
 
 
 class BaseEntityDB(BaseEntityObject):
@@ -20,6 +20,9 @@ class BaseEntityDB(BaseEntityObject):
 
     def __len__(self):
         return len(self.database)
+
+    def keys(self):
+        return self.database.keys()
 
     def to_json(self):
         content = {}
@@ -47,8 +50,8 @@ class BaseEntityDB(BaseEntityObject):
                 return
 
             content = self.entity_class.from_server_url(query_params={self.query_param_field: [entity_id]})
-            self.database[entity_id] = self.format_content_for_entity(content)
+            self.database[entity_id] = self.format_content_for_entity(content, entity_id)
 
-    @staticmethod
-    def format_content_for_entity(content):
+    def format_content_for_entity(self, content, entity_id=None):
+        _ = entity_id
         return content[0] if len(content) == 1 else content

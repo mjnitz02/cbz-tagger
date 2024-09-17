@@ -13,6 +13,7 @@ def get_arg_parser():
     parser.add_argument("--entrymode", help="Container Entrymode Start", action="store_true")
     parser.add_argument("--manual", help="Manual Mode", action="store_true")
     parser.add_argument("--refresh", help="Refresh Mode", action="store_true")
+    parser.add_argument("--add", help="Add Mode", action="store_true")
     kwargs = vars(parser.parse_args())
     return kwargs
 
@@ -56,7 +57,7 @@ def run_container(**kwargs):
 
     env_vars = get_environment_variables()
 
-    if kwargs["entrymode"]:
+    if kwargs.get("entrymode"):
         container_mode = AppEnv.CONTAINER_MODE
         if container_mode == ContainerMode.TIMER:
             container = TimerContainer(**env_vars)
@@ -65,7 +66,9 @@ def run_container(**kwargs):
         container.run()
     else:
         container = ManualContainer(**env_vars)
-        if kwargs["refresh"]:
-            container.scanner.cbz_database.refresh()
+        if kwargs.get("add"):
+            container.scanner.add_tracked_entity()
+        elif kwargs.get("refresh"):
+            container.scanner.refresh()
         else:
             container.scanner.run()

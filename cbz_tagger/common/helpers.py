@@ -6,8 +6,11 @@ from typing import List
 
 import requests
 
+from cbz_tagger.common.enums import MANGADEX_DELAY_PER_REQUEST
+
 
 def get_input(desc, max_val, allow_negative_exit=False):
+    """Allow selection from a list of inputs"""
     while True:
         user_input = input(desc)
         try:
@@ -21,6 +24,11 @@ def get_input(desc, max_val, allow_negative_exit=False):
 
         except (TypeError, ValueError):
             print("Your input is incorrect! Please try again!")
+
+
+def get_raw_input(desc):
+    """Allow input to be simply mapped in unit testing"""
+    return input(desc)
 
 
 def unpaginate_request(url, query_params=None, limit=50) -> List[Dict[str, Any]]:
@@ -39,10 +47,10 @@ def unpaginate_request(url, query_params=None, limit=50) -> List[Dict[str, Any]]
             response_content.extend(response["data"])
 
             offset += limit
-            if offset > response["total"]:
+            if offset >= response["total"]:
                 return response_content
 
             # Only make 2 queries per second
-            sleep(0.5)
+            sleep(MANGADEX_DELAY_PER_REQUEST)
     except JSONDecodeError as exc:
         raise EnvironmentError("Mangadex API is down! Please try again later!") from exc
