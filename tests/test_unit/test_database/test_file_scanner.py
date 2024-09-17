@@ -1,8 +1,9 @@
 from unittest import mock
+from unittest.mock import patch
 
 import pytest
 
-from cbz_tagger.container.file_scanner import FileScanner
+from cbz_tagger.database.file_scanner import FileScanner
 from cbz_tagger.entities.cbz_entity import CbzEntity
 
 
@@ -29,6 +30,41 @@ def mock_get_paths():
         ("/root/path/to/files/series name 3", ["series name 3 - chapter 1.cbz"]),
         ("/root/path/to/files/junk", ["something.txt"]),
     ]
+
+
+def test_run_without_tracked_entities(scanner):
+    scanner.run_scan = mock.MagicMock()
+    scanner.entity_database.refresh = mock.MagicMock()
+    with patch("cbz_tagger.database.entity_db.EntityDB.load", return_value=scanner.entity_database) as mock_load:
+        scanner.run()
+
+    mock_load.assert_called_once()
+    scanner.run_scan.assert_called_once()
+    scanner.entity_database.refresh.assert_not_called()
+
+
+def test_run_with_tracked_entities(scanner):
+    scanner.run_scan = mock.MagicMock()
+    scanner.entity_database.refresh = mock.MagicMock()
+    scanner.entity_database.entity_tracked.add("series name")
+    with patch("cbz_tagger.database.entity_db.EntityDB.load", return_value=scanner.entity_database) as mock_load:
+        scanner.run()
+
+    mock_load.assert_called_once()
+    scanner.run_scan.assert_called_once()
+    scanner.entity_database.refresh.assert_called_once_with(scanner.storage_path)
+
+
+def test_run_scan(scanner):
+    with (
+        patch.object(scanner, "scan", side_effect=[False, True]) as mock_scan,
+        patch("cbz_tagger.database.entity_db.EntityDB.load", return_value=scanner.entity_database),
+        patch("time.sleep") as mock_sleep,
+    ):
+        scanner.run_scan()
+
+        assert mock_scan.call_count == 2
+        mock_sleep.assert_called_once_with(120)
 
 
 def test_get_cbz_files(scanner, mock_get_paths):

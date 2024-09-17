@@ -63,6 +63,10 @@ class EntityDB:
     def image_db_path(self) -> str:
         return os.path.join(self.root_path, "images")
 
+    @property
+    def has_tracked_entities(self) -> bool:
+        return len(self.entity_tracked) > 0
+
     def save(self) -> None:
         entity_db_path = os.path.join(self.root_path, "entity_db.json")
         entity_database_json = self.to_json()
@@ -206,7 +210,8 @@ class EntityDB:
                 # Update missing covers
                 self.covers.download(entity_id, self.image_db_path)
 
-                # Save database on successful update
+                # Save database on successful update, this makes each call slightly slower, but more reliable
+                # since the APIs are prone to crashing
                 self.save()
 
             except EnvironmentError:

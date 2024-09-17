@@ -1,4 +1,4 @@
-from cbz_tagger.container.file_scanner import FileScanner
+from cbz_tagger.database.file_scanner import FileScanner
 
 
 class BaseContainer:

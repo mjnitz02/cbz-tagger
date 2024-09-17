@@ -6,7 +6,7 @@ from zipfile import ZipFile
 import pytest
 
 from cbz_tagger.container.container import get_environment_variables
-from cbz_tagger.container.file_scanner import FileScanner
+from cbz_tagger.database.file_scanner import FileScanner
 
 
 @pytest.fixture

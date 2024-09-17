@@ -26,6 +26,10 @@ class FileScanner:
         self.entity_database = EntityDB.load(root_path=self.config_path)
         self.run_scan()
 
+        # If we have tracked entities, refresh the database to scan for new downloads and manga updates
+        if self.entity_database.has_tracked_entities:
+            self.entity_database.refresh(self.storage_path)
+
     def run_scan(self):
         self.entity_database = EntityDB.load(root_path=self.config_path)
         self.recently_updated = []
