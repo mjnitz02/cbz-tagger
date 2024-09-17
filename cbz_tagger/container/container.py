@@ -57,7 +57,7 @@ def run_container(**kwargs):
 
     env_vars = get_environment_variables()
 
-    if kwargs["entrymode"]:
+    if kwargs.get("entrymode"):
         container_mode = AppEnv.CONTAINER_MODE
         if container_mode == ContainerMode.TIMER:
             container = TimerContainer(**env_vars)
@@ -66,9 +66,9 @@ def run_container(**kwargs):
         container.run()
     else:
         container = ManualContainer(**env_vars)
-        if kwargs["add"]:
+        if kwargs.get("add"):
             container.scanner.add_tracked_entity()
-        elif kwargs["refresh"]:
+        elif kwargs.get("refresh"):
             container.scanner.refresh()
         else:
             container.scanner.run()
