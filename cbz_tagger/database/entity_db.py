@@ -278,7 +278,7 @@ class EntityDB:
         cbz_files = sorted(f for f in os.listdir(chapter_filepath) if os.path.splitext(f)[-1] in (".jpg", ".xml"))
         with ZipFile(f"{chapter_filepath}.cbz", "w", ZIP_DEFLATED) as zip_write:
             for cbz_file in cbz_files:
-                if not os.path.exists(cbz_file):
+                if not os.path.exists(os.path.join(chapter_filepath, cbz_file)):
                     raise EnvironmentError(f"Could not find file to add to CBZ: {cbz_file}")
                 zip_write.write(os.path.join(chapter_filepath, cbz_file), cbz_file)
 

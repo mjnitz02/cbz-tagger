@@ -2,10 +2,8 @@ import os
 from io import BytesIO
 from typing import List
 
-import requests
 from PIL import Image
 
-from cbz_tagger.common.helpers import unpaginate_request
 from cbz_tagger.entities.base_entity import BaseEntity
 
 
@@ -19,7 +17,7 @@ class ChapterEntity(BaseEntity):
     def from_server_url(cls, query_params=None):
         entity_id = query_params["ids[]"][0]
 
-        response = unpaginate_request(f"{cls.entity_url}/{entity_id}/feed")
+        response = cls.unpaginate_request(f"{cls.entity_url}/{entity_id}/feed")
         return [cls(data) for data in response]
 
     @property
@@ -64,7 +62,7 @@ class ChapterEntity(BaseEntity):
     def download_chapter(self, filepath) -> List[str]:
         # Get chapter image urls
         url = f"{self.download_url}/{self.entity_id}"
-        response = requests.get(url, timeout=60).json()
+        response = self.request_with_retry(url).json()
         base_url = f"{response['baseUrl']}/{self.quality}/{response['chapter']['hash']}"
 
         # Download the images for the chapter

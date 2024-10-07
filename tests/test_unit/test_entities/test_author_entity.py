@@ -13,7 +13,7 @@ def test_author_entity(author_request_content):
 
 
 def test_author_entity_from_url(author_request_response):
-    with mock.patch("cbz_tagger.entities.base_entity.unpaginate_request") as mock_request:
+    with mock.patch("cbz_tagger.entities.base_entity.BaseEntity.unpaginate_request") as mock_request:
         mock_request.return_value = author_request_response["data"]
         entities = AuthorEntity.from_server_url()
         assert len(entities) == 1

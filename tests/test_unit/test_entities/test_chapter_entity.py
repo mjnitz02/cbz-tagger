@@ -48,7 +48,7 @@ def test_chapter_entity_with_decimal_chapter(chapter_request_content):
 
 
 def test_chapter_from_url(chapter_request_response):
-    with mock.patch("cbz_tagger.entities.chapter_entity.unpaginate_request") as mock_request:
+    with mock.patch("cbz_tagger.entities.chapter_entity.ChapterEntity.unpaginate_request") as mock_request:
         mock_request.return_value = chapter_request_response["data"]
         entities = ChapterEntity.from_server_url(query_params={"ids[]": ["1361d404-d03c-4fd9-97b4-2c297914b098"]})
         # This test will see the english cover
@@ -65,7 +65,7 @@ def test_cover_entity_can_store_and_load(cover_request_content, check_entity_for
     check_entity_for_save_and_load(entity)
 
 
-@patch("cbz_tagger.entities.chapter_entity.requests.get")
+@patch("cbz_tagger.entities.chapter_entity.ChapterEntity.request_with_retry")
 @patch("cbz_tagger.entities.chapter_entity.Image.open")
 @patch("cbz_tagger.entities.chapter_entity.os.path.exists", return_value=False)
 @patch("cbz_tagger.entities.chapter_entity.ChapterEntity.download_file")
@@ -83,13 +83,13 @@ def test_download_chapter(mock_download_file, mock_path_exists, mock_image_open,
     result = chapter_entity.download_chapter("/fake/filepath")
 
     assert result == ["/fake/filepath/001.jpg", "/fake/filepath/002.jpg"]
-    mock_requests_get.assert_called_once_with("https://api.mangadex.org/at-home/server/chapter_id", timeout=60)
+    mock_requests_get.assert_called_once_with("https://api.mangadex.org/at-home/server/chapter_id")
     mock_download_file.assert_any_call("http://example.com/data/hash_value/image1.jpg")
     mock_download_file.assert_any_call("http://example.com/data/hash_value/image2.jpg")
     assert mock_image.save.call_count == 2
 
 
-@patch("cbz_tagger.entities.chapter_entity.requests.get")
+@patch("cbz_tagger.entities.chapter_entity.ChapterEntity.request_with_retry")
 @patch("cbz_tagger.entities.chapter_entity.os.path.exists", return_value=False)
 @patch("cbz_tagger.entities.chapter_entity.ChapterEntity.download_file")
 def test_download_chapter_raises_environment_error(
@@ -105,4 +105,4 @@ def test_download_chapter_raises_environment_error(
     with pytest.raises(EnvironmentError, match="Failed to download file"):
         chapter_entity.download_chapter("/fake/filepath")
 
-    mock_requests_get.assert_called_once_with("https://api.mangadex.org/at-home/server/chapter_id", timeout=60)
+    mock_requests_get.assert_called_once_with("https://api.mangadex.org/at-home/server/chapter_id")

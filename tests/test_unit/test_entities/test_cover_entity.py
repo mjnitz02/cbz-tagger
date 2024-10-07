@@ -35,7 +35,7 @@ def test_cover_entity_with_png(cover_request_content_png):
 
 
 def test_cover_entity_from_url(cover_request_response):
-    with mock.patch("cbz_tagger.entities.base_entity.unpaginate_request") as mock_request:
+    with mock.patch("cbz_tagger.entities.base_entity.BaseEntity.unpaginate_request") as mock_request:
         mock_request.return_value = cover_request_response["data"]
         entities = CoverEntity.from_server_url()
         # This test will see the english cover

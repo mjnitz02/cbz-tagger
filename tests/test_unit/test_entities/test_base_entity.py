@@ -41,7 +41,7 @@ def test_download_file_success(mock_sleep, mock_requests_get):
     result = BaseEntity.download_file("http://example.com/file")
 
     assert result == b"file content"
-    mock_requests_get.assert_called_once_with("http://example.com/file", timeout=60)
+    mock_requests_get.assert_called_once_with("http://example.com/file", params=None, timeout=60)
     mock_sleep.assert_called_once()
 
 
@@ -69,7 +69,9 @@ def test_download_file_failure(mock_sleep, mock_requests_get):
     mock_response.status_code = 500
     mock_requests_get.return_value = mock_response
 
-    with pytest.raises(EnvironmentError, match="Failed to download http://example.com/file after 3 attempts"):
+    with pytest.raises(
+        EnvironmentError, match="Failed to receive response from http://example.com/file after 3 attempts"
+    ):
         BaseEntity.download_file("http://example.com/file")
 
     assert mock_requests_get.call_count == 3
