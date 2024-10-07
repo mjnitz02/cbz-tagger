@@ -42,9 +42,9 @@ class ChapterEntity(BaseEntity):
         try:
             if self.chapter_number.is_integer():
                 chapter_number = int(self.chapter_number)
-            else:
-                chapter_number = self.chapter_number
-            return f"{chapter_number:03}"
+                return f"{chapter_number:03}"
+            chapter_number = self.chapter_number
+            return f"{chapter_number:05}"
         except (ValueError, TypeError):
             return str(self.chapter_number)
 

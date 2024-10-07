@@ -12,6 +12,7 @@ from zipfile import ZipFile
 
 from cbz_tagger.common.helpers import get_input
 from cbz_tagger.common.helpers import get_raw_input
+from cbz_tagger.common.helpers import set_file_ownership
 from cbz_tagger.database.author_entity_db import AuthorEntityDB
 from cbz_tagger.database.chapter_entity_db import ChapterEntityDB
 from cbz_tagger.database.cover_entity_db import CoverEntityDB
@@ -262,6 +263,9 @@ class EntityDB:
             self.save()
             # Cleanup excess
             shutil.rmtree(chapter_filepath)
+
+            # Set the ownership of the file
+            set_file_ownership(f"{chapter_filepath}.cbz")
         except EnvironmentError as err:
             print(f"Could not download chapter: {entity_id}, {chapter_item.entity_id}", err)
 

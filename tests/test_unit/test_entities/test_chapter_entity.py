@@ -18,6 +18,20 @@ def test_chapter_entity(chapter_request_content):
     assert entity.translated_language == "en"
 
 
+def test_chapter_entity_with_decimal_chapter(chapter_request_content):
+    chapter_request_content["attributes"]["chapter"] = "5.5"
+    entity = ChapterEntity(content=chapter_request_content)
+    assert entity.entity_id == "1361d404-d03c-4fd9-97b4-2c297914b098"
+    assert entity.entity_type == "chapter"
+
+    assert entity.volume_number == 1.0
+    assert entity.chapter_number == 5.5
+    assert entity.chapter_string == "5.5"
+    assert entity.padded_chapter_string == "005.5"
+    assert entity.quality == "data"
+    assert entity.translated_language == "en"
+
+
 def test_chapter_from_url(chapter_request_response):
     with mock.patch("cbz_tagger.entities.chapter_entity.unpaginate_request") as mock_request:
         mock_request.return_value = chapter_request_response["data"]

@@ -1,3 +1,6 @@
+import grp
+import os
+import pwd
 from json import JSONDecodeError
 from time import sleep
 from typing import Any
@@ -54,3 +57,12 @@ def unpaginate_request(url, query_params=None, limit=50) -> List[Dict[str, Any]]
             sleep(MANGADEX_DELAY_PER_REQUEST)
     except JSONDecodeError as exc:
         raise EnvironmentError("Mangadex API is down! Please try again later!") from exc
+
+
+def set_file_ownership(file_path):
+    puid = pwd.getpwnam("nobody").pw_uid
+    pgid = grp.getgrnam("nogroup").gr_gid
+    try:
+        os.chown(file_path, puid, pgid)
+    except PermissionError:
+        print(f"ERROR >> Unable to set permissions on {file_path}, {puid}, {pgid}")
