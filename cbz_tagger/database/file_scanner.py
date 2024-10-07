@@ -94,7 +94,8 @@ class FileScanner:
             entity_name, entity_xml, entity_image_path = self.entity_database.get_comicinfo_and_image(
                 manga_name, chapter_number
             )
-            print(entity_name, entity_image_path)
+            if entity_name is None:
+                raise RuntimeError(f"ERROR >> {manga_name} not in database. Run manual mode to add new series.")
             return entity_name, entity_xml, entity_image_path
 
         except (RuntimeError, EnvironmentError):
