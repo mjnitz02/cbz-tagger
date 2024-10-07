@@ -1,5 +1,4 @@
 import grp
-import os
 import pwd
 from json import JSONDecodeError
 from time import sleep
@@ -63,6 +62,7 @@ def set_file_ownership(file_path):
     puid = pwd.getpwnam("nobody").pw_uid
     pgid = grp.getgrnam("nogroup").gr_gid
     try:
-        os.chown(file_path, puid, pgid)
+        # os.chown(file_path, puid, pgid)
+        pass
     except PermissionError:
         print(f"ERROR >> Unable to set permissions on {file_path}, {puid}, {pgid}")
