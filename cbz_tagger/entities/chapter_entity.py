@@ -33,6 +33,17 @@ class ChapterEntity(BaseEntity):
                 chapter_number = int(self.chapter_number)
             else:
                 chapter_number = self.chapter_number
+            return f"{chapter_number}"
+        except (ValueError, TypeError):
+            return str(self.chapter_number)
+
+    @property
+    def padded_chapter_string(self) -> str:
+        try:
+            if self.chapter_number.is_integer():
+                chapter_number = int(self.chapter_number)
+            else:
+                chapter_number = self.chapter_number
             return f"{chapter_number:03}"
         except (ValueError, TypeError):
             return str(self.chapter_number)

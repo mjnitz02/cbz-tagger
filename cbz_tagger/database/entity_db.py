@@ -231,7 +231,7 @@ class EntityDB:
             return
 
         manga_name = next(iter(name for name, id in self.entity_map.items() if id == entity_id))
-        chapter_name = f"{manga_name} - Chapter {chapter_item.chapter_string}"
+        chapter_name = f"{manga_name} - Chapter {chapter_item.padded_chapter_string}"
 
         chapter_filepath = os.path.join(storage_path, manga_name, chapter_name)
         print(f"Downloading {chapter_name}...")

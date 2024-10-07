@@ -12,7 +12,8 @@ def test_chapter_entity(chapter_request_content):
 
     assert entity.volume_number == 1.0
     assert entity.chapter_number == 5
-    assert entity.chapter_string == "005"
+    assert entity.chapter_string == "5"
+    assert entity.padded_chapter_string == "005"
     assert entity.quality == "data"
     assert entity.translated_language == "en"
 
