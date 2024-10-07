@@ -61,5 +61,6 @@ class BaseEntity(BaseEntityObject):
                 return response.content
             print(f"Error downloading {url}: {response.status_code}")
             attempt += 1
+            sleep(MANGADEX_DELAY_PER_REQUEST)
 
         raise EnvironmentError(f"Failed to download {url} after {retries} attempts")

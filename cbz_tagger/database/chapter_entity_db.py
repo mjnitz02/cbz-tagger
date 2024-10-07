@@ -49,7 +49,7 @@ class ChapterEntityDB(BaseEntityDB):
         return filtered_content
 
     def download(self, entity_id: str, chapter_id: str, filepath: str):
-        chapter = next(iter(c for c in self[entity_id] if c.entity_id == chapter_id), None)
+        chapter: ChapterEntity = next(iter(c for c in self[entity_id] if c.entity_id == chapter_id), None)
         if chapter is not None:
             return chapter.download_chapter(filepath)
 

@@ -238,36 +238,49 @@ class EntityDB:
         print(f"Downloading {chapter_name}...")
         try:
             os.makedirs(chapter_filepath, exist_ok=True)
-            # Write the comicinfo.xml file
-            entity_xml = self.to_xml_string(manga_name, chapter_item.chapter_string)
-            with open(os.path.join(chapter_filepath, "ComicInfo.xml"), "w", encoding="UTF-8") as write_file:
-                write_file.write(entity_xml)
-
-            # Write the cover image
-            cover_path = self.to_local_image_file(manga_name, chapter_item.chapter_string)
-            entity_image_path = os.path.join(self.image_db_path, cover_path)
-            with open(os.path.join(chapter_filepath, "000_cover.jpg"), "wb") as write_file:
-                with open(entity_image_path, "rb") as read_file:
-                    write_file.write(read_file.read())
+            # Build the chapter metadata files
+            self.build_chapter_metadata(manga_name, chapter_item, chapter_filepath)
 
             # Download the chapter images and write them to the folder
             self.chapters.download(entity_id, chapter_item.entity_id, chapter_filepath)
 
-            cbz_files = sorted(f for f in os.listdir(chapter_filepath) if os.path.splitext(f)[-1] in (".jpg", ".xml"))
-            with ZipFile(f"{chapter_filepath}.cbz", "w", ZIP_DEFLATED) as zip_write:
-                for cbz_file in cbz_files:
-                    zip_write.write(os.path.join(chapter_filepath, cbz_file), cbz_file)
-            # Mark cbz creation as successful
+            # Build the chapter CBZ file
+            self.build_chapter_cbz(chapter_filepath)
+
+            # Mark cbz creation as successful and save the database
             self.entity_downloads.add((entity_id, chapter_item.entity_id))
-            # Save that the chapter was downloaded
             self.save()
-            # Cleanup excess
-            shutil.rmtree(chapter_filepath)
 
             # Set the ownership of the file
             set_file_ownership(f"{chapter_filepath}.cbz")
         except EnvironmentError as err:
             print(f"Could not download chapter: {entity_id}, {chapter_item.entity_id}", err)
+            if os.path.exists(f"{chapter_filepath}.cbz"):
+                os.remove(f"{chapter_filepath}.cbz")
+        finally:
+            # Cleanup excess
+            shutil.rmtree(chapter_filepath)
+
+    def build_chapter_metadata(self, manga_name, chapter_item, chapter_filepath):
+        # Write the comicinfo.xml file
+        entity_xml = self.to_xml_string(manga_name, chapter_item.chapter_string)
+        with open(os.path.join(chapter_filepath, "ComicInfo.xml"), "w", encoding="UTF-8") as write_file:
+            write_file.write(entity_xml)
+
+        # Write the cover image
+        cover_path = self.to_local_image_file(manga_name, chapter_item.chapter_string)
+        entity_image_path = os.path.join(self.image_db_path, cover_path)
+        with open(os.path.join(chapter_filepath, "000_cover.jpg"), "wb") as write_file:
+            with open(entity_image_path, "rb") as read_file:
+                write_file.write(read_file.read())
+
+    def build_chapter_cbz(self, chapter_filepath):
+        cbz_files = sorted(f for f in os.listdir(chapter_filepath) if os.path.splitext(f)[-1] in (".jpg", ".xml"))
+        with ZipFile(f"{chapter_filepath}.cbz", "w", ZIP_DEFLATED) as zip_write:
+            for cbz_file in cbz_files:
+                if not os.path.exists(cbz_file):
+                    raise EnvironmentError(f"Could not find file to add to CBZ: {cbz_file}")
+                zip_write.write(os.path.join(chapter_filepath, cbz_file), cbz_file)
 
     @staticmethod
     def clean_entity_name(entity_name):

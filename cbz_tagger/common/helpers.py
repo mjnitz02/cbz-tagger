@@ -1,5 +1,4 @@
-import grp
-import pwd
+import os
 from json import JSONDecodeError
 from time import sleep
 from typing import Any
@@ -9,6 +8,7 @@ from typing import List
 import requests
 
 from cbz_tagger.common.enums import MANGADEX_DELAY_PER_REQUEST
+from cbz_tagger.common.env import AppEnv
 
 
 def get_input(desc, max_val, allow_negative_exit=False):
@@ -59,10 +59,8 @@ def unpaginate_request(url, query_params=None, limit=50) -> List[Dict[str, Any]]
 
 
 def set_file_ownership(file_path):
-    puid = pwd.getpwnam("nobody").pw_uid
-    pgid = grp.getgrnam("nogroup").gr_gid
+    env = AppEnv()
     try:
-        # os.chown(file_path, puid, pgid)
-        pass
+        os.chown(file_path, env.PUID, env.PGID)
     except PermissionError:
-        print(f"ERROR >> Unable to set permissions on {file_path}, {puid}, {pgid}")
+        print(f"ERROR >> Unable to set permissions on {file_path}, {env.PUID}, {env.PGID}")

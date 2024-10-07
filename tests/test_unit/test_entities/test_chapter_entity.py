@@ -1,8 +1,23 @@
 from unittest import mock
+from unittest.mock import MagicMock
+from unittest.mock import patch
+
+import pytest
 
 from cbz_tagger.entities.base_entity import BaseEntity
 from cbz_tagger.entities.chapter_entity import ChapterEntity
 from cbz_tagger.entities.cover_entity import CoverEntity
+
+
+@pytest.fixture
+def chapter_entity():
+    return ChapterEntity(
+        {
+            "id": "chapter_id",
+            "attributes": {"chapter": "1", "translatedLanguage": "en"},
+            "relationships": [{"type": "scanlation_group", "id": "group_id"}],
+        }
+    )
 
 
 def test_chapter_entity(chapter_request_content):
@@ -48,3 +63,46 @@ def test_chapter_from_url(chapter_request_response):
 def test_cover_entity_can_store_and_load(cover_request_content, check_entity_for_save_and_load):
     entity = CoverEntity(content=cover_request_content)
     check_entity_for_save_and_load(entity)
+
+
+@patch("cbz_tagger.entities.chapter_entity.requests.get")
+@patch("cbz_tagger.entities.chapter_entity.Image.open")
+@patch("cbz_tagger.entities.chapter_entity.os.path.exists", return_value=False)
+@patch("cbz_tagger.entities.chapter_entity.ChapterEntity.download_file")
+def test_download_chapter(mock_download_file, mock_path_exists, mock_image_open, mock_requests_get, chapter_entity):
+    _ = mock_path_exists
+    mock_requests_get.return_value.json.return_value = {
+        "baseUrl": "http://example.com",
+        "chapter": {"hash": "hash_value", "data": ["image1.jpg", "image2.jpg"]},
+    }
+    mock_download_file.return_value = b"image data"
+    mock_image = MagicMock()
+    mock_image.format = "JPEG"
+    mock_image_open.return_value = mock_image
+
+    result = chapter_entity.download_chapter("/fake/filepath")
+
+    assert result == ["/fake/filepath/001.jpg", "/fake/filepath/002.jpg"]
+    mock_requests_get.assert_called_once_with("https://api.mangadex.org/at-home/server/chapter_id", timeout=60)
+    mock_download_file.assert_any_call("http://example.com/data/hash_value/image1.jpg")
+    mock_download_file.assert_any_call("http://example.com/data/hash_value/image2.jpg")
+    assert mock_image.save.call_count == 2
+
+
+@patch("cbz_tagger.entities.chapter_entity.requests.get")
+@patch("cbz_tagger.entities.chapter_entity.os.path.exists", return_value=False)
+@patch("cbz_tagger.entities.chapter_entity.ChapterEntity.download_file")
+def test_download_chapter_raises_environment_error(
+    mock_download_file, mock_path_exists, mock_requests_get, chapter_entity
+):
+    _ = mock_path_exists
+    mock_requests_get.return_value.json.return_value = {
+        "baseUrl": "http://example.com",
+        "chapter": {"hash": "hash_value", "data": ["image1.jpg", "image2.jpg"]},
+    }
+    mock_download_file.side_effect = EnvironmentError("Failed to download file")
+
+    with pytest.raises(EnvironmentError, match="Failed to download file"):
+        chapter_entity.download_chapter("/fake/filepath")
+
+    mock_requests_get.assert_called_once_with("https://api.mangadex.org/at-home/server/chapter_id", timeout=60)
