@@ -111,7 +111,7 @@ class EntityDB:
             covers=CoverEntityDB.from_json(content["covers"]),
             authors=AuthorEntityDB.from_json(content["authors"]),
             volumes=VolumeEntityDB.from_json(content["volumes"]),
-            chapters=ChapterEntityDB.from_json(content["chapters"]),
+            chapters=ChapterEntityDB.from_json(content.get("chapters", "{}")),
         )
 
     def check_manga_missing(self, manga_name):

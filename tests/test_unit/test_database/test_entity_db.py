@@ -1,3 +1,4 @@
+import json
 import os
 from unittest import mock
 
@@ -21,6 +22,7 @@ def test_entity_db_can_store_and_load(mock_entity_db, manga_request_id):
     assert len(mock_entity_db.covers) == 1
     assert len(mock_entity_db.metadata) == 1
     assert len(mock_entity_db.volumes) == 1
+    assert len(mock_entity_db.chapters) == 1
 
     json_str = mock_entity_db.to_json()
     new_mock_entity_db = EntityDB.from_json("mock", json_str)
@@ -30,9 +32,40 @@ def test_entity_db_can_store_and_load(mock_entity_db, manga_request_id):
     assert len(new_mock_entity_db.covers) == 1
     assert len(new_mock_entity_db.metadata) == 1
     assert len(new_mock_entity_db.volumes) == 1
+    assert len(new_mock_entity_db.chapters) == 1
 
     new_json_str = new_mock_entity_db.to_json()
     assert json_str == new_json_str
+
+
+def test_entity_db_can_load_backwards_compatible(mock_entity_db, manga_request_id):
+    assert mock_entity_db.entity_map == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
+    assert mock_entity_db.entity_names == {manga_request_id: "Oshimai"}
+    assert len(mock_entity_db.authors) == 1
+    assert len(mock_entity_db.covers) == 1
+    assert len(mock_entity_db.metadata) == 1
+    assert len(mock_entity_db.volumes) == 1
+    assert len(mock_entity_db.chapters) == 1
+
+    legacy_json_dump = {
+        "entity_map": mock_entity_db.entity_map,
+        "entity_names": mock_entity_db.entity_names,
+        "metadata": mock_entity_db.metadata.to_json(),
+        "covers": mock_entity_db.covers.to_json(),
+        "authors": mock_entity_db.authors.to_json(),
+        "volumes": mock_entity_db.volumes.to_json(),
+    }
+    legacy_json_dump = json.dumps(legacy_json_dump)
+    new_mock_entity_db = EntityDB.from_json("mock", legacy_json_dump)
+    assert new_mock_entity_db.entity_map == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
+    assert new_mock_entity_db.entity_names == {manga_request_id: "Oshimai"}
+    assert len(new_mock_entity_db.authors) == 1
+    assert len(new_mock_entity_db.covers) == 1
+    assert len(new_mock_entity_db.metadata) == 1
+    assert len(new_mock_entity_db.volumes) == 1
+    assert len(new_mock_entity_db.chapters) == 0
+    assert len(new_mock_entity_db.entity_downloads) == 0
+    assert len(new_mock_entity_db.entity_tracked) == 0
 
 
 def test_entity_db_to_entity_name(mock_entity_db, manga_name):
