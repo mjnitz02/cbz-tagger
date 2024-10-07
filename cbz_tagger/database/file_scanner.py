@@ -94,6 +94,7 @@ class FileScanner:
             entity_name, entity_xml, entity_image_path = self.entity_database.get_comicinfo_and_image(
                 manga_name, chapter_number
             )
+            print(entity_name, entity_image_path)
             return entity_name, entity_xml, entity_image_path
 
         except (RuntimeError, EnvironmentError):

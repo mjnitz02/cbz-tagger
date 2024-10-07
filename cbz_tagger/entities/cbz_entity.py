@@ -84,6 +84,7 @@ class CbzEntity:
         return os.path.join(self.scan_path, self.filepath)
 
     def get_entity_write_path(self, entity_name, chapter_number):
+        print(f"DEBUG: {self.config_path}, {self.scan_path}, {self.storage_path}, {entity_name}, {chapter_number}")
         os.makedirs(os.path.join(self.storage_path, entity_name), exist_ok=True)
         chapter_number_string = str(chapter_number)
         if "." in chapter_number_string:
