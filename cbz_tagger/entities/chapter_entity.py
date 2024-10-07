@@ -33,7 +33,7 @@ class ChapterEntity(BaseEntity):
                 chapter_number = int(self.chapter_number)
             else:
                 chapter_number = self.chapter_number
-            return str(chapter_number)
+            return f"{chapter_number:03}"
         except (ValueError, TypeError):
             return str(self.chapter_number)
 

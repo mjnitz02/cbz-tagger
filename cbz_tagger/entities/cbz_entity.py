@@ -1,4 +1,6 @@
+import grp
 import os
+import pwd
 import re
 from zipfile import ZIP_DEFLATED
 from zipfile import ZipFile
@@ -120,9 +122,10 @@ class CbzEntity:
         if remove_on_write:
             os.remove(read_path)
 
-        # if environment:
-        #     try:
-        #         os.chown(write_path, environment.get("puid"), environment.get("pgid"))
-        #         os.chmod(write_path, 0o644)
-        #     except PermissionError:
-        #         print(f"ERROR >> Unable to set permissions on {write_path}")
+        if environment:
+            puid = pwd.getpwnam("nobody").pw_uid
+            pgid = grp.getgrnam("nogroup").gr_gid
+            try:
+                os.chown(write_path, puid, pgid)
+            except PermissionError:
+                print(f"ERROR >> Unable to set permissions on {write_path}, {puid}, {pgid}")
