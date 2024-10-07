@@ -74,7 +74,8 @@ class FileScanner:
     def process(self, filepath):
         cbz_entity = CbzEntity(filepath, self.config_path, self.scan_path, self.storage_path)
         entity_name, entity_xml, entity_image_path = self.get_cbz_comicinfo_and_image(cbz_entity)
-        cbz_entity.build(entity_name, entity_xml, entity_image_path, environment=self.environment)
+        if entity_name:
+            cbz_entity.build(entity_name, entity_xml, entity_image_path, environment=self.environment)
 
     def get_cbz_comicinfo_and_image(self, cbz_entity: CbzEntity):
         manga_name, chapter_number = cbz_entity.get_name_and_chapter()
