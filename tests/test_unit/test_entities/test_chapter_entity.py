@@ -14,7 +14,7 @@ def chapter_entity():
     return ChapterEntity(
         {
             "id": "chapter_id",
-            "attributes": {"chapter": "1", "translatedLanguage": "en"},
+            "attributes": {"chapter": "1", "translatedLanguage": "en", "pages": 2},
             "relationships": [{"type": "scanlation_group", "id": "group_id"}],
         }
     )
@@ -57,7 +57,11 @@ def test_chapter_from_url(chapter_request_response):
         assert entities[1].entity_id == "057c0bce-fd18-44ea-ad64-cefa92378d49"
         assert entities[2].entity_id == "01c86808-46fb-4108-aa5d-4e87aee8b2f1"
         assert entities[3].entity_id == "19020b28-67b1-48a2-82a6-9b7ad18a5c37"
-        mock_request.assert_called_once_with(f"{BaseEntity.base_url}/manga/1361d404-d03c-4fd9-97b4-2c297914b098/feed")
+        mock_request.assert_called_once_with(
+            f"{BaseEntity.base_url}/manga/1361d404-d03c-4fd9-97b4-2c297914b098/feed?"
+            f"order%5BcreatedAt%5D=asc&order%5BupdatedAt%5D=asc&order%5BpublishAt%5D=asc&"
+            f"order%5BreadableAt%5D=asc&order%5Bvolume%5D=asc&order%5Bchapter%5D=asc"
+        )
 
 
 def test_cover_entity_can_store_and_load(cover_request_content, check_entity_for_save_and_load):

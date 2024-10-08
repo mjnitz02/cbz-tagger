@@ -61,7 +61,7 @@ class BaseEntity(BaseEntityObject):
                 return response
             print(f"Error downloading {url}: {response.status_code}")
             attempt += 1
-            sleep(5 * (attempt + 1))
+            sleep(5 * attempt)
 
         raise EnvironmentError(f"Failed to receive response from {url} after {retries} attempts")
 
@@ -70,12 +70,13 @@ class BaseEntity(BaseEntityObject):
         return cls.request_with_retry(url).content
 
     @classmethod
-    def unpaginate_request(cls, url, query_params=None, limit=50) -> List[Dict[str, Any]]:
+    def unpaginate_request(cls, url, query_params=None, limit=100) -> List[Dict[str, Any]]:
         if query_params is None:
             query_params = {}
 
         response_content = []
         offset = 0
+        total = None
         try:
             while True:
                 params = {"limit": limit, "offset": offset}
@@ -83,11 +84,17 @@ class BaseEntity(BaseEntityObject):
 
                 response = cls.request_with_retry(url, params=params)
                 response_json = response.json()
+                if total is None:
+                    total = response_json["total"]
 
                 response_content.extend(response_json["data"])
 
                 offset += limit
                 if offset >= response_json["total"]:
+                    # This is a deep sanity check to ensure the uniqueness of the retrieved IDs.
+                    # Some endpoints with specific settings may return non-deterministic responses :(
+                    if len(set(r["id"] for r in response_content)) != total:
+                        raise EnvironmentError("Paginated response contains duplicate entries")
                     return response_content
 
                 # Only make 2 queries per second

@@ -29,7 +29,7 @@ def build_test_cbz(tests_fixtures_path, scan_path, manga_name):
 
 @pytest.fixture
 def capture_input_fixture():
-    def _func(manga_name):
+    def _func(manga_name, mark_all_chapters=False):
         def capture_input(test_input, *args, **kwargs):
             _ = args, kwargs
             if test_input == "Enter a new name to search for: ":
@@ -37,6 +37,8 @@ def capture_input_fixture():
             if test_input == "Please select the manga that you are searching for in number: ":
                 return 1
             if "Mark all chapters" in test_input:
+                if mark_all_chapters:
+                    return 1
                 return 0
             return 0
 

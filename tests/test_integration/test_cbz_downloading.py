@@ -15,8 +15,8 @@ def test_download_cbz_files_with_mark_all_tracked(
         _ = url, path
         assert True
 
-    mock_get_input.side_effect = capture_input_fixture(manga_name)
-    mock_get_raw_input.side_effect = capture_input_fixture(manga_name)
+    mock_get_input.side_effect = capture_input_fixture(manga_name, mark_all_chapters=True)
+    mock_get_raw_input.side_effect = capture_input_fixture(manga_name, mark_all_chapters=True)
     mock_download_file.side_effect = capture_download_file
 
     # Assert we can add a "tracked" entity to the database, and we're marking everything as completed

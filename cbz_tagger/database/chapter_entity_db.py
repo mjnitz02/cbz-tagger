@@ -41,6 +41,9 @@ class ChapterEntityDB(BaseEntityDB):
                         filtered_chapters.append(entry)
                         break
 
+        if len(filtered_chapters) != len(grouped_chapters.keys()):
+            raise ValueError("Chapter entries are not being filtered correctly")
+
         return filtered_chapters
 
     def format_content_for_entity(self, content, entity_id: Optional[str] = None):

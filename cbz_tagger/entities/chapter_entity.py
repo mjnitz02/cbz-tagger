@@ -1,5 +1,6 @@
 import os
 from io import BytesIO
+from time import sleep
 from typing import List
 
 from PIL import Image
@@ -17,7 +18,16 @@ class ChapterEntity(BaseEntity):
     def from_server_url(cls, query_params=None):
         entity_id = query_params["ids[]"][0]
 
-        response = cls.unpaginate_request(f"{cls.entity_url}/{entity_id}/feed")
+        order = {
+            "createdAt": "asc",
+            "updatedAt": "asc",
+            "publishAt": "asc",
+            "readableAt": "asc",
+            "volume": "asc",
+            "chapter": "asc",
+        }
+        params = "&".join([f"order%5B{key}%5D={value}" for key, value in order.items()])
+        response = cls.unpaginate_request(f"{cls.entity_url}/{entity_id}/feed?{params}")
         return [cls(data) for data in response]
 
     @property
@@ -55,6 +65,10 @@ class ChapterEntity(BaseEntity):
         return self.attributes.get("translatedLanguage")
 
     @property
+    def pages(self):
+        return self.attributes.get("pages")
+
+    @property
     def scanlation_group(self):
         group = next(iter(rel for rel in self.relationships if rel["type"] == "scanlation_group"), {})
         return group.get("id", "none")
@@ -63,6 +77,17 @@ class ChapterEntity(BaseEntity):
         # Get chapter image urls
         url = f"{self.download_url}/{self.entity_id}"
         response = self.request_with_retry(url).json()
+
+        # If we didn't retrieve enough pages, try to query again
+        if len(response["chapter"][self.quality]) != self.pages:
+            print("Not enough pages returned from server. Waiting 10s and retrying query.")
+            sleep(10)
+            response = self.request_with_retry(url).json()
+            if len(response["chapter"][self.quality]) != self.pages:
+                raise EnvironmentError(
+                    f"Failed to download chapter {self.entity_id}, not enough pages returned from server"
+                )
+
         base_url = f"{response['baseUrl']}/{self.quality}/{response['chapter']['hash']}"
 
         # Download the images for the chapter
@@ -77,5 +102,8 @@ class ChapterEntity(BaseEntity):
                 if in_memory_image.format != "JPEG":
                     in_memory_image = in_memory_image.convert("RGB")
                 in_memory_image.save(image_path, quality=95, optimize=True)
+
+        if len(cached_images) != self.pages:
+            raise EnvironmentError(f"Failed to download chapter {self.entity_id}, not enough pages saved from server")
 
         return cached_images
