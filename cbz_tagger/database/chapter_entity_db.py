@@ -41,6 +41,9 @@ class ChapterEntityDB(BaseEntityDB):
                         filtered_chapters.append(entry)
                         break
 
+        if len(filtered_chapters) != len(grouped_chapters.keys()):
+            raise ValueError("Chapter entries are not being filtered correctly")
+
         return filtered_chapters
 
     def format_content_for_entity(self, content, entity_id: Optional[str] = None):
@@ -49,7 +52,7 @@ class ChapterEntityDB(BaseEntityDB):
         return filtered_content
 
     def download(self, entity_id: str, chapter_id: str, filepath: str):
-        chapter = next(iter(c for c in self[entity_id] if c.entity_id == chapter_id), None)
+        chapter: ChapterEntity = next(iter(c for c in self[entity_id] if c.entity_id == chapter_id), None)
         if chapter is not None:
             return chapter.download_chapter(filepath)
 

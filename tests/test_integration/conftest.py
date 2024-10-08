@@ -1,61 +1,13 @@
 import os
-import shutil
 from zipfile import ZIP_DEFLATED
 from zipfile import ZipFile
 
 import pytest
 
-from cbz_tagger.container.container import get_environment_variables
-from cbz_tagger.database.file_scanner import FileScanner
-
 
 @pytest.fixture
 def manga_name():
     return "Precious. 4P Short Stories"
-
-
-@pytest.fixture
-def integration_path():
-    return os.path.dirname(os.path.realpath(__file__))
-
-
-@pytest.fixture
-def config_path(integration_path):
-    return os.path.join(integration_path, "config")
-
-
-@pytest.fixture
-def scan_path(integration_path):
-    return os.path.join(integration_path, "scan")
-
-
-@pytest.fixture
-def storage_path(integration_path):
-    return os.path.join(integration_path, "storage")
-
-
-@pytest.fixture
-def integration_scanner(config_path, scan_path, storage_path):
-    try:
-        os.makedirs(config_path, exist_ok=True)
-        os.makedirs(scan_path, exist_ok=True)
-        os.makedirs(storage_path, exist_ok=True)
-
-        env_vars = get_environment_variables()
-
-        scanner = FileScanner(
-            config_path=config_path,
-            scan_path=scan_path,
-            storage_path=storage_path,
-            environment=env_vars["environment"],
-        )
-
-        yield scanner
-
-    finally:
-        shutil.rmtree(config_path)
-        shutil.rmtree(scan_path)
-        shutil.rmtree(storage_path)
 
 
 @pytest.fixture
@@ -73,3 +25,23 @@ def build_test_cbz(tests_fixtures_path, scan_path, manga_name):
                 zip_write.write(image_source_path, f"{i:03}.jpg")
 
     return _build_test_cbz
+
+
+@pytest.fixture
+def capture_input_fixture():
+    def _func(manga_name, mark_all_chapters=False):
+        def capture_input(test_input, *args, **kwargs):
+            _ = args, kwargs
+            if test_input == "Enter a new name to search for: ":
+                return manga_name
+            if test_input == "Please select the manga that you are searching for in number: ":
+                return 1
+            if "Mark all chapters" in test_input:
+                if mark_all_chapters:
+                    return 1
+                return 0
+            return 0
+
+        return capture_input
+
+    return _func

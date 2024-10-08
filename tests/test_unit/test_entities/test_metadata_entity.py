@@ -34,7 +34,7 @@ def test_metadata_entity(manga_request_content):
 
 
 def test_metadata_entity_from_url(manga_request_response):
-    with mock.patch("cbz_tagger.entities.base_entity.unpaginate_request") as mock_request:
+    with mock.patch("cbz_tagger.entities.base_entity.BaseEntity.unpaginate_request") as mock_request:
         mock_request.return_value = manga_request_response["data"]
         entities = MetadataEntity.from_server_url()
         assert len(entities) == 2

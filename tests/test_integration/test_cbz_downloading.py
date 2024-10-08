@@ -6,29 +6,17 @@ from unittest import mock
 @mock.patch("cbz_tagger.database.entity_db.get_raw_input")
 @mock.patch("cbz_tagger.entities.chapter_entity.ChapterEntity.download_file")
 def test_download_cbz_files_with_mark_all_tracked(
-    mock_download_file, mock_get_raw_input, mock_get_input, integration_scanner, manga_name
+    mock_download_file, mock_get_raw_input, mock_get_input, integration_scanner, manga_name, capture_input_fixture
 ):
     """This test will add a new entry and mark it as fully downloaded. It will then attempt a refresh
     to verify that no files are downloaded or attempted to be downloaded during the refresh."""
-
-    def capture_input(test_input, *args, **kwargs):
-        _ = args, kwargs
-        if test_input == "Enter a new name to search for: ":
-            return manga_name
-        if test_input == "Please select the manga that you are searching for in number: ":
-            return 1
-        if test_input == "Please select the manga that you are searching for in number: ":
-            return 1
-        if "Mark all chapters" in test_input:
-            return 1
-        return 0
 
     def capture_download_file(url, path):
         _ = url, path
         assert True
 
-    mock_get_input.side_effect = capture_input
-    mock_get_raw_input.side_effect = capture_input
+    mock_get_input.side_effect = capture_input_fixture(manga_name, mark_all_chapters=True)
+    mock_get_raw_input.side_effect = capture_input_fixture(manga_name, mark_all_chapters=True)
     mock_download_file.side_effect = capture_download_file
 
     # Assert we can add a "tracked" entity to the database, and we're marking everything as completed
@@ -54,30 +42,18 @@ def test_download_cbz_files_with_mark_all_tracked(
 @mock.patch("cbz_tagger.database.entity_db.get_raw_input")
 @mock.patch("cbz_tagger.entities.chapter_entity.ChapterEntity.download_file")
 def test_download_cbz_files_without_mark_all_tracked(
-    mock_download_file, mock_get_raw_input, mock_get_input, integration_scanner, manga_name
+    mock_download_file, mock_get_raw_input, mock_get_input, integration_scanner, manga_name, capture_input_fixture
 ):
     """This test will add a new entry and mark it as not downloaded. It will then attempt a refresh
     to verify that each chapter is acquired, cleaned, and processed into the correct filename. The
     actual retrieval of any real files is mocked, so no files are actually downloaded."""
 
-    def capture_input(test_input, *args, **kwargs):
-        _ = args, kwargs
-        if test_input == "Enter a new name to search for: ":
-            return manga_name
-        if test_input == "Please select the manga that you are searching for in number: ":
-            return 1
-        if test_input == "Please select the manga that you are searching for in number: ":
-            return 1
-        if "Mark all chapters" in test_input:
-            return 0
-        return 0
-
     def capture_download_file(url, path):
         _ = url, path
         assert True
 
-    mock_get_input.side_effect = capture_input
-    mock_get_raw_input.side_effect = capture_input
+    mock_get_input.side_effect = capture_input_fixture(manga_name)
+    mock_get_raw_input.side_effect = capture_input_fixture(manga_name)
     mock_download_file.side_effect = capture_download_file
 
     # Assert we can add a "tracked" entity to the database, and we're marking everything as completed

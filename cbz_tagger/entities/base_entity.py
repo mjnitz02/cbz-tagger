@@ -1,4 +1,5 @@
 import json
+from json import JSONDecodeError
 from time import sleep
 from typing import Any
 from typing import Dict
@@ -7,7 +8,6 @@ from typing import List
 import requests
 
 from cbz_tagger.common.enums import MANGADEX_DELAY_PER_REQUEST
-from cbz_tagger.common.helpers import unpaginate_request
 
 
 class BaseEntityObject:
@@ -32,7 +32,7 @@ class BaseEntity(BaseEntityObject):
 
     @classmethod
     def from_server_url(cls, query_params=None):
-        response = unpaginate_request(cls.entity_url, query_params)
+        response = cls.unpaginate_request(cls.entity_url, query_params)
         return [cls(data) for data in response]
 
     @property
@@ -52,14 +52,52 @@ class BaseEntity(BaseEntityObject):
         return self.content.get("relationships", {})
 
     @staticmethod
-    def download_file(url, retries=3):
+    def request_with_retry(url, params=None, retries=3, timeout=60):
         attempt = 0
         while attempt < retries:
-            response = requests.get(url, timeout=60)
+            response = requests.get(url, params=params, timeout=timeout)
             if response.status_code == 200:
                 sleep(MANGADEX_DELAY_PER_REQUEST)
-                return response.content
+                return response
             print(f"Error downloading {url}: {response.status_code}")
             attempt += 1
+            sleep(5 * attempt)
 
-        raise EnvironmentError(f"Failed to download {url} after {retries} attempts")
+        raise EnvironmentError(f"Failed to receive response from {url} after {retries} attempts")
+
+    @classmethod
+    def download_file(cls, url):
+        return cls.request_with_retry(url).content
+
+    @classmethod
+    def unpaginate_request(cls, url, query_params=None, limit=100) -> List[Dict[str, Any]]:
+        if query_params is None:
+            query_params = {}
+
+        response_content = []
+        offset = 0
+        total = None
+        try:
+            while True:
+                params = {"limit": limit, "offset": offset}
+                params.update(query_params)
+
+                response = cls.request_with_retry(url, params=params)
+                response_json = response.json()
+                if total is None:
+                    total = response_json["total"]
+
+                response_content.extend(response_json["data"])
+
+                offset += limit
+                if offset >= response_json["total"]:
+                    # This is a deep sanity check to ensure the uniqueness of the retrieved IDs.
+                    # Some endpoints with specific settings may return non-deterministic responses :(
+                    if len(set(r["id"] for r in response_content)) != total:
+                        raise EnvironmentError("Paginated response contains duplicate entries")
+                    return response_content
+
+                # Only make 2 queries per second
+                sleep(MANGADEX_DELAY_PER_REQUEST)
+        except JSONDecodeError as exc:
+            raise EnvironmentError("Mangadex API is down! Please try again later!") from exc
