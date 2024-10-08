@@ -10,7 +10,6 @@ def test_download_cbz_files_with_mark_all_tracked(
 ):
     """This test will add a new entry and mark it as fully downloaded. It will then attempt a refresh
     to verify that no files are downloaded or attempted to be downloaded during the refresh."""
-
     def capture_download_file(url, path):
         _ = url, path
         assert True
