@@ -59,7 +59,7 @@ def test_download_file_retry_success(mock_sleep, mock_requests_get):
 
     assert result == b"file content"
     assert mock_requests_get.call_count == 2
-    mock_sleep.assert_called_with(0.5)
+    mock_sleep.assert_called_with(0.3)
 
 
 @patch("cbz_tagger.entities.base_entity.requests.get")
