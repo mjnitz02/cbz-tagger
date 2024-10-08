@@ -12,14 +12,14 @@ class AppEnv:
     elif platform.system() == "Darwin":
         PUID = pwd.getpwnam(getpass.getuser()).pw_uid
     else:
-        PUID = "99"
+        PUID = 99
 
     if os.getenv("PGID") is not None:
         PGID = os.getenv("PGID")
     elif platform.system() == "Darwin":
         PGID = pwd.getpwnam(getpass.getuser()).pw_gid
     else:
-        PGID = "100"
+        PGID = 100
 
     if os.getenv("UMASK") is not None:
         UMASK = os.getenv("UMASK")
