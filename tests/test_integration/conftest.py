@@ -36,10 +36,12 @@ def capture_input_fixture():
                 return manga_name
             if test_input == "Please select the manga that you are searching for in number: ":
                 return 1
+            if test_input == "Please select the local and storage name number: ":
+                return 1
             if "Mark all chapters" in test_input:
                 if mark_all_chapters:
-                    return 1
-                return 0
+                    return "y"
+                return "n"
             return 0
 
         return capture_input

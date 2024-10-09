@@ -134,7 +134,7 @@ class EntityDB:
         for title in entity.all_titles:
             print(f"{counter+1}. {title}")
             counter += 1
-        choice = get_input("Please select the manga that you are searching for in number: ", counter + 1)
+        choice = get_input("Please select the local and storage name number: ", counter + 1)
         entity_name = entity.all_titles[choice - 1]
 
         return entity_id, entity_name
@@ -162,7 +162,8 @@ class EntityDB:
 
     @staticmethod
     def should_mark_all_tracked(manga_name):
-        return get_input(f"Mark all chapters for {manga_name} as tracked? (y/n): ", 2) == 1
+        response = get_raw_input(f"Mark all chapters for {manga_name} as tracked? (y/n): ")
+        return response == "y"
 
     @staticmethod
     def find_mangadex_entry(search_term):

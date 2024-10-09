@@ -177,7 +177,7 @@ def test_entity_db_add_new_manga_with_update(
         simple_mock_entity_db.update_manga_entity_id.assert_called_once_with(manga_request_id)
 
 
-@mock.patch("cbz_tagger.database.entity_db.get_input")
+@mock.patch("cbz_tagger.database.entity_db.get_raw_input")
 def test_entity_db_add_new_manga_with_tracking_and_mark_all_downloaded(
     mock_get_input, simple_mock_entity_db, mock_chapter_db, manga_name, manga_request_id, manga_request_response
 ):
@@ -185,7 +185,7 @@ def test_entity_db_add_new_manga_with_tracking_and_mark_all_downloaded(
         mock_from_server_url.return_value = [MetadataEntity(data) for data in manga_request_response["data"]]
 
         # Simulate user selecting 1 for each input
-        mock_get_input.return_value = 1
+        mock_get_input.return_value = "y"
 
         simple_mock_entity_db.search = mock.MagicMock(return_value=(manga_request_id, "Oshimai"))
         simple_mock_entity_db.update_manga_entity_id = mock.MagicMock()
@@ -204,7 +204,7 @@ def test_entity_db_add_new_manga_with_tracking_and_mark_all_downloaded(
         }
 
 
-@mock.patch("cbz_tagger.database.entity_db.get_input")
+@mock.patch("cbz_tagger.database.entity_db.get_raw_input")
 def test_entity_db_add_new_manga_with_tracking(
     mock_get_input, simple_mock_entity_db, mock_chapter_db, manga_name, manga_request_id, manga_request_response
 ):

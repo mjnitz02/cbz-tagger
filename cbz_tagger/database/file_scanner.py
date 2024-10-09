@@ -40,6 +40,7 @@ class FileScanner:
                 time.sleep(120)
                 print("Initiating rescan...")
             else:
+                print("Scan completed.")
                 return
 
     def scan(self):
