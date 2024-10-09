@@ -32,7 +32,11 @@ class ChapterEntity(BaseEntity):
 
     @property
     def chapter_number(self):
-        return float(self.attributes.get("chapter"))
+        chapter = str(self.attributes.get("chapter", ""))
+        if chapter.count(".") > 1:
+            chapter_split = chapter.split(".")
+            chapter = f"{chapter_split[0]}.{''.join(chapter_split[1:])}"
+        return float(chapter)
 
     @property
     def chapter_string(self) -> str:
@@ -52,7 +56,12 @@ class ChapterEntity(BaseEntity):
                 chapter_number = int(self.chapter_number)
                 return f"{chapter_number:03}"
             chapter_number = self.chapter_number
-            return f"{chapter_number:05}"
+            decimal_size = len(str(self.chapter_number).split(".", maxsplit=1)[-1])
+            if decimal_size == 2:
+                return f"{chapter_number:06.2f}"
+            if decimal_size == 3:
+                return f"{chapter_number:07.3f}"
+            return f"{chapter_number:05.1f}"
         except (ValueError, TypeError):
             return str(self.chapter_number)
 
