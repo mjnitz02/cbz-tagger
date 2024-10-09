@@ -52,16 +52,23 @@ class BaseEntity(BaseEntityObject):
         return self.content.get("relationships", {})
 
     @staticmethod
-    def request_with_retry(url, params=None, retries=3, timeout=60):
+    def request_with_retry(url, params=None, retries=3, timeout=30):
         attempt = 0
         while attempt < retries:
-            response = requests.get(url, params=params, timeout=timeout)
-            if response.status_code == 200:
-                sleep(MANGADEX_DELAY_PER_REQUEST)
-                return response
-            print(f"Error downloading {url}: {response.status_code}")
-            attempt += 1
-            sleep(5 * attempt)
+            try:
+                response = requests.get(url, params=params, timeout=timeout)
+                if response.status_code == 200:
+                    sleep(MANGADEX_DELAY_PER_REQUEST)
+                    return response
+                # If the status code wasn't success, retry
+                attempt += 1
+                print(f"Error downloading {url}: {response.status_code}. Attempt: {attempt}")
+                sleep(5 * attempt)
+            # If the request times out, retry
+            except requests.exceptions.Timeout:
+                attempt += 1
+                print(f"Error downloading {url}. Attempt: {attempt}")
+                sleep(5 * attempt)
 
         raise EnvironmentError(f"Failed to receive response from {url} after {retries} attempts")
 
