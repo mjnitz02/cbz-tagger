@@ -12,7 +12,7 @@ def test_process_cbz_files(mock_get_input, integration_scanner, build_test_cbz):
         _ = args, kwargs
         if test_input == "Please select the manga that you are searching for in number: ":
             return 1
-        if test_input == "Please select the manga that you are searching for in number: ":
+        if test_input == "Please select the local and storage name number: ":
             return 1
         return 0
 
