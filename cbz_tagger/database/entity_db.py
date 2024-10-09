@@ -215,8 +215,8 @@ class EntityDB:
                 # since the APIs are prone to crashing
                 self.save()
 
-            except EnvironmentError:
-                print(f"Mangadex API Down >> Unable to update {manga_name} metadata.")
+            except EnvironmentError as err:
+                print(f"Mangadex API Down >> Unable to update {manga_name} metadata.", err)
 
     def refresh(self, storage_path):
         print("Refreshing database...")
@@ -257,6 +257,9 @@ class EntityDB:
             print(f"Could not download chapter: {entity_id}, {chapter_item.entity_id}", err)
             if os.path.exists(f"{chapter_filepath}.cbz"):
                 os.remove(f"{chapter_filepath}.cbz")
+            if (entity_id, chapter_item.entity_id) in self.entity_downloads:
+                self.entity_downloads.discard((entity_id, chapter_item.entity_id))
+                self.save()
         finally:
             # Cleanup excess
             shutil.rmtree(chapter_filepath)
@@ -380,5 +383,5 @@ class EntityDB:
             try:
                 self.download_chapter(entity_id, chapter_item, storage_path)
             except EnvironmentError as err:
-                print(f"Could not download chapter: {entity_id}, {chapter_item.entity_id}", err)
+                print(f"Error occurred in chapter: {entity_id}, {chapter_item.entity_id}", err)
         return missing_chapters

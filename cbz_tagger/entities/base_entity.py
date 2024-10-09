@@ -99,5 +99,5 @@ class BaseEntity(BaseEntityObject):
 
                 # Only make 2 queries per second
                 sleep(MANGADEX_DELAY_PER_REQUEST)
-        except JSONDecodeError as exc:
-            raise EnvironmentError("Mangadex API is down! Please try again later!") from exc
+        except JSONDecodeError as err:
+            raise EnvironmentError("Mangadex API is down! Please try again later!") from err

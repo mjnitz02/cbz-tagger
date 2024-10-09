@@ -29,5 +29,5 @@ def set_file_ownership(file_path):
     env = AppEnv()
     try:
         os.chown(file_path, int(env.PUID), int(env.PGID))
-    except PermissionError:
-        print(f"ERROR >> Unable to set permissions on {file_path}, {env.PUID}, {env.PGID}")
+    except PermissionError as err:
+        print(f"ERROR >> Unable to set permissions on {file_path}, {env.PUID}, {env.PGID}", err)

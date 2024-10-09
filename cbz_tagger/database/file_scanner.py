@@ -99,8 +99,8 @@ class FileScanner:
                 raise RuntimeError(f"ERROR >> {manga_name} not in database. Run manual mode to add new series.")
             return entity_name, entity_xml, entity_image_path
 
-        except (RuntimeError, EnvironmentError):
-            print(f"ERROR >> {manga_name} not in database. Run manual mode to add new series.")
+        except (RuntimeError, EnvironmentError) as err:
+            print(f"ERROR >> {manga_name} not in database. Run manual mode to add new series.", err)
             return None, None, None
 
     def add_tracked_entity(self):
