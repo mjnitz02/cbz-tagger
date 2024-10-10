@@ -1,5 +1,4 @@
 import json
-from typing import Any
 from typing import Dict
 from typing import List
 from xml.etree import ElementTree
@@ -8,12 +7,12 @@ from cbz_tagger.entities.base_entity import BaseEntity
 
 
 class MangaSeeChapterEntity(BaseEntity):
-    def __init__(self):
-        self.rss_url = "https://mangasee123.com/rss/{}.xml"
+    base_url = "https://mangasee123.com/rss/{}.xml"
 
-    def parse_rss_feed(self, entity_id: str) -> Dict[str, str]:
-        url = self.rss_url.format(entity_id)
-        response = self.request_with_retry(url)
+    @classmethod
+    def parse_rss_feed(cls, entity_id: str) -> Dict[str, str]:
+        url = cls.base_url.format(entity_id)
+        response = cls.request_with_retry(url)
 
         root = ElementTree.fromstring(response.text)
         title_name = root.findall("channel")[0].find("title").text
