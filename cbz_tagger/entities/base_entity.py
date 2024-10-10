@@ -59,8 +59,8 @@ class BaseEntity(BaseEntityObject):
         attempt = 0
         while attempt < retries:
             try:
-                if env.PROXY_TYPE is not None:
-                    proxies = {env.PROXY_TYPE: env.PROXY_URL}
+                if env.PROXY_URL is not None:
+                    proxies = {"http": env.PROXY_URL, "https": env.PROXY_URL}
                     response = requests.get(url, params=params, proxies=proxies, timeout=timeout)
                 else:
                     response = requests.get(url, params=params, timeout=timeout)

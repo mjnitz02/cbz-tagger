@@ -51,11 +51,6 @@ class AppEnv:
     else:
         TIMER_DELAY = int(os.getenv("TIMER_DELAY"))
 
-    if os.getenv("PROXY_TYPE") is None:
-        PROXY_TYPE = None
-    else:
-        PROXY_TYPE = os.getenv("TIMER_DELAY")
-
     if os.getenv("PROXY_URL") is None:
         PROXY_URL = None
     else:

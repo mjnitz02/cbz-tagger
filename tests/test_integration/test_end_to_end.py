@@ -5,7 +5,11 @@ import pytest
 
 @pytest.fixture
 def end_to_end_manga_name():
-    return None
+    return "Frieren: Beyond Journey's End"
+
+
+def test_end_to_end_disabled_on_commits(end_to_end_manga_name):
+    assert end_to_end_manga_name is None
 
 
 @mock.patch("cbz_tagger.database.entity_db.get_input")
