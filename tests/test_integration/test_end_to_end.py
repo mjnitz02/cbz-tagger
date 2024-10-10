@@ -5,7 +5,7 @@ import pytest
 
 @pytest.fixture
 def end_to_end_manga_name():
-    return "Frieren: Beyond Journey's End"
+    return None
 
 
 def test_end_to_end_disabled_on_commits(end_to_end_manga_name):

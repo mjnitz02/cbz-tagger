@@ -38,6 +38,7 @@ def get_environment_variables():
 
     print("Environment Variables:")
     print(env_vars)
+    print(f"proxy_url: {env.PROXY_URL}")
 
     return env_vars
 
