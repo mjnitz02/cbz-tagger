@@ -114,6 +114,27 @@ def test_request_with_retry_failure(mock_sleep, mock_requests_get):
 
 @patch("cbz_tagger.entities.base_entity.requests.get")
 @patch("cbz_tagger.entities.base_entity.sleep")
+@patch("cbz_tagger.entities.base_entity.AppEnv")
+def test_request_with_retry_with_proxy(mock_app_env, mock_sleep, mock_requests_get):
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_requests_get.return_value = mock_response
+    mock_app_env.return_value.PROXY_URL = "http://proxy.example.com"
+
+    result = BaseEntity.request_with_retry("http://example.com/file")
+
+    assert result == mock_response
+    mock_requests_get.assert_called_once_with(
+        "http://example.com/file",
+        params=None,
+        proxies={"http": "http://proxy.example.com", "https": "http://proxy.example.com"},
+        timeout=30,
+    )
+    mock_sleep.assert_called_once_with(0.3)
+
+
+@patch("cbz_tagger.entities.base_entity.requests.get")
+@patch("cbz_tagger.entities.base_entity.sleep")
 def test_download_file_success(mock_sleep, mock_requests_get):
     mock_response = MagicMock()
     mock_response.status_code = 200
