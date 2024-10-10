@@ -8,6 +8,7 @@ from typing import List
 import requests
 
 from cbz_tagger.common.enums import MANGADEX_DELAY_PER_REQUEST
+from cbz_tagger.common.env import AppEnv
 
 
 class BaseEntityObject:
@@ -53,10 +54,16 @@ class BaseEntity(BaseEntityObject):
 
     @staticmethod
     def request_with_retry(url, params=None, retries=3, timeout=30):
+        env = AppEnv()
+
         attempt = 0
         while attempt < retries:
             try:
-                response = requests.get(url, params=params, timeout=timeout)
+                if env.PROXY_TYPE is not None:
+                    proxies = {env.PROXY_TYPE: env.PROXY_URL}
+                    response = requests.get(url, params=params, proxies=proxies, timeout=timeout)
+                else:
+                    response = requests.get(url, params=params, timeout=timeout)
                 if response.status_code == 200:
                     sleep(MANGADEX_DELAY_PER_REQUEST)
                     return response

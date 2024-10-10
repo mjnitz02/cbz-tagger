@@ -221,7 +221,7 @@ class EntityDB:
 
     def refresh(self, storage_path):
         print("Refreshing database...")
-        for entity_id in self.metadata.keys():
+        for entity_id in sorted(self.metadata.keys()):
             self.update_manga_entity_id(entity_id)
         print("Cleaning orphaned covers...")
         self.covers.remove_orphaned_covers(self.image_db_path)
