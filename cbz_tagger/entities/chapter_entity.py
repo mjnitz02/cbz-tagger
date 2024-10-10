@@ -4,6 +4,7 @@ from time import sleep
 from typing import List
 
 from PIL import Image
+from PIL import ImageFile
 
 from cbz_tagger.entities.base_entity import BaseEntity
 
@@ -110,7 +111,11 @@ class ChapterEntity(BaseEntity):
                 in_memory_image = Image.open(BytesIO(image))
                 if in_memory_image.format != "JPEG":
                     in_memory_image = in_memory_image.convert("RGB")
-                in_memory_image.save(image_path, quality=95, optimize=True)
+                try:
+                    in_memory_image.save(image_path, quality=95, optimize=True)
+                except OSError:
+                    ImageFile.LOAD_TRUNCATED_IMAGES = True
+                    in_memory_image.save(image_path, quality=95, optimize=True)
 
         if len(cached_images) != self.pages:
             raise EnvironmentError(f"Failed to download chapter {self.entity_id}, not enough pages saved from server")
