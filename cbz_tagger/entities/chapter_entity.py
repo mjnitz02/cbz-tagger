@@ -83,9 +83,7 @@ class ChapterEntity(BaseEntity):
         group = next(iter(rel for rel in self.relationships if rel["type"] == "scanlation_group"), {})
         return group.get("id", "none")
 
-    def download_chapter(self, filepath) -> List[str]:
-        # Get chapter image urls
-        url = f"{self.download_url}/{self.entity_id}"
+    def parse_chapter_download_links(self, url: str) -> List[str]:
         response = self.request_with_retry(url).json()
 
         # If we didn't retrieve enough pages, try to query again
@@ -99,14 +97,22 @@ class ChapterEntity(BaseEntity):
                 )
 
         base_url = f"{response['baseUrl']}/{self.quality}/{response['chapter']['hash']}"
+        links = []
+        for chapter_image_name in response["chapter"][self.quality]:
+            links.append(f"{base_url}/{chapter_image_name}")
+        return links
+
+    def download_chapter(self, filepath) -> List[str]:
+        # Get chapter image urls
+        url = f"{self.download_url}/{self.entity_id}"
+        download_links = self.parse_chapter_download_links(url)
 
         # Download the images for the chapter
         cached_images = []
-        for index, chapter_image_name in enumerate(response["chapter"][self.quality]):
+        for index, image_url in enumerate(download_links):
             image_path = os.path.join(filepath, f"{index + 1:03}.jpg")
             cached_images.append(image_path)
             if not os.path.exists(image_path):
-                image_url = f"{base_url}/{chapter_image_name}"
                 image = self.download_file(image_url)
                 in_memory_image = Image.open(BytesIO(image))
                 if in_memory_image.format != "JPEG":
