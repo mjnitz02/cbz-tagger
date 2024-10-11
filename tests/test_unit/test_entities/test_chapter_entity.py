@@ -5,13 +5,13 @@ from unittest.mock import patch
 import pytest
 
 from cbz_tagger.entities.base_entity import BaseEntity
-from cbz_tagger.entities.chapter_entity import ChapterEntity
+from cbz_tagger.entities.chapter_entity import MangaDexChapterEntity
 from cbz_tagger.entities.cover_entity import CoverEntity
 
 
 @pytest.fixture
 def chapter_entity():
-    return ChapterEntity(
+    return MangaDexChapterEntity(
         {
             "id": "chapter_id",
             "attributes": {"chapter": "1", "translatedLanguage": "en", "pages": 2},
@@ -21,7 +21,7 @@ def chapter_entity():
 
 
 def test_chapter_entity(chapter_request_content):
-    entity = ChapterEntity(content=chapter_request_content)
+    entity = MangaDexChapterEntity(content=chapter_request_content)
     assert entity.entity_id == "1361d404-d03c-4fd9-97b4-2c297914b098"
     assert entity.entity_type == "chapter"
 
@@ -35,7 +35,7 @@ def test_chapter_entity(chapter_request_content):
 
 def test_chapter_entity_with_decimal_chapter(chapter_request_content):
     chapter_request_content["attributes"]["chapter"] = "5.5"
-    entity = ChapterEntity(content=chapter_request_content)
+    entity = MangaDexChapterEntity(content=chapter_request_content)
     assert entity.entity_id == "1361d404-d03c-4fd9-97b4-2c297914b098"
     assert entity.entity_type == "chapter"
 
@@ -49,7 +49,7 @@ def test_chapter_entity_with_decimal_chapter(chapter_request_content):
 
 def test_chapter_entity_with_double_decimal_chapter(chapter_request_content):
     chapter_request_content["attributes"]["chapter"] = "5.5.1"
-    entity = ChapterEntity(content=chapter_request_content)
+    entity = MangaDexChapterEntity(content=chapter_request_content)
     assert entity.entity_id == "1361d404-d03c-4fd9-97b4-2c297914b098"
     assert entity.entity_type == "chapter"
 
@@ -63,7 +63,7 @@ def test_chapter_entity_with_double_decimal_chapter(chapter_request_content):
 
 def test_chapter_entity_with_triple_decimal_chapter(chapter_request_content):
     chapter_request_content["attributes"]["chapter"] = "5.5.1.2"
-    entity = ChapterEntity(content=chapter_request_content)
+    entity = MangaDexChapterEntity(content=chapter_request_content)
     assert entity.entity_id == "1361d404-d03c-4fd9-97b4-2c297914b098"
     assert entity.entity_type == "chapter"
 
@@ -76,9 +76,11 @@ def test_chapter_entity_with_triple_decimal_chapter(chapter_request_content):
 
 
 def test_chapter_from_url(chapter_request_response):
-    with mock.patch("cbz_tagger.entities.chapter_entity.ChapterEntity.unpaginate_request") as mock_request:
+    with mock.patch("cbz_tagger.entities.chapter_entity.MangaDexChapterEntity.unpaginate_request") as mock_request:
         mock_request.return_value = chapter_request_response["data"]
-        entities = ChapterEntity.from_server_url(query_params={"ids[]": ["1361d404-d03c-4fd9-97b4-2c297914b098"]})
+        entities = MangaDexChapterEntity.from_server_url(
+            query_params={"ids[]": ["1361d404-d03c-4fd9-97b4-2c297914b098"]}
+        )
         # This test will see the english cover
         assert len(entities) == 4
         assert entities[0].entity_id == "1361d404-d03c-4fd9-97b4-2c297914b098"
@@ -97,10 +99,10 @@ def test_cover_entity_can_store_and_load(cover_request_content, check_entity_for
     check_entity_for_save_and_load(entity)
 
 
-@patch("cbz_tagger.entities.chapter_entity.ChapterEntity.request_with_retry")
+@patch("cbz_tagger.entities.chapter_entity.MangaDexChapterEntity.request_with_retry")
 @patch("cbz_tagger.entities.chapter_entity.Image.open")
 @patch("cbz_tagger.entities.chapter_entity.os.path.exists", return_value=False)
-@patch("cbz_tagger.entities.chapter_entity.ChapterEntity.download_file")
+@patch("cbz_tagger.entities.chapter_entity.MangaDexChapterEntity.download_file")
 def test_download_chapter(mock_download_file, mock_path_exists, mock_image_open, mock_requests_get, chapter_entity):
     _ = mock_path_exists
     mock_requests_get.return_value.json.return_value = {
@@ -121,9 +123,9 @@ def test_download_chapter(mock_download_file, mock_path_exists, mock_image_open,
     assert mock_image.save.call_count == 2
 
 
-@patch("cbz_tagger.entities.chapter_entity.ChapterEntity.request_with_retry")
+@patch("cbz_tagger.entities.chapter_entity.MangaDexChapterEntity.request_with_retry")
 @patch("cbz_tagger.entities.chapter_entity.os.path.exists", return_value=False)
-@patch("cbz_tagger.entities.chapter_entity.ChapterEntity.download_file")
+@patch("cbz_tagger.entities.chapter_entity.MangaDexChapterEntity.download_file")
 def test_download_chapter_raises_environment_error(
     mock_download_file, mock_path_exists, mock_requests_get, chapter_entity
 ):

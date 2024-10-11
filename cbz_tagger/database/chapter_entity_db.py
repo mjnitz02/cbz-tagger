@@ -4,12 +4,12 @@ from typing import List
 from typing import Optional
 
 from cbz_tagger.database.base_db import BaseEntityDB
-from cbz_tagger.entities.chapter_entity import ChapterEntity
+from cbz_tagger.entities.chapter_entity import MangaDexChapterEntity
 
 
 class ChapterEntityDB(BaseEntityDB):
-    database: Dict[str, List[ChapterEntity]]
-    entity_class = ChapterEntity
+    database: Dict[str, List[MangaDexChapterEntity]]
+    entity_class = MangaDexChapterEntity
 
     @staticmethod
     def remove_chapter_duplicate_entries(list_of_chapters) -> List[Optional[str]]:
@@ -52,7 +52,7 @@ class ChapterEntityDB(BaseEntityDB):
         return filtered_content
 
     def download(self, entity_id: str, chapter_id: str, filepath: str):
-        chapter: ChapterEntity = next(iter(c for c in self[entity_id] if c.entity_id == chapter_id), None)
+        chapter: MangaDexChapterEntity = next(iter(c for c in self[entity_id] if c.entity_id == chapter_id), None)
         if chapter is not None:
             return chapter.download_chapter(filepath)
 
