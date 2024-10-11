@@ -189,15 +189,15 @@ class MangaSeeChapterEntity(MangaDexChapterEntity):
         chapter_metadata = {}
         for line in response.text.split("\n"):
             if "vm.CurChapter = {" in line:
-                chapter_info = json.loads(line.replace(";\r", "").split("vm.CurChapter = ")[-1])
+                chapter_info = json.loads(line.replace(";", "").replace("\r", "").split("vm.CurChapter = ")[-1])
                 chapter_metadata["chapter"] = float(chapter_info["Chapter"]) - 100000.0
                 chapter_metadata["chapter"] = chapter_metadata["chapter"] / 10.0
                 chapter_metadata["pages"] = int(chapter_info["Page"])
                 chapter_metadata["date"] = chapter_info["Date"]
             if 'vm.CurPathName = "' in line:
-                chapter_metadata["path_name"] = line.replace('";\r', "").split('vm.CurPathName = "')[-1]
+                chapter_metadata["path_name"] = line.replace('";', "").replace("\r", "").split('vm.CurPathName = "')[-1]
             if 'vm.IndexName = "' in line:
-                chapter_metadata["index_name"] = line.replace('";\r', "").split('vm.IndexName = "')[-1]
+                chapter_metadata["index_name"] = line.replace('";', "").replace("\r", "").split('vm.IndexName = "')[-1]
 
         if chapter_metadata["chapter"].is_integer():
             chapter_string = f"{int(chapter_metadata['chapter']):04}"

@@ -140,3 +140,23 @@ def test_download_chapter_raises_environment_error(
         chapter_entity.download_chapter("/fake/filepath")
 
     mock_requests_get.assert_called_once_with("https://api.mangadex.org/at-home/server/chapter_id")
+
+
+@patch("cbz_tagger.entities.chapter_entity.MangaDexChapterEntity.request_with_retry")
+def test_mangadex_parse_chapter_download_links(mock_request_with_retry, chapter_entity):
+    mock_response = MagicMock()
+    mock_response.json.return_value = {
+        "baseUrl": "http://example.com",
+        "chapter": {"hash": "hash_value", "data": ["image1.jpg", "image2.jpg"]},
+    }
+    mock_request_with_retry.return_value = mock_response
+
+    result = chapter_entity.parse_chapter_download_links("http://example.com/chapter")
+
+    assert result == ["http://example.com/data/hash_value/image1.jpg", "http://example.com/data/hash_value/image2.jpg"]
+    mock_request_with_retry.assert_called_with("http://example.com/chapter")
+
+
+def test_mangadex_get_chapter_url(chapter_entity):
+    result = chapter_entity.get_chapter_url()
+    assert result == "https://api.mangadex.org/at-home/server/chapter_id"
