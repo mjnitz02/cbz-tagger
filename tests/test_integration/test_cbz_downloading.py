@@ -82,3 +82,21 @@ def test_download_cbz_files_without_mark_all_tracked(
         for name in files
     ]
     assert len(storage_results) == missing_chapters
+
+    # Test tracking removal
+    integration_scanner.remove_tracked_entity()
+    assert integration_scanner.entity_database.entity_tracked == set()
+    assert integration_scanner.entity_database.entity_downloads == set()
+
+    # Test full deletion
+    assert len(integration_scanner.entity_database.authors) >= 1
+    assert len(integration_scanner.entity_database.chapters) >= 1
+    assert len(integration_scanner.entity_database.covers) >= 1
+    assert len(integration_scanner.entity_database.metadata) >= 1
+    assert len(integration_scanner.entity_database.volumes) >= 1
+    integration_scanner.delete_entity()
+    assert len(integration_scanner.entity_database.authors) >= 1
+    assert len(integration_scanner.entity_database.chapters) == 0
+    assert len(integration_scanner.entity_database.covers) == 0
+    assert len(integration_scanner.entity_database.metadata) == 0
+    assert len(integration_scanner.entity_database.volumes) == 0

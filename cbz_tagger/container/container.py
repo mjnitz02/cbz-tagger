@@ -72,6 +72,8 @@ def run_container(**kwargs):
             container.scanner.add_tracked_entity()
         if kwargs.get("remove"):
             container.scanner.remove_tracked_entity()
+        if kwargs.get("delete"):
+            container.scanner.delete_entity()
         elif kwargs.get("refresh"):
             container.scanner.refresh()
         else:

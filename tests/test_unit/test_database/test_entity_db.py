@@ -254,9 +254,46 @@ def test_entity_db_remove_manga_from_tracking(
         )
 
         mock_get_input.return_value = 1
-        simple_mock_entity_db.remove_tracked()
+        simple_mock_entity_db.remove()
 
         # Assert the entity maps are populated
+        assert simple_mock_entity_db.entity_tracked == set()
+        assert simple_mock_entity_db.entity_downloads == set()
+
+
+@mock.patch("cbz_tagger.database.entity_db.get_raw_input")
+@mock.patch("cbz_tagger.database.entity_db.get_input")
+def test_entity_db_delete_manga(
+    mock_get_input,
+    mock_get_raw_input,
+    simple_mock_entity_db,
+    mock_chapter_db,
+    manga_name,
+    manga_request_id,
+    manga_request_response,
+):
+    with mock.patch.object(MetadataEntity, "from_server_url") as mock_from_server_url:
+        mock_from_server_url.return_value = [MetadataEntity(data) for data in manga_request_response["data"]]
+
+        # Simulate user selecting 1 for each input
+        mock_get_raw_input.return_value = 0
+
+        simple_mock_entity_db.search = mock.MagicMock(return_value=(manga_request_id, "Oshimai"))
+        simple_mock_entity_db.update_manga_entity_id = mock.MagicMock()
+        simple_mock_entity_db.chapters = mock_chapter_db
+        simple_mock_entity_db.add(manga_name, track=True)
+        assert simple_mock_entity_db.entity_tracked == {"831b12b8-2d0e-4397-8719-1efee4c32f40"}
+        assert simple_mock_entity_db.entity_downloads == set()
+        simple_mock_entity_db.entity_downloads.add(
+            ("831b12b8-2d0e-4397-8719-1efee4c32f40", "01c86808-46fb-4108-aa5d-4e87aee8b2f1")
+        )
+
+        mock_get_input.return_value = 1
+        simple_mock_entity_db.delete()
+
+        # Assert the entity maps are populated
+        assert simple_mock_entity_db.entity_map == {}
+        assert simple_mock_entity_db.entity_names == {}
         assert simple_mock_entity_db.entity_tracked == set()
         assert simple_mock_entity_db.entity_downloads == set()
 
