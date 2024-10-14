@@ -38,6 +38,10 @@ def capture_input_fixture():
                 return 1
             if test_input == "Please select the local and storage name number: ":
                 return 1
+            if test_input == "Select a manga to remove tracking for: ":
+                return 1
+            if test_input == "Select a manga to delete: ":
+                return 1
             if "Mark all chapters" in test_input:
                 if mark_all_chapters:
                     return "y"

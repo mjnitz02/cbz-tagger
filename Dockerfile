@@ -35,6 +35,10 @@ RUN echo -e '#!/bin/sh\npython3 /app/run.py --refresh' > /usr/bin/refresh
 RUN chmod +x /usr/bin/refresh
 RUN echo -e '#!/bin/sh\npython3 /app/run.py --add' > /usr/bin/add
 RUN chmod +x /usr/bin/add
+RUN echo -e '#!/bin/sh\npython3 /app/run.py --remove' > /usr/bin/remove
+RUN chmod +x /usr/bin/remove
+RUN echo -e '#!/bin/sh\npython3 /app/run.py --delete' > /usr/bin/delete
+RUN chmod +x /usr/bin/delete
 
 ### Volume Mappings ###
 VOLUME /config

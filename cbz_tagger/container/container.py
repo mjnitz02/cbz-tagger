@@ -13,7 +13,9 @@ def get_arg_parser():
     parser.add_argument("--entrymode", help="Container Entrymode Start", action="store_true")
     parser.add_argument("--manual", help="Manual Mode", action="store_true")
     parser.add_argument("--refresh", help="Refresh Mode", action="store_true")
-    parser.add_argument("--add", help="Add Mode", action="store_true")
+    parser.add_argument("--add", help="Add Tracked Mode", action="store_true")
+    parser.add_argument("--remove", help="Remove Tracked Mode", action="store_true")
+    parser.add_argument("--delete", help="Delete Mode", action="store_true")
     kwargs = vars(parser.parse_args())
     return kwargs
 
@@ -69,6 +71,10 @@ def run_container(**kwargs):
         container = ManualContainer(**env_vars)
         if kwargs.get("add"):
             container.scanner.add_tracked_entity()
+        if kwargs.get("remove"):
+            container.scanner.remove_tracked_entity()
+        if kwargs.get("delete"):
+            container.scanner.delete_entity()
         elif kwargs.get("refresh"):
             container.scanner.refresh()
         else:
