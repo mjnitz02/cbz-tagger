@@ -107,6 +107,9 @@ class FileScanner:
     def add_tracked_entity(self):
         self.entity_database.add(None, track=True)
 
+    def remove_tracked_entity(self):
+        self.entity_database.remove()
+
     def refresh(self):
         self.entity_database.refresh(self.storage_path)
 

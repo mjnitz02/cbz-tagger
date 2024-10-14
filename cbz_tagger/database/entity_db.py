@@ -160,6 +160,30 @@ class EntityDB:
 
         self.save()
 
+    def remove_tracked(self):
+        print("Select a manga to remove from tracking:")
+        counter = 0
+        tracked_ids = list(self.entity_tracked)
+        for entity_id in tracked_ids:
+            title = self.entity_names[entity_id]
+            print(f"{counter+1}. {title} ({entity_id})")
+            counter += 1
+        choice = get_input("Please select the local and storage name number: ", counter + 1)
+
+        # Remove the entity from tracking
+        entity_id_to_remove = tracked_ids[choice - 1]
+        self.entity_tracked.discard(entity_id_to_remove)
+        print(f"Removed {entity_id_to_remove} from tracking.")
+
+        # Remove the downloaded chapters
+        downloaded_chapters = []
+        for chapter in self.entity_downloads:
+            if chapter[0] == entity_id_to_remove:
+                downloaded_chapters.append(chapter)
+        for chapter in downloaded_chapters:
+            self.entity_downloads.discard(chapter)
+        print(f"Removed downloaded chapters for {entity_id_to_remove} from tracking.")
+
     @staticmethod
     def should_mark_all_tracked(manga_name):
         response = get_raw_input(f"Mark all chapters for {manga_name} as tracked? (y/n): ")
