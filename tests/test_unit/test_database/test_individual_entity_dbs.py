@@ -7,7 +7,7 @@ from cbz_tagger.database.cover_entity_db import CoverEntityDB
 from cbz_tagger.database.metadata_entity_db import MetadataEntityDB
 from cbz_tagger.database.volume_entity_db import VolumeEntityDB
 from cbz_tagger.entities.author_entity import AuthorEntity
-from cbz_tagger.entities.chapter_entity import MangaDexChapterEntity
+from cbz_tagger.entities.chapter_plugins.mangadex import ChapterEntityMangaDex
 from cbz_tagger.entities.cover_entity import CoverEntity
 from cbz_tagger.entities.metadata_entity import MetadataEntity
 from cbz_tagger.entities.volume_entity import VolumeEntity
@@ -143,8 +143,8 @@ def test_cover_entity_db_can_store_and_load(cover_request_response, manga_reques
 
 
 def test_chapter_entity_db(chapter_request_response, manga_request_id):
-    with mock.patch.object(MangaDexChapterEntity, "from_server_url") as mock_from_server_url:
-        mock_from_server_url.return_value = [MangaDexChapterEntity(data) for data in chapter_request_response["data"]]
+    with mock.patch.object(ChapterEntityMangaDex, "from_server_url") as mock_from_server_url:
+        mock_from_server_url.return_value = [ChapterEntityMangaDex(data) for data in chapter_request_response["data"]]
         entity_db = ChapterEntityDB()
         entity_db.update(manga_request_id)
         mock_from_server_url.assert_called_once_with(query_params={"ids[]": [manga_request_id]})
@@ -158,8 +158,8 @@ def test_chapter_entity_db(chapter_request_response, manga_request_id):
 
 
 def test_chapter_entity_db_return_list_if_only_one_chapter(chapter_request_response, manga_request_id):
-    with mock.patch.object(MangaDexChapterEntity, "from_server_url") as mock_from_server_url:
-        mock_from_server_url.return_value = [MangaDexChapterEntity(data) for data in chapter_request_response["data"]]
+    with mock.patch.object(ChapterEntityMangaDex, "from_server_url") as mock_from_server_url:
+        mock_from_server_url.return_value = [ChapterEntityMangaDex(data) for data in chapter_request_response["data"]]
         entity_db = ChapterEntityDB()
         entity_db.update(manga_request_id)
 
@@ -169,8 +169,8 @@ def test_chapter_entity_db_return_list_if_only_one_chapter(chapter_request_respo
 
 
 def test_chapter_entity_db_can_store_and_load(chapter_request_response, manga_request_id):
-    with mock.patch.object(MangaDexChapterEntity, "from_server_url") as mock_from_server_url:
-        mock_from_server_url.return_value = [MangaDexChapterEntity(data) for data in chapter_request_response["data"]]
+    with mock.patch.object(ChapterEntityMangaDex, "from_server_url") as mock_from_server_url:
+        mock_from_server_url.return_value = [ChapterEntityMangaDex(data) for data in chapter_request_response["data"]]
         entity_db = ChapterEntityDB()
         entity_db.update(manga_request_id)
         assert isinstance(entity_db[manga_request_id], list)

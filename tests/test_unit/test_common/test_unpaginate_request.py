@@ -28,5 +28,5 @@ def test_unpaginate_request_api_down(requests_mock):
     url = "https://api.example.com/data"
     requests_mock.get(url, exc=requests.exceptions.JSONDecodeError("Expecting value", "", 0))
 
-    with pytest.raises(EnvironmentError, match="Mangadex API is down! Please try again later!"):
+    with pytest.raises(EnvironmentError, match="API is down! Please try again later!"):
         BaseEntity.unpaginate_request(url)

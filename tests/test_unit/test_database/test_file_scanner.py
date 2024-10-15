@@ -21,11 +21,19 @@ def mock_get_paths():
     return [
         (
             "/root/path/to/files/series name",
-            ["series name - chapter 1.cbz", "series name - chapter 2.cbz", "series name - chapter 3.cbz"],
+            [
+                "series name - chapter 1.cbz",
+                "series name - chapter 2.cbz",
+                "series name - chapter 3.cbz",
+            ],
         ),
         (
             "/root/path/to/files/series name 2",
-            ["series name 2 - chapter 1.cbz", "series name 2 - chapter 2.cbz", "series name 2 - chapter 3.cbz"],
+            [
+                "series name 2 - chapter 1.cbz",
+                "series name 2 - chapter 2.cbz",
+                "series name 2 - chapter 3.cbz",
+            ],
         ),
         ("/root/path/to/files/series name 3", ["series name 3 - chapter 1.cbz"]),
         ("/root/path/to/files/junk", ["something.txt"]),

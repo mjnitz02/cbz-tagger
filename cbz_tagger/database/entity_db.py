@@ -269,7 +269,7 @@ class EntityDB:
                 self.save()
 
             except EnvironmentError as err:
-                print(f"Mangadex API Down >> Unable to update {manga_name} metadata.", err)
+                print(f"API Down >> Unable to update {manga_name} metadata.", err)
 
     def refresh(self, storage_path):
         print("Refreshing database...")

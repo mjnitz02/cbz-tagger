@@ -7,7 +7,7 @@ from typing import List
 
 import requests
 
-from cbz_tagger.common.enums import MANGADEX_DELAY_PER_REQUEST
+from cbz_tagger.common.enums import DELAY_PER_REQUEST
 from cbz_tagger.common.env import AppEnv
 
 
@@ -65,7 +65,7 @@ class BaseEntity(BaseEntityObject):
                 else:
                     response = requests.get(url, params=params, timeout=timeout)
                 if response.status_code == 200:
-                    sleep(MANGADEX_DELAY_PER_REQUEST)
+                    sleep(DELAY_PER_REQUEST)
                     return response
                 # If the status code wasn't success, retry
                 attempt += 1
@@ -112,6 +112,6 @@ class BaseEntity(BaseEntityObject):
                     return response_content
 
                 # Only make 2 queries per second
-                sleep(MANGADEX_DELAY_PER_REQUEST)
+                sleep(DELAY_PER_REQUEST)
         except JSONDecodeError as err:
-            raise EnvironmentError("Mangadex API is down! Please try again later!") from err
+            raise EnvironmentError("API is down! Please try again later!") from err

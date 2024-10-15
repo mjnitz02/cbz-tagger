@@ -3,15 +3,20 @@ from unittest.mock import patch
 
 import pytest
 
-from cbz_tagger.entities.chapter_entity import MangaSeeChapterEntity
+from cbz_tagger.entities.chapter_plugins.mangasee import ChapterEntityMangaSee
 
 
 @pytest.fixture
 def chapter_entity():
-    return MangaSeeChapterEntity(
+    return ChapterEntityMangaSee(
         {
             "id": "chapter_id",
-            "attributes": {"chapter": "1", "translatedLanguage": "en", "pages": 2, "url": "http://example.com/chapter"},
+            "attributes": {
+                "chapter": "1",
+                "translatedLanguage": "en",
+                "pages": 2,
+                "url": "http://example.com/chapter",
+            },
             "relationships": [{"type": "scanlation_group", "id": "group_id"}],
         }
     )
@@ -22,7 +27,7 @@ def test_get_chapter_url(chapter_entity):
     assert result == "http://example.com/chapter"
 
 
-@patch("cbz_tagger.entities.chapter_entity.MangaSeeChapterEntity.request_with_retry")
+@patch("cbz_tagger.entities.chapter_plugins.ChapterEntityMangaSee.request_with_retry")
 def test_parse_rss_feed(mock_request_with_retry):
     mock_response = MagicMock()
     mock_response.text = """
@@ -63,7 +68,7 @@ def test_parse_rss_feed(mock_request_with_retry):
     """
     mock_request_with_retry.return_value = mock_response
 
-    result = MangaSeeChapterEntity.parse_rss_feed("example_manga")
+    result = ChapterEntityMangaSee.parse_rss_feed("example_manga")
 
     assert len(result) == 3
     assert result[0]["id"] == "example_manga-chapter-2"
@@ -98,7 +103,7 @@ def test_parse_rss_feed(mock_request_with_retry):
     }
 
 
-@patch("cbz_tagger.entities.chapter_entity.MangaSeeChapterEntity.parse_rss_feed")
+@patch("cbz_tagger.entities.chapter_plugins.ChapterEntityMangaSee.parse_rss_feed")
 def test_from_server_url(mock_parse_rss_feed):
     mock_parse_rss_feed.return_value = [
         {
@@ -114,15 +119,15 @@ def test_from_server_url(mock_parse_rss_feed):
         }
     ]
 
-    result = MangaSeeChapterEntity.from_server_url({"ids[]": ["example_manga"]})
+    result = ChapterEntityMangaSee.from_server_url({"ids[]": ["example_manga"]})
 
     assert len(result) == 1
     assert result[0].entity_id == "example_manga-example-manga-chapter-1"
-    assert result[0].mangasee_url == "http://example.com/chapter1"
+    assert result[0].get_chapter_url() == "http://example.com/chapter1"
     mock_parse_rss_feed.assert_called_once_with("example_manga")
 
 
-@patch("cbz_tagger.entities.chapter_entity.MangaSeeChapterEntity.request_with_retry")
+@patch("cbz_tagger.entities.chapter_plugins.ChapterEntityMangaSee.request_with_retry")
 def test_parse_chapter_download_links(mock_request_with_retry, chapter_entity):
     mock_response = MagicMock()
     mock_response.text = r"""
