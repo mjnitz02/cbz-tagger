@@ -6,6 +6,7 @@ from unittest import mock
 
 import pytest
 
+from cbz_tagger.common.enums import Urls
 from cbz_tagger.database.author_entity_db import AuthorEntityDB
 from cbz_tagger.database.chapter_entity_db import ChapterEntityDB
 from cbz_tagger.database.entity_db import EntityDB
@@ -138,6 +139,7 @@ def mock_chapter_1_xml(tests_fixtures_path):
     fixture_name = os.path.join(tests_fixtures_path, "expected_chapter_1.xml")
     with open(fixture_name, "r", encoding="UTF-8") as read_file:
         content = read_file.read()
+    content = content.replace("example.com", Urls.MDX)
     return content
 
 
@@ -146,4 +148,5 @@ def mock_chapter_10_xml(tests_fixtures_path):
     fixture_name = os.path.join(tests_fixtures_path, "expected_chapter_10.xml")
     with open(fixture_name, "r", encoding="UTF-8") as read_file:
         content = read_file.read()
+    content = content.replace("example.com", Urls.MDX)
     return content

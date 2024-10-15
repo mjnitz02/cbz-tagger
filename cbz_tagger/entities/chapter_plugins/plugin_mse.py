@@ -9,7 +9,7 @@ from cbz_tagger.entities.chapter_entity import ChapterEntity
 
 
 class ChapterEntityMSE(ChapterEntity):
-    entity_url = f"https://{Urls.MDX}/rss/"
+    entity_url = f"https://{Urls.MSE}/rss/"
 
     @classmethod
     def from_server_url(cls, query_params=None):

@@ -41,6 +41,7 @@ def test_end_to_end_live_rss(integration_scanner, end_to_end_manga_name):
 
     query_params = {"ids[]": [end_to_end_manga_name]}
     chapters = plugins["mse"].from_server_url(query_params)
+    assert len(chapters) > 1
     for idx, chapter in enumerate(chapters):
         if idx > 0:
             break
