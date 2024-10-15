@@ -46,6 +46,10 @@ clean:
 	docker container prune -f
 	docker image prune -af
 
+clean-git:
+	git fetch -p
+	# for branch in $(git for-each-ref --format '%(refname) %(upstream:track)' refs/heads | awk '$2 == "[gone]" {sub("refs/heads/", "", $1); print $1}'); do git branch -D $branch; done
+
 shell:
 	docker exec -it manga-tag bash
 
