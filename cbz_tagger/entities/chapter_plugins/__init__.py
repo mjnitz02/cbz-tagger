@@ -1,7 +1,7 @@
-from cbz_tagger.entities.chapter_plugins.mangadex import ChapterEntityMangaDex
-from cbz_tagger.entities.chapter_plugins.mangasee import ChapterEntityMangaSee
+from cbz_tagger.entities.chapter_plugins.plugin_mdx import ChapterEntityMDX
+from cbz_tagger.entities.chapter_plugins.plugin_mse import ChapterEntityMSE
 
 plugins = {
-    "mangadex": ChapterEntityMangaDex,
-    "mangasee": ChapterEntityMangaSee,
+    "mdx": ChapterEntityMDX,
+    "mse": ChapterEntityMSE,
 }

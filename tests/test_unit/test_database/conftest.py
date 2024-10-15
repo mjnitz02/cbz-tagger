@@ -12,7 +12,7 @@ from cbz_tagger.database.entity_db import EntityDB
 from cbz_tagger.database.metadata_entity_db import MetadataEntityDB
 from cbz_tagger.database.volume_entity_db import VolumeEntityDB
 from cbz_tagger.entities.author_entity import AuthorEntity
-from cbz_tagger.entities.chapter_plugins.mangadex import ChapterEntityMangaDex
+from cbz_tagger.entities.chapter_plugins.plugin_mdx import ChapterEntityMDX
 from cbz_tagger.entities.cover_entity import CoverEntity
 from cbz_tagger.entities.metadata_entity import MetadataEntity
 from cbz_tagger.entities.volume_entity import VolumeEntity
@@ -52,7 +52,7 @@ def mock_volume_db(volume_request_response, manga_request_id):
 
 @pytest.fixture
 def mock_chapter_db(chapter_request_response, manga_request_id):
-    entities = [ChapterEntityMangaDex(data) for data in chapter_request_response["data"]]
+    entities = [ChapterEntityMDX(data) for data in chapter_request_response["data"]]
     entity_db = ChapterEntityDB()
     entity_db.database[manga_request_id] = entities
     return entity_db

@@ -4,11 +4,12 @@ from typing import Any
 from typing import List
 from xml.etree import ElementTree
 
+from cbz_tagger.common.enums import Urls
 from cbz_tagger.entities.chapter_entity import ChapterEntity
 
 
-class ChapterEntityMangaSee(ChapterEntity):
-    entity_url = "https://mangasee123.com/rss/"
+class ChapterEntityMSE(ChapterEntity):
+    entity_url = f"https://{Urls.MDX}/rss/"
 
     @classmethod
     def from_server_url(cls, query_params=None):
@@ -29,7 +30,7 @@ class ChapterEntityMangaSee(ChapterEntity):
 
         items = root.findall("channel/item")
         content = []
-        # This constructs a mangadex api compatible response from the mangasee rss feed
+        # This constructs an api compatible response from the rss feed
         for item in items:
             title = item.find("title").text.replace(f"{title_name} ", "")
             link = str(item.find("link").text)

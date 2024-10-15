@@ -15,7 +15,7 @@ class ChapterEntityDB(BaseEntityDB):
 
     def __init__(self, database=None, default_class: Optional[str] = None):
         if default_class is None:
-            default_class = "mangadex"
+            default_class = "mdx"
         self.entity_class = self.plugins[default_class]
         super().__init__(database=database)
 

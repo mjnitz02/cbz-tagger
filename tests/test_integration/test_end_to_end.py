@@ -2,6 +2,8 @@ from unittest import mock
 
 import pytest
 
+from cbz_tagger.entities.chapter_plugins import plugins
+
 
 @pytest.fixture
 def end_to_end_manga_name():
@@ -30,3 +32,17 @@ def test_end_to_end_live(
     # Refresh the database to run all downloads, nothing should be downloaded since the actual request
     # to the server is mocked above. We will run everything else though against real APIs.
     integration_scanner.refresh()
+
+
+def test_end_to_end_live_rss(integration_scanner, end_to_end_manga_name):
+    """This test is designed for triggering a live test in a local environment"""
+    if end_to_end_manga_name is None:
+        return
+
+    query_params = {"ids[]": [end_to_end_manga_name]}
+    chapters = plugins["mse"].from_server_url(query_params)
+    for idx, chapter in enumerate(chapters):
+        if idx > 0:
+            break
+        chapter.download_chapter(integration_scanner.storage_path)
+    assert chapters

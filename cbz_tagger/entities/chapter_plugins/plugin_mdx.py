@@ -4,7 +4,7 @@ from typing import List
 from cbz_tagger.entities.chapter_entity import ChapterEntity
 
 
-class ChapterEntityMangaDex(ChapterEntity):
+class ChapterEntityMDX(ChapterEntity):
     entity_url: str = f"{ChapterEntity.base_url}/manga"
     download_url: str = f"{ChapterEntity.base_url}/at-home/server"
 

@@ -8,11 +8,12 @@ from typing import List
 import requests
 
 from cbz_tagger.common.enums import DELAY_PER_REQUEST
+from cbz_tagger.common.enums import Urls
 from cbz_tagger.common.env import AppEnv
 
 
 class BaseEntityObject:
-    base_url = "https://api.mangadex.org"
+    base_url = f"https://api.{Urls.MDX}"
 
 
 class BaseEntity(BaseEntityObject):
