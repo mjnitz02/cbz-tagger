@@ -1,5 +1,6 @@
 from os import path
 
+from cbz_tagger.common.enums import Urls
 from cbz_tagger.entities.base_entity import BaseEntity
 
 
@@ -29,4 +30,4 @@ class CoverEntity(BaseEntity):
 
     @property
     def cover_url(self) -> str:
-        return f"https://uploads.mangadex.org/covers/{self.manga_id}/{self.filename}"
+        return f"https://uploads.{Urls.MDX}/covers/{self.manga_id}/{self.filename}"

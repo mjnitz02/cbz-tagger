@@ -1,6 +1,5 @@
 import os
 from io import BytesIO
-from time import sleep
 from typing import List
 
 from PIL import Image
@@ -10,26 +9,9 @@ from cbz_tagger.entities.base_entity import BaseEntity
 
 
 class ChapterEntity(BaseEntity):
-    entity_url: str = f"{BaseEntity.base_url}/manga"
-    download_url: str = f"{BaseEntity.base_url}/at-home/server"
+    download_url: str
     paginated: bool = False
     quality = "data"
-
-    @classmethod
-    def from_server_url(cls, query_params=None):
-        entity_id = query_params["ids[]"][0]
-
-        order = {
-            "createdAt": "asc",
-            "updatedAt": "asc",
-            "publishAt": "asc",
-            "readableAt": "asc",
-            "volume": "asc",
-            "chapter": "asc",
-        }
-        params = "&".join([f"order%5B{key}%5D={value}" for key, value in order.items()])
-        response = cls.unpaginate_request(f"{cls.entity_url}/{entity_id}/feed?{params}")
-        return [cls(data) for data in response]
 
     @property
     def chapter_number(self):
@@ -83,30 +65,23 @@ class ChapterEntity(BaseEntity):
         group = next(iter(rel for rel in self.relationships if rel["type"] == "scanlation_group"), {})
         return group.get("id", "none")
 
+    def get_chapter_url(self):
+        raise NotImplementedError
+
+    def parse_chapter_download_links(self, url: str) -> List[str]:
+        raise NotImplementedError
+
     def download_chapter(self, filepath) -> List[str]:
         # Get chapter image urls
-        url = f"{self.download_url}/{self.entity_id}"
-        response = self.request_with_retry(url).json()
-
-        # If we didn't retrieve enough pages, try to query again
-        if len(response["chapter"][self.quality]) != self.pages:
-            print("Not enough pages returned from server. Waiting 10s and retrying query.")
-            sleep(10)
-            response = self.request_with_retry(url).json()
-            if len(response["chapter"][self.quality]) != self.pages:
-                raise EnvironmentError(
-                    f"Failed to download chapter {self.entity_id}, not enough pages returned from server"
-                )
-
-        base_url = f"{response['baseUrl']}/{self.quality}/{response['chapter']['hash']}"
+        url = self.get_chapter_url()
+        download_links = self.parse_chapter_download_links(url)
 
         # Download the images for the chapter
         cached_images = []
-        for index, chapter_image_name in enumerate(response["chapter"][self.quality]):
+        for index, image_url in enumerate(download_links):
             image_path = os.path.join(filepath, f"{index + 1:03}.jpg")
             cached_images.append(image_path)
             if not os.path.exists(image_path):
-                image_url = f"{base_url}/{chapter_image_name}"
                 image = self.download_file(image_url)
                 in_memory_image = Image.open(BytesIO(image))
                 if in_memory_image.format != "JPEG":

@@ -49,7 +49,7 @@ class CbzEntity:
     def chapter_number(self) -> str:
         filename = self.chapter_name.replace(".cbz", "")
 
-        # Check if mangadex formatting with chapter title, if so remove the word title
+        # Check if formatting with chapter title, if so remove the word title
         if filename.find("-") != filename.rfind("-") and filename.find("-") != -1 and filename.rfind("-") != -1:
             chapter_pos = filename.find("Ch")
             if filename.find("-") < chapter_pos < filename.rfind("-"):

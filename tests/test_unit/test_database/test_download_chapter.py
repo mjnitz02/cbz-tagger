@@ -4,7 +4,7 @@ from unittest import mock
 
 import pytest
 
-from cbz_tagger.entities.chapter_entity import ChapterEntity
+from cbz_tagger.entities.chapter_plugins.plugin_mdx import ChapterEntityMDX
 
 
 @pytest.fixture
@@ -30,7 +30,7 @@ def mock_entity_db_downloader(mock_entity_db):
 def test_download_chapter_fails_with_page_download_failure(
     mock_entity_db_downloader, manga_request_id, chapter_request_response, storage_path
 ):
-    chapter_item = [ChapterEntity(data) for data in chapter_request_response["data"]][0]
+    chapter_item = [ChapterEntityMDX(data) for data in chapter_request_response["data"]][0]
     mock_entity_db_downloader.chapters.download = mock.MagicMock(side_effect=EnvironmentError)
     mock_entity_db_downloader.download_chapter(manga_request_id, chapter_item, storage_path)
 
@@ -48,7 +48,7 @@ def test_download_chapter_fails_with_page_download_failure(
 def test_download_chapter_fails_with_missing_cbz_file_failure(
     mock_entity_db_downloader, manga_request_id, chapter_request_response, storage_path
 ):
-    chapter_item = [ChapterEntity(data) for data in chapter_request_response["data"]][0]
+    chapter_item = [ChapterEntityMDX(data) for data in chapter_request_response["data"]][0]
     mock_entity_db_downloader.build_chapter_cbz = mock.MagicMock(side_effect=EnvironmentError)
     mock_entity_db_downloader.download_chapter(manga_request_id, chapter_item, storage_path)
 

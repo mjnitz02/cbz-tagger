@@ -1,5 +1,6 @@
 from unittest import mock
 
+from cbz_tagger.common.enums import Urls
 from cbz_tagger.entities.base_entity import BaseEntity
 from cbz_tagger.entities.cover_entity import CoverEntity
 
@@ -15,7 +16,7 @@ def test_cover_entity(cover_request_content):
     assert entity.manga_id == "831b12b8-2d0e-4397-8719-1efee4c32f40"
     assert (
         entity.cover_url
-        == "https://uploads.mangadex.org/covers/831b12b8-2d0e-4397-8719-1efee4c32f40/87ad56cd-780b-48bc-82b1-fa425836f9a4.jpg"
+        == f"https://uploads.{Urls.MDX}/covers/831b12b8-2d0e-4397-8719-1efee4c32f40/87ad56cd-780b-48bc-82b1-fa425836f9a4.jpg"
     )
 
 
@@ -30,7 +31,7 @@ def test_cover_entity_with_png(cover_request_content_png):
     assert entity.manga_id == "831b12b8-2d0e-4397-8719-1efee4c32f40"
     assert (
         entity.cover_url
-        == "https://uploads.mangadex.org/covers/831b12b8-2d0e-4397-8719-1efee4c32f40/39194a9c-719b-4a27-b8ef-99a3d6fa0997.png"
+        == f"https://uploads.{Urls.MDX}/covers/831b12b8-2d0e-4397-8719-1efee4c32f40/39194a9c-719b-4a27-b8ef-99a3d6fa0997.png"
     )
 
 

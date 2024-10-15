@@ -10,6 +10,7 @@ from xml.etree import ElementTree
 from zipfile import ZIP_DEFLATED
 from zipfile import ZipFile
 
+from cbz_tagger.common.enums import Urls
 from cbz_tagger.common.helpers import get_input
 from cbz_tagger.common.helpers import get_raw_input
 from cbz_tagger.common.helpers import set_file_ownership
@@ -124,7 +125,7 @@ class EntityDB:
 
         entity = None
         while entity is None:
-            entity = self.find_mangadex_entry(search_term)
+            entity = self.find_manga_entry(search_term)
             if entity is None:
                 search_term = get_raw_input("Enter a new name to search for: ")
         entity_id = entity.entity_id
@@ -218,8 +219,8 @@ class EntityDB:
         return response == "y"
 
     @staticmethod
-    def find_mangadex_entry(search_term):
-        print(f">>> SEARCHING MANGADEX FOR NEW SERIES [{search_term}]")
+    def find_manga_entry(search_term):
+        print(f">>> SEARCHING FOR NEW SERIES [{search_term}]")
         meta_entries = MetadataEntity.from_server_url(query_params={"title": search_term})
 
         counter = 0
@@ -269,7 +270,7 @@ class EntityDB:
                 self.save()
 
             except EnvironmentError as err:
-                print(f"Mangadex API Down >> Unable to update {manga_name} metadata.", err)
+                print(f"API Down >> Unable to update {manga_name} metadata.", err)
 
     def refresh(self, storage_path):
         print("Refreshing database...")
@@ -404,7 +405,7 @@ class EntityDB:
         assign("Manga", "Yes")
         assign("Genre", ",".join(self.metadata[entity_id].genres))
         assign("AgeRating", self.metadata[entity_id].age_rating)
-        assign("Web", f"https://mangadex.org/title/{entity_id}")
+        assign("Web", f"https://{Urls.MDX}/title/{entity_id}")
         return root
 
     def to_xml_string(self, manga_name, chapter_number) -> str:
