@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
+from cbz_tagger.common.enums import Plugins
 from cbz_tagger.common.enums import Urls
 from cbz_tagger.entities.base_entity import BaseEntity
 from cbz_tagger.entities.chapter_entity import ChapterEntity
@@ -24,7 +25,7 @@ def chapter_entity():
 def test_chapter_entity(chapter_request_content):
     entity = ChapterEntity(content=chapter_request_content)
     assert entity.entity_id == "1361d404-d03c-4fd9-97b4-2c297914b098"
-    assert entity.entity_type == "mdx"
+    assert entity.entity_type == Plugins.MDX
 
     assert entity.volume_number == 1.0
     assert entity.chapter_number == 5
@@ -38,7 +39,7 @@ def test_chapter_entity_with_decimal_chapter(chapter_request_content):
     chapter_request_content["attributes"]["chapter"] = "5.5"
     entity = ChapterEntity(content=chapter_request_content)
     assert entity.entity_id == "1361d404-d03c-4fd9-97b4-2c297914b098"
-    assert entity.entity_type == "mdx"
+    assert entity.entity_type == Plugins.MDX
 
     assert entity.volume_number == 1.0
     assert entity.chapter_number == 5.5
@@ -52,7 +53,7 @@ def test_chapter_entity_with_double_decimal_chapter(chapter_request_content):
     chapter_request_content["attributes"]["chapter"] = "5.5.1"
     entity = ChapterEntity(content=chapter_request_content)
     assert entity.entity_id == "1361d404-d03c-4fd9-97b4-2c297914b098"
-    assert entity.entity_type == "mdx"
+    assert entity.entity_type == Plugins.MDX
 
     assert entity.volume_number == 1.0
     assert entity.chapter_number == 5.51
@@ -66,7 +67,7 @@ def test_chapter_entity_with_triple_decimal_chapter(chapter_request_content):
     chapter_request_content["attributes"]["chapter"] = "5.5.1.2"
     entity = ChapterEntity(content=chapter_request_content)
     assert entity.entity_id == "1361d404-d03c-4fd9-97b4-2c297914b098"
-    assert entity.entity_type == "mdx"
+    assert entity.entity_type == Plugins.MDX
 
     assert entity.volume_number == 1.0
     assert entity.chapter_number == 5.512

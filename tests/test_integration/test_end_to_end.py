@@ -5,12 +5,14 @@ import pytest
 
 @pytest.fixture
 def end_to_end_manga_name():
-    return "Kaoru Hana wa Rin to Saku"
+    return None
+    # return "Kaoru Hana wa Rin to Saku"
 
 
 @pytest.fixture
 def end_to_end_chapter_name():
-    return "01-kaoru-hana-wa-rin-to-saku"
+    return None
+    # return "01-kaoru-hana-wa-rin-to-saku"
 
 
 def test_end_to_end_disabled_on_commits(end_to_end_manga_name):

@@ -5,6 +5,7 @@ from typing import List
 from PIL import Image
 from PIL import ImageFile
 
+from cbz_tagger.common.enums import Plugins
 from cbz_tagger.entities.base_entity import BaseEntity
 from cbz_tagger.entities.chapter_plugins.cmk import ChapterPluginCMK
 from cbz_tagger.entities.chapter_plugins.mdx import ChapterPluginMDX
@@ -16,14 +17,14 @@ class ChapterEntity(BaseEntity):
     paginated: bool = False
     quality = "data"
     plugins = {
-        "mdx": ChapterPluginMDX,
-        "mse": ChapterPluginMSE,
-        "cmk": ChapterPluginCMK,
+        Plugins.MDX: ChapterPluginMDX,
+        Plugins.MSE: ChapterPluginMSE,
+        Plugins.CMK: ChapterPluginCMK,
     }
 
     @classmethod
     def from_server_url(cls, query_params=None, **kwargs):
-        plugin_type = kwargs.get("plugin_type", "mdx")
+        plugin_type = kwargs.get("plugin_type", Plugins.MDX)
         entity_plugin = cls.plugins[plugin_type]
         response = entity_plugin.from_server_url(query_params=query_params, **kwargs)
         return [cls(data) for data in response]
@@ -67,12 +68,12 @@ class ChapterEntity(BaseEntity):
     def entity_type(self):
         # Backwards compatibility for old chapter types
         if self.content.get("type", "") == "chapter":
-            return "mdx"
-        return self.content.get("type", "mdx")
+            return Plugins.MDX
+        return self.content.get("type", Plugins.MDX)
 
     @property
     def entity_plugin(self):
-        return self.plugins.get(self.entity_type, self.plugins["mdx"])(self.content)
+        return self.plugins[self.entity_type](self.content)
 
     @property
     def volume_number(self):

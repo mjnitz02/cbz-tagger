@@ -4,6 +4,7 @@ from typing import Any
 from typing import List
 from xml.etree import ElementTree
 
+from cbz_tagger.common.enums import Plugins
 from cbz_tagger.common.enums import Urls
 from cbz_tagger.entities.base_entity import BaseEntity
 
@@ -37,7 +38,7 @@ class ChapterPluginMSE(BaseEntity):
             content.append(
                 {
                     "id": f"{entity_id}-{title}".replace(" ", "-").lower(),
-                    "type": "mse",
+                    "type": Plugins.MSE,
                     "attributes": {
                         "title": title,
                         "url": link,

@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
+from cbz_tagger.common.enums import Plugins
 from cbz_tagger.entities.chapter_entity import ChapterEntity
 from cbz_tagger.entities.chapter_plugins.mse import ChapterPluginMSE
 
@@ -19,7 +20,7 @@ def chapter_entity():
                 "url": "http://example.com/chapter",
             },
             "relationships": [{"type": "scanlation_group", "id": "group_id"}],
-            "type": "mse",
+            "type": Plugins.MSE,
         },
     )
 
@@ -74,7 +75,7 @@ def test_parse_info_feed(mock_request_with_retry):
 
     assert len(result) == 3
     assert result[0]["id"] == "example_manga-chapter-2"
-    assert result[0]["type"] == "mse"
+    assert result[0]["type"] == Plugins.MSE
     assert result[0]["attributes"] == {
         "chapter": "2",
         "pages": -1,
@@ -84,7 +85,7 @@ def test_parse_info_feed(mock_request_with_retry):
         "volume": -1,
     }
     assert result[1]["id"] == "example_manga-chapter-1.5"
-    assert result[1]["type"] == "mse"
+    assert result[1]["type"] == Plugins.MSE
     assert result[1]["attributes"] == {
         "chapter": "1.5",
         "pages": -1,
@@ -94,7 +95,7 @@ def test_parse_info_feed(mock_request_with_retry):
         "volume": -1,
     }
     assert result[2]["id"] == "example_manga-chapter-1"
-    assert result[2]["type"] == "mse"
+    assert result[2]["type"] == Plugins.MSE
     assert result[2]["attributes"] == {
         "chapter": "1",
         "pages": -1,
@@ -110,7 +111,7 @@ def test_from_server_url(mock_parse_info_feed):
     mock_parse_info_feed.return_value = [
         {
             "id": "example_manga-example-manga-chapter-1",
-            "type": "mse",
+            "type": Plugins.MSE,
             "attributes": {
                 "title": "Example Manga Chapter 1",
                 "url": "http://example.com/chapter1",
@@ -122,7 +123,7 @@ def test_from_server_url(mock_parse_info_feed):
         }
     ]
 
-    result = ChapterEntity.from_server_url({"ids[]": ["example_manga"]}, plugin_type="mse")
+    result = ChapterEntity.from_server_url({"ids[]": ["example_manga"]}, plugin_type=Plugins.MSE)
 
     assert len(result) == 1
     assert result[0].entity_id == "example_manga-example-manga-chapter-1"

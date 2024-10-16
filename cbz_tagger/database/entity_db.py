@@ -284,7 +284,7 @@ class EntityDB:
 
                 self.metadata.update(entity_id)
                 if last_updated == self.metadata[entity_id].updated:
-                    if chapter_plugin is not None:
+                    if chapter_plugin:
                         self.chapters.update(entity_id, **chapter_plugin)
                         self.save()
                     return

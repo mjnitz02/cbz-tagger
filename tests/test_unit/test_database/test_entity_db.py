@@ -178,12 +178,20 @@ def test_entity_db_add_new_manga_with_update(
 
 
 @mock.patch("cbz_tagger.database.entity_db.get_raw_input")
+@mock.patch("cbz_tagger.database.entity_db.get_input")
 def test_entity_db_add_new_manga_with_tracking_and_mark_all_downloaded(
-    mock_get_raw_input, simple_mock_entity_db, mock_chapter_db, manga_name, manga_request_id, manga_request_response
+    mock_get_input,
+    mock_get_raw_input,
+    simple_mock_entity_db,
+    mock_chapter_db,
+    manga_name,
+    manga_request_id,
+    manga_request_response,
 ):
     with mock.patch.object(MetadataEntity, "from_server_url") as mock_from_server_url:
         mock_from_server_url.return_value = [MetadataEntity(data) for data in manga_request_response["data"]]
 
+        mock_get_input.return_value = 0
         # Simulate user selecting 1 for each input
         mock_get_raw_input.return_value = "y"
 
@@ -205,12 +213,20 @@ def test_entity_db_add_new_manga_with_tracking_and_mark_all_downloaded(
 
 
 @mock.patch("cbz_tagger.database.entity_db.get_raw_input")
+@mock.patch("cbz_tagger.database.entity_db.get_input")
 def test_entity_db_add_new_manga_with_tracking(
-    mock_get_raw_input, simple_mock_entity_db, mock_chapter_db, manga_name, manga_request_id, manga_request_response
+    mock_get_input,
+    mock_get_raw_input,
+    simple_mock_entity_db,
+    mock_chapter_db,
+    manga_name,
+    manga_request_id,
+    manga_request_response,
 ):
     with mock.patch.object(MetadataEntity, "from_server_url") as mock_from_server_url:
         mock_from_server_url.return_value = [MetadataEntity(data) for data in manga_request_response["data"]]
 
+        mock_get_input.return_value = 0
         # Simulate user selecting 1 for each input
         mock_get_raw_input.return_value = 0
 
@@ -240,6 +256,7 @@ def test_entity_db_remove_manga_from_tracking(
     with mock.patch.object(MetadataEntity, "from_server_url") as mock_from_server_url:
         mock_from_server_url.return_value = [MetadataEntity(data) for data in manga_request_response["data"]]
 
+        mock_get_input.return_value = 0
         # Simulate user selecting 1 for each input
         mock_get_raw_input.return_value = 0
 
@@ -275,7 +292,8 @@ def test_entity_db_delete_manga(
     with mock.patch.object(MetadataEntity, "from_server_url") as mock_from_server_url:
         mock_from_server_url.return_value = [MetadataEntity(data) for data in manga_request_response["data"]]
 
-        # Simulate user selecting 1 for each input
+        mock_get_input.return_value = 0
+        # Simulate user selecting 0 for each input
         mock_get_raw_input.return_value = 0
 
         simple_mock_entity_db.search = mock.MagicMock(return_value=(manga_request_id, "Oshimai"))
@@ -314,6 +332,20 @@ def test_entity_db_update_calls_only_metadata_if_no_updates(mock_entity_db_with_
     mock_entity_db_with_mock_updates.covers.update.assert_not_called()
     mock_entity_db_with_mock_updates.volumes.update.assert_not_called()
     mock_entity_db_with_mock_updates.chapters.update.assert_not_called()
+    mock_entity_db_with_mock_updates.covers.download.assert_not_called()
+
+
+def test_entity_db_update_calls_only_metadata_and_chapter_if_no_updates_and_plugin(
+    mock_entity_db_with_mock_updates, manga_request_id
+):
+    mock_entity_db_with_mock_updates.entity_chapter_plugin[manga_request_id] = {"mock": "mock"}
+    mock_entity_db_with_mock_updates.update_manga_entity_id(manga_request_id)
+
+    mock_entity_db_with_mock_updates.metadata.update.assert_called_once_with(manga_request_id)
+    mock_entity_db_with_mock_updates.authors.update.assert_not_called()
+    mock_entity_db_with_mock_updates.covers.update.assert_not_called()
+    mock_entity_db_with_mock_updates.volumes.update.assert_not_called()
+    mock_entity_db_with_mock_updates.chapters.update.assert_called_once_with(manga_request_id, mock="mock")
     mock_entity_db_with_mock_updates.covers.download.assert_not_called()
 
 

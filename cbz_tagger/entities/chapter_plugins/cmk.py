@@ -1,6 +1,7 @@
 from typing import Any
 from typing import List
 
+from cbz_tagger.common.enums import Plugins
 from cbz_tagger.common.enums import Urls
 from cbz_tagger.entities.base_entity import BaseEntity
 
@@ -55,7 +56,7 @@ class ChapterPluginCMK(BaseEntity):
             content.append(
                 {
                     "id": f"{manga_id}-{item['hid']}",
-                    "type": "cmk",
+                    "type": Plugins.CMK,
                     "attributes": {
                         "title": item["title"],
                         "url": f"{cls.entity_url}chapter/{item['hid']}?tachiyomi=true",

@@ -17,3 +17,9 @@ class Urls:
     MDX = "mangadex.org"
     MSE = "mangasee123.com"
     CMK = "api.comick.fun"
+
+
+class Plugins:
+    MDX = "mdx"
+    MSE = "mse"
+    CMK = "cmk"
