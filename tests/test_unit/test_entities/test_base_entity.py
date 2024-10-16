@@ -42,7 +42,9 @@ def test_request_with_retry_success(mock_sleep, mock_requests_get):
     result = BaseEntity.request_with_retry("http://example.com/file")
 
     assert result == mock_response
-    mock_requests_get.assert_called_once_with("http://example.com/file", params=None, timeout=30)
+    mock_requests_get.assert_called_once_with(
+        "http://example.com/file", params=None, headers=BaseEntity.base_header, timeout=30
+    )
     mock_sleep.assert_called_once_with(0.3)
 
 
@@ -144,7 +146,9 @@ def test_download_file_success(mock_sleep, mock_requests_get):
     result = BaseEntity.download_file("http://example.com/file")
 
     assert result == b"file content"
-    mock_requests_get.assert_called_once_with("http://example.com/file", params=None, timeout=30)
+    mock_requests_get.assert_called_once_with(
+        "http://example.com/file", params=None, headers=BaseEntity.base_header, timeout=30
+    )
     mock_sleep.assert_called_once()
 
 

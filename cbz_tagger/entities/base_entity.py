@@ -14,6 +14,10 @@ from cbz_tagger.common.env import AppEnv
 
 class BaseEntityObject:
     base_url = f"https://api.{Urls.MDX}"
+    base_header = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/"
+        "537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36"
+    }
 
 
 class BaseEntity(BaseEntityObject):
@@ -33,7 +37,8 @@ class BaseEntity(BaseEntityObject):
         return cls(json.loads(json_str))
 
     @classmethod
-    def from_server_url(cls, query_params=None):
+    def from_server_url(cls, query_params=None, plugin_type=None):
+        _ = plugin_type
         response = cls.unpaginate_request(cls.entity_url, query_params)
         return [cls(data) for data in response]
 
@@ -53,8 +58,8 @@ class BaseEntity(BaseEntityObject):
     def relationships(self) -> List[Dict[str, str]]:
         return self.content.get("relationships", {})
 
-    @staticmethod
-    def request_with_retry(url, params=None, retries=3, timeout=30):
+    @classmethod
+    def request_with_retry(cls, url, params=None, retries=3, timeout=30):
         env = AppEnv()
 
         attempt = 0
@@ -64,7 +69,7 @@ class BaseEntity(BaseEntityObject):
                     proxies = {"http": env.PROXY_URL, "https": env.PROXY_URL}
                     response = requests.get(url, params=params, proxies=proxies, timeout=timeout)
                 else:
-                    response = requests.get(url, params=params, timeout=timeout)
+                    response = requests.get(url, params=params, headers=cls.base_header, timeout=timeout)
                 if response.status_code == 200:
                     sleep(DELAY_PER_REQUEST)
                     return response

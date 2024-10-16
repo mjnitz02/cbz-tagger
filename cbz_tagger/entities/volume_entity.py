@@ -10,7 +10,7 @@ class VolumeEntity(BaseEntity):
     paginated: bool = False
 
     @classmethod
-    def from_server_url(cls, query_params=None):
+    def from_server_url(cls, query_params=None, plugin_type=None):
         entity_id = query_params["ids[]"][0]
 
         response = requests.get(f"{cls.entity_url}/{entity_id}/aggregate", timeout=60).json()

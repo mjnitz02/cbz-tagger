@@ -1,15 +1,15 @@
 from unittest import mock
 
 from cbz_tagger.database.chapter_entity_db import ChapterEntityDB
-from cbz_tagger.entities.chapter_plugins import ChapterEntityMDX
+from cbz_tagger.entities.chapter_entity import ChapterEntity
 
 
 def test_chapter_entity_db(chapter_request_response, manga_request_id):
-    with mock.patch.object(ChapterEntityMDX, "from_server_url") as mock_from_server_url:
-        mock_from_server_url.return_value = [ChapterEntityMDX(data) for data in chapter_request_response["data"]]
+    with mock.patch.object(ChapterEntity, "from_server_url") as mock_from_server_url:
+        mock_from_server_url.return_value = [ChapterEntity(data) for data in chapter_request_response["data"]]
         entity_db = ChapterEntityDB()
         entity_db.update(manga_request_id)
-        mock_from_server_url.assert_called_once_with(query_params={"ids[]": [manga_request_id]})
+        mock_from_server_url.assert_called_once_with(query_params={"ids[]": [manga_request_id]}, plugin_type=None)
 
         assert len(entity_db) == 1
         assert isinstance(entity_db[manga_request_id], list)
@@ -20,8 +20,8 @@ def test_chapter_entity_db(chapter_request_response, manga_request_id):
 
 
 def test_chapter_entity_db_return_list_if_only_one_chapter(chapter_request_response, manga_request_id):
-    with mock.patch.object(ChapterEntityMDX, "from_server_url") as mock_from_server_url:
-        mock_from_server_url.return_value = [ChapterEntityMDX(data) for data in chapter_request_response["data"]]
+    with mock.patch.object(ChapterEntity, "from_server_url") as mock_from_server_url:
+        mock_from_server_url.return_value = [ChapterEntity(data) for data in chapter_request_response["data"]]
         entity_db = ChapterEntityDB()
         entity_db.update(manga_request_id)
 
@@ -31,8 +31,8 @@ def test_chapter_entity_db_return_list_if_only_one_chapter(chapter_request_respo
 
 
 def test_chapter_entity_db_can_store_and_load(chapter_request_response, manga_request_id):
-    with mock.patch.object(ChapterEntityMDX, "from_server_url") as mock_from_server_url:
-        mock_from_server_url.return_value = [ChapterEntityMDX(data) for data in chapter_request_response["data"]]
+    with mock.patch.object(ChapterEntity, "from_server_url") as mock_from_server_url:
+        mock_from_server_url.return_value = [ChapterEntity(data) for data in chapter_request_response["data"]]
         entity_db = ChapterEntityDB()
         entity_db.update(manga_request_id)
         assert isinstance(entity_db[manga_request_id], list)

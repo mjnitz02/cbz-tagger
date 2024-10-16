@@ -23,7 +23,7 @@ def test_metadata_entity_db(manga_request_content, manga_request_id):
         mock_from_server_url.return_value = [MetadataEntity(content=manga_request_content)]
         entity_db = MetadataEntityDB()
         entity_db.update(manga_request_id)
-        mock_from_server_url.assert_called_once_with(query_params={"ids[]": [manga_request_id]})
+        mock_from_server_url.assert_called_once_with(query_params={"ids[]": [manga_request_id]}, plugin_type=None)
 
         assert len(entity_db) == 1
         assert entity_db[manga_request_id].content == manga_request_content
@@ -53,7 +53,7 @@ def test_author_entity_db(author_request_content, author_request_id):
         mock_from_server_url.return_value = [AuthorEntity(content=author_request_content)]
         entity_db = AuthorEntityDB()
         entity_db.update(author_request_id)
-        mock_from_server_url.assert_called_once_with(query_params={"ids[]": [author_request_id]})
+        mock_from_server_url.assert_called_once_with(query_params={"ids[]": [author_request_id]}, plugin_type=None)
 
         assert len(entity_db) == 1
         assert entity_db[author_request_id].content == author_request_content
@@ -78,7 +78,7 @@ def test_volume_entity_db(volume_request_response, manga_request_id):
         mock_from_server_url.return_value = [VolumeEntity(content=volume_request_response)]
         entity_db = VolumeEntityDB()
         entity_db.update(manga_request_id)
-        mock_from_server_url.assert_called_once_with(query_params={"ids[]": [manga_request_id]})
+        mock_from_server_url.assert_called_once_with(query_params={"ids[]": [manga_request_id]}, plugin_type=None)
 
         assert len(entity_db) == 1
         assert entity_db[manga_request_id].content == volume_request_response
@@ -103,7 +103,7 @@ def test_cover_entity_db(cover_request_response, manga_request_id):
         mock_from_server_url.return_value = [CoverEntity(data) for data in cover_request_response["data"]]
         entity_db = CoverEntityDB()
         entity_db.update(manga_request_id)
-        mock_from_server_url.assert_called_once_with(query_params={"manga[]": [manga_request_id]})
+        mock_from_server_url.assert_called_once_with(query_params={"manga[]": [manga_request_id]}, plugin_type=None)
 
         assert len(entity_db) == 1
         assert isinstance(entity_db[manga_request_id], list)

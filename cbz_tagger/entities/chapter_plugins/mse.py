@@ -5,23 +5,24 @@ from typing import List
 from xml.etree import ElementTree
 
 from cbz_tagger.common.enums import Urls
-from cbz_tagger.entities.chapter_entity import ChapterEntity
+from cbz_tagger.entities.base_entity import BaseEntity
 
 
-class ChapterEntityMSE(ChapterEntity):
+class ChapterPluginMSE(BaseEntity):
     entity_url = f"https://{Urls.MSE}/rss/"
 
     @classmethod
-    def from_server_url(cls, query_params=None):
+    def from_server_url(cls, query_params=None, plugin_type=None):
+        _ = plugin_type
         entity_id = query_params["ids[]"][0]
-        response = cls.parse_rss_feed(entity_id)
-        return [cls(data) for data in response]
+        response = cls.parse_info_feed(entity_id)
+        return response
 
     def get_chapter_url(self):
         return self.attributes.get("url", "")
 
     @classmethod
-    def parse_rss_feed(cls, entity_id: str) -> List[Any]:
+    def parse_info_feed(cls, entity_id: str) -> List[Any]:
         url = f"{cls.entity_url}{entity_id}.xml"
         response = cls.request_with_retry(url)
 
@@ -37,7 +38,7 @@ class ChapterEntityMSE(ChapterEntity):
             content.append(
                 {
                     "id": f"{entity_id}-{title}".replace(" ", "-").lower(),
-                    "type": "chapter-manga-see",
+                    "type": "mse",
                     "attributes": {
                         "title": title,
                         "url": link,
