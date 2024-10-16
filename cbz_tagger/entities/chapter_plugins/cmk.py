@@ -5,15 +5,16 @@ from cbz_tagger.common.enums import Urls
 from cbz_tagger.entities.base_entity import BaseEntity
 
 
-class ChapterEntityCMK(BaseEntity):
+class ChapterPluginCMK(BaseEntity):
     entity_url = f"https://{Urls.CMK}/"
 
     @classmethod
-    def from_server_url(cls, query_params=None, plugin_type=None):
-        _ = plugin_type
-        entity_id = query_params["ids[]"][0]
+    def from_server_url(cls, query_params=None, **kwargs):
+        if "plugin_id" not in kwargs:
+            raise EnvironmentError("plugin_id not provided")
+        entity_id = kwargs["plugin_id"]
         response = cls.parse_info_feed(entity_id)
-        return [cls(data) for data in response]
+        return response
 
     def get_chapter_url(self):
         return self.attributes.get("url", "")
@@ -67,3 +68,12 @@ class ChapterEntityCMK(BaseEntity):
                 }
             )
         return content
+
+    def parse_chapter_download_links(self, url: str) -> List[str]:
+        response = self.request_with_retry(url)
+        response_json = response.json()
+        chapter_content = response_json["chapter"]
+        links = []
+        for image in chapter_content["images"]:
+            links.append(image["url"])
+        return links

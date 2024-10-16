@@ -37,8 +37,8 @@ class BaseEntity(BaseEntityObject):
         return cls(json.loads(json_str))
 
     @classmethod
-    def from_server_url(cls, query_params=None, plugin_type=None):
-        _ = plugin_type
+    def from_server_url(cls, query_params=None, **kwargs):
+        _ = kwargs
         response = cls.unpaginate_request(cls.entity_url, query_params)
         return [cls(data) for data in response]
 
@@ -67,7 +67,9 @@ class BaseEntity(BaseEntityObject):
             try:
                 if env.PROXY_URL is not None:
                     proxies = {"http": env.PROXY_URL, "https": env.PROXY_URL}
-                    response = requests.get(url, params=params, proxies=proxies, timeout=timeout)
+                    response = requests.get(
+                        url, params=params, headers=cls.base_header, proxies=proxies, timeout=timeout
+                    )
                 else:
                     response = requests.get(url, params=params, headers=cls.base_header, timeout=timeout)
                 if response.status_code == 200:

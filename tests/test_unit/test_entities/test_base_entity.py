@@ -129,6 +129,7 @@ def test_request_with_retry_with_proxy(mock_app_env, mock_sleep, mock_requests_g
     mock_requests_get.assert_called_once_with(
         "http://example.com/file",
         params=None,
+        headers=BaseEntity.base_header,
         proxies={"http": "http://proxy.example.com", "https": "http://proxy.example.com"},
         timeout=30,
     )

@@ -9,7 +9,7 @@ def test_chapter_entity_db(chapter_request_response, manga_request_id):
         mock_from_server_url.return_value = [ChapterEntity(data) for data in chapter_request_response["data"]]
         entity_db = ChapterEntityDB()
         entity_db.update(manga_request_id)
-        mock_from_server_url.assert_called_once_with(query_params={"ids[]": [manga_request_id]}, plugin_type=None)
+        mock_from_server_url.assert_called_once_with(query_params={"ids[]": [manga_request_id]})
 
         assert len(entity_db) == 1
         assert isinstance(entity_db[manga_request_id], list)

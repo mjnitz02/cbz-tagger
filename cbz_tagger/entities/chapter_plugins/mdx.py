@@ -11,8 +11,7 @@ class ChapterPluginMDX(BaseEntity):
     quality = "data"
 
     @classmethod
-    def from_server_url(cls, query_params=None, plugin_type=None):
-        _ = plugin_type
+    def from_server_url(cls, query_params=None, **kwargs):
         entity_id = query_params["ids[]"][0]
 
         order = {

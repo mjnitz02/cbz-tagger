@@ -6,6 +6,7 @@ from PIL import Image
 from PIL import ImageFile
 
 from cbz_tagger.entities.base_entity import BaseEntity
+from cbz_tagger.entities.chapter_plugins.cmk import ChapterPluginCMK
 from cbz_tagger.entities.chapter_plugins.mdx import ChapterPluginMDX
 from cbz_tagger.entities.chapter_plugins.mse import ChapterPluginMSE
 
@@ -17,12 +18,14 @@ class ChapterEntity(BaseEntity):
     plugins = {
         "mdx": ChapterPluginMDX,
         "mse": ChapterPluginMSE,
+        "cmk": ChapterPluginCMK,
     }
 
     @classmethod
-    def from_server_url(cls, query_params=None, plugin_type=None):
-        entity_plugin = cls.plugins.get(plugin_type, cls.plugins["mdx"])
-        response = entity_plugin.from_server_url(query_params=query_params)
+    def from_server_url(cls, query_params=None, **kwargs):
+        plugin_type = kwargs.get("plugin_type", "mdx")
+        entity_plugin = cls.plugins[plugin_type]
+        response = entity_plugin.from_server_url(query_params=query_params, **kwargs)
         return [cls(data) for data in response]
 
     @property
@@ -115,7 +118,9 @@ class ChapterEntity(BaseEntity):
                     ImageFile.LOAD_TRUNCATED_IMAGES = True
                     in_memory_image.save(image_path, quality=95, optimize=True)
 
-        if len(cached_images) != self.pages:
+        if self.pages != -1 and len(cached_images) != self.pages:
+            raise EnvironmentError(f"Failed to download chapter {self.entity_id}, not enough pages saved from server")
+        if self.pages == -1 and len(cached_images) != len(download_links):
             raise EnvironmentError(f"Failed to download chapter {self.entity_id}, not enough pages saved from server")
 
         return cached_images

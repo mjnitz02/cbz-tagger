@@ -12,8 +12,7 @@ class ChapterPluginMSE(BaseEntity):
     entity_url = f"https://{Urls.MSE}/rss/"
 
     @classmethod
-    def from_server_url(cls, query_params=None, plugin_type=None):
-        _ = plugin_type
+    def from_server_url(cls, query_params=None, **kwargs):
         entity_id = query_params["ids[]"][0]
         response = cls.parse_info_feed(entity_id)
         return response
@@ -75,7 +74,6 @@ class ChapterPluginMSE(BaseEntity):
         page_root_url = (
             f"https://{chapter_metadata['path_name']}/manga/{chapter_metadata['index_name']}/{chapter_string}"
         )
-        self.content["attributes"]["pages"] = chapter_metadata["pages"]
         for page in range(1, chapter_metadata["pages"] + 1):
             links.append(f"{page_root_url}-{page:03}.png")
         return links
