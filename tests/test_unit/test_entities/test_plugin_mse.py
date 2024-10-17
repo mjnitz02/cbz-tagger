@@ -12,47 +12,47 @@ def chapter_entity(requests_mock):
     requests_mock.get(
         f"https://{Urls.MSE}/rss/example_manga.xml",
         text="""<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
-    <channel>
-    <atom:link href="https://url.com/rss/series-name.xml" rel="self" type="application/rss+xml"/>
-    <title>Series Name</title>
-    <link>https://url.com/manga/series-name</link>
-    <lastBuildDate>Thu, 10 Oct 2024 18:45:45 +0000</lastBuildDate>
-    <description>Series Name Chapters</description>
-    <language>en-us</language>
-    <category>entertainment</category>
-    <image>
-    <url>https://url.com/cover/series-name.jpg</url>
-    <title>Series Name</title>
-    <link>https://url.com/manga/series-name</link>
-    </image>
-    <item>
-    <title>Series Name Chapter 2</title>
-    <link>https://url.com/series-name-chapter-2-page-1.html</link>
-    <pubDate>Tue, 08 Oct 2024 23:16:39 +0000</pubDate>
-    <guid isPermaLink="false">Series-Name-2</guid>
-    </item>
-    <item>
-    <title>Series Name Chapter 1.5</title>
-    <link>https://url.com/series-name-chapter-1.5-page-1.html</link>
-    <pubDate>Tue, 01 Oct 2024 22:09:02 +0000</pubDate>
-    <guid isPermaLink="false">Series-Name-1.5</guid>
-    </item>
-    <item>
-    <title>Series Name Chapter 1</title>
-    <link>https://url.com/series-name-chapter-1-page-1.html</link>
-    <pubDate>Tue, 01 Oct 2024 22:09:02 +0000</pubDate>
-    <guid isPermaLink="false">Series-Name-1</guid>
-    </item>
-    </channel>
-    </rss>
+        <channel>
+        <atom:link href="https://url.com/rss/series-name.xml" rel="self" type="application/rss+xml"/>
+        <title>Series Name</title>
+        <link>https://url.com/manga/series-name</link>
+        <lastBuildDate>Thu, 10 Oct 2024 18:45:45 +0000</lastBuildDate>
+        <description>Series Name Chapters</description>
+        <language>en-us</language>
+        <category>entertainment</category>
+        <image>
+        <url>https://url.com/cover/series-name.jpg</url>
+        <title>Series Name</title>
+        <link>https://url.com/manga/series-name</link>
+        </image>
+        <item>
+        <title>Series Name Chapter 2</title>
+        <link>https://url.com/series-name-chapter-2-page-1.html</link>
+        <pubDate>Tue, 08 Oct 2024 23:16:39 +0000</pubDate>
+        <guid isPermaLink="false">Series-Name-2</guid>
+        </item>
+        <item>
+        <title>Series Name Chapter 1.5</title>
+        <link>https://url.com/series-name-chapter-1.5-page-1.html</link>
+        <pubDate>Tue, 01 Oct 2024 22:09:02 +0000</pubDate>
+        <guid isPermaLink="false">Series-Name-1.5</guid>
+        </item>
+        <item>
+        <title>Series Name Chapter 1</title>
+        <link>https://url.com/series-name-chapter-1-page-1.html</link>
+        <pubDate>Tue, 01 Oct 2024 22:09:02 +0000</pubDate>
+        <guid isPermaLink="false">Series-Name-1</guid>
+        </item>
+        </channel>
+        </rss>
     """,
     )
     requests_mock.get(
         "http://mse.example.com/chapter",
         text="""vm.CurChapter = {"Chapter":"100010","Type":"Chapter","Page":"2","Directory":"","Date":"2024-10-08 23:16:39","ChapterName":null};
-    vm.CurPathName = "scans.filelocation.us";
-    vm.IndexName = "series_name";
-    vm.SeriesName = "Some Name";
+        vm.CurPathName = "scans.filelocation.us";
+        vm.IndexName = "series_name";
+        vm.SeriesName = "Some Name";
     """,
     )
 
