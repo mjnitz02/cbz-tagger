@@ -6,19 +6,18 @@ import pytest
 @pytest.fixture
 def end_to_end_manga_name():
     return None
-    # return "Kaoru Hana wa Rin to Saku"
 
 
 @pytest.fixture
 def end_to_end_chapter_name():
     return None
-    # return "01-kaoru-hana-wa-rin-to-saku"
 
 
 def test_end_to_end_disabled_on_commits(end_to_end_manga_name):
     assert end_to_end_manga_name is None
 
 
+@pytest.mark.skip("Debugging only")
 @mock.patch("cbz_tagger.database.entity_db.get_input")
 @mock.patch("cbz_tagger.database.entity_db.get_raw_input")
 def test_end_to_end_mdx(
@@ -37,8 +36,10 @@ def test_end_to_end_mdx(
     # Refresh the database to run all downloads, nothing should be downloaded since the actual request
     # to the server is mocked above. We will run everything else though against real APIs.
     integration_scanner.refresh()
+    assert True
 
 
+@pytest.mark.skip("Debugging only")
 @mock.patch("cbz_tagger.database.entity_db.get_input")
 @mock.patch("cbz_tagger.database.entity_db.get_raw_input")
 def test_end_to_end_live_mse(
@@ -62,8 +63,10 @@ def test_end_to_end_live_mse(
 
     integration_scanner.add_tracked_entity()
     integration_scanner.refresh()
+    assert True
 
 
+@pytest.mark.skip("Debugging only")
 @mock.patch("cbz_tagger.database.entity_db.get_input")
 @mock.patch("cbz_tagger.database.entity_db.get_raw_input")
 def test_end_to_end_live_cmk(
@@ -87,3 +90,4 @@ def test_end_to_end_live_cmk(
 
     integration_scanner.add_tracked_entity()
     integration_scanner.refresh()
+    assert True

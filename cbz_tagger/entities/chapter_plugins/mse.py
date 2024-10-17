@@ -6,20 +6,11 @@ from xml.etree import ElementTree
 
 from cbz_tagger.common.enums import Plugins
 from cbz_tagger.common.enums import Urls
-from cbz_tagger.entities.base_entity import BaseEntity
+from cbz_tagger.entities.chapter_plugins.plugin import ChapterPluginEntity
 
 
-class ChapterPluginMSE(BaseEntity):
+class ChapterPluginMSE(ChapterPluginEntity):
     entity_url = f"https://{Urls.MSE}/rss/"
-
-    @classmethod
-    def from_server_url(cls, query_params=None, **kwargs):
-        entity_id = query_params["ids[]"][0]
-        response = cls.parse_info_feed(entity_id)
-        return response
-
-    def get_chapter_url(self):
-        return self.attributes.get("url", "")
 
     @classmethod
     def parse_info_feed(cls, entity_id: str) -> List[Any]:

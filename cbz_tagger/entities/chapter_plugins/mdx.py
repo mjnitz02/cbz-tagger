@@ -1,11 +1,12 @@
 from time import sleep
+from typing import Any
 from typing import List
 
 from cbz_tagger.common.enums import Urls
-from cbz_tagger.entities.base_entity import BaseEntity
+from cbz_tagger.entities.chapter_plugins.plugin import ChapterPluginEntity
 
 
-class ChapterPluginMDX(BaseEntity):
+class ChapterPluginMDX(ChapterPluginEntity):
     entity_url: str = f"https://api.{Urls.MDX}/manga"
     download_url: str = f"https://api.{Urls.MDX}/at-home/server"
     quality = "data"
@@ -29,6 +30,10 @@ class ChapterPluginMDX(BaseEntity):
     def get_chapter_url(self):
         url = f"{self.download_url}/{self.entity_id}"
         return url
+
+    @classmethod
+    def parse_info_feed(cls, entity_id: str) -> List[Any]:
+        return []
 
     def parse_chapter_download_links(self, url: str) -> List[str]:
         response = self.request_with_retry(url).json()

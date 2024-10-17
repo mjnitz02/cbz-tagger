@@ -61,17 +61,14 @@ class BaseEntity(BaseEntityObject):
     @classmethod
     def request_with_retry(cls, url, params=None, retries=3, timeout=30):
         env = AppEnv()
+        request_parameters = {"url": url, "params": params, "headers": cls.base_header, "timeout": timeout}
+        if env.PROXY_URL is not None:
+            request_parameters["proxies"] = {"http": env.PROXY_URL, "https": env.PROXY_URL}
 
         attempt = 0
         while attempt < retries:
             try:
-                if env.PROXY_URL is not None:
-                    proxies = {"http": env.PROXY_URL, "https": env.PROXY_URL}
-                    response = requests.get(
-                        url, params=params, headers=cls.base_header, proxies=proxies, timeout=timeout
-                    )
-                else:
-                    response = requests.get(url, params=params, headers=cls.base_header, timeout=timeout)
+                response = requests.get(**request_parameters)
                 if response.status_code == 200:
                     sleep(DELAY_PER_REQUEST)
                     return response

@@ -3,22 +3,11 @@ from typing import List
 
 from cbz_tagger.common.enums import Plugins
 from cbz_tagger.common.enums import Urls
-from cbz_tagger.entities.base_entity import BaseEntity
+from cbz_tagger.entities.chapter_plugins.plugin import ChapterPluginEntity
 
 
-class ChapterPluginCMK(BaseEntity):
+class ChapterPluginCMK(ChapterPluginEntity):
     entity_url = f"https://{Urls.CMK}/"
-
-    @classmethod
-    def from_server_url(cls, query_params=None, **kwargs):
-        if "plugin_id" not in kwargs:
-            raise EnvironmentError("plugin_id not provided")
-        entity_id = kwargs["plugin_id"]
-        response = cls.parse_info_feed(entity_id)
-        return response
-
-    def get_chapter_url(self):
-        return self.attributes.get("url", "")
 
     @classmethod
     def parse_info_feed(cls, entity_id: str) -> List[Any]:
@@ -76,5 +65,6 @@ class ChapterPluginCMK(BaseEntity):
         chapter_content = response_json["chapter"]
         links = []
         for image in chapter_content["images"]:
-            links.append(image["url"])
+            if "null" not in image["url"]:
+                links.append(image["url"])
         return links

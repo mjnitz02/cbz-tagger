@@ -43,7 +43,7 @@ def test_request_with_retry_success(mock_sleep, mock_requests_get):
 
     assert result == mock_response
     mock_requests_get.assert_called_once_with(
-        "http://example.com/file", params=None, headers=BaseEntity.base_header, timeout=30
+        url="http://example.com/file", params=None, headers=BaseEntity.base_header, timeout=30
     )
     mock_sleep.assert_called_once_with(0.3)
 
@@ -127,7 +127,7 @@ def test_request_with_retry_with_proxy(mock_app_env, mock_sleep, mock_requests_g
 
     assert result == mock_response
     mock_requests_get.assert_called_once_with(
-        "http://example.com/file",
+        url="http://example.com/file",
         params=None,
         headers=BaseEntity.base_header,
         proxies={"http": "http://proxy.example.com", "https": "http://proxy.example.com"},
@@ -148,7 +148,7 @@ def test_download_file_success(mock_sleep, mock_requests_get):
 
     assert result == b"file content"
     mock_requests_get.assert_called_once_with(
-        "http://example.com/file", params=None, headers=BaseEntity.base_header, timeout=30
+        url="http://example.com/file", params=None, headers=BaseEntity.base_header, timeout=30
     )
     mock_sleep.assert_called_once()
 
