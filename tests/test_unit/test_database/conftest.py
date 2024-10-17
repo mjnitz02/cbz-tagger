@@ -135,6 +135,17 @@ def mock_entity_db_with_mock_updates_out_of_date(
 
 
 @pytest.fixture
+def mock_entity_db_with_mock_updates_out_of_date_chapter(
+    mock_entity_db_with_metadata_update, manga_request_id, manga_request_content
+):
+    out_of_date_content = copy.deepcopy(manga_request_content)
+    out_of_date_content["attributes"]["latestUploadedChapter"] = "old-chapter"
+    entity = MetadataEntity(content=out_of_date_content)
+    mock_entity_db_with_metadata_update.metadata.database[manga_request_id] = entity
+    return mock_entity_db_with_metadata_update
+
+
+@pytest.fixture
 def mock_chapter_1_xml(tests_fixtures_path):
     fixture_name = os.path.join(tests_fixtures_path, "expected_chapter_1.xml")
     with open(fixture_name, "r", encoding="UTF-8") as read_file:

@@ -279,12 +279,14 @@ class EntityDB:
                 chapter_plugin = self.entity_chapter_plugin.get(entity_id, {})
                 print(f"Checking for updates {manga_name}: {entity_id}")
                 last_updated = None
+                latest_chapter = None
                 if self.metadata[entity_id] is not None:
                     last_updated = self.metadata[entity_id].updated
+                    latest_chapter = self.metadata[entity_id].latest_chapter
 
                 self.metadata.update(entity_id)
                 if last_updated == self.metadata[entity_id].updated:
-                    if chapter_plugin:
+                    if chapter_plugin or latest_chapter != self.metadata[entity_id].latest_chapter:
                         self.chapters.update(entity_id, **chapter_plugin)
                         self.save()
                     return

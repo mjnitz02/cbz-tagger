@@ -355,11 +355,24 @@ def test_entity_db_update_calls_each_entity_when_updates_available(
     metadata_entity = mock_entity_db_with_mock_updates_out_of_date.metadata[manga_request_id]
 
     mock_entity_db_with_mock_updates_out_of_date.update_manga_entity_id(manga_request_id)
+
     mock_entity_db_with_mock_updates_out_of_date.authors.update.assert_called_once_with(metadata_entity.author_entities)
     mock_entity_db_with_mock_updates_out_of_date.covers.update.assert_called_once_with(manga_request_id)
     mock_entity_db_with_mock_updates_out_of_date.volumes.update.assert_called_once_with(manga_request_id)
     mock_entity_db_with_mock_updates_out_of_date.chapters.update.assert_called_once_with(manga_request_id)
     mock_entity_db_with_mock_updates_out_of_date.covers.download.assert_called_once()
+
+
+def test_entity_db_update_chapter_only_when_no_updates_but_not_latest_chapter(
+    mock_entity_db_with_mock_updates_out_of_date_chapter, manga_request_id
+):
+    mock_entity_db_with_mock_updates_out_of_date_chapter.update_manga_entity_id(manga_request_id)
+
+    mock_entity_db_with_mock_updates_out_of_date_chapter.chapters.update.assert_called_once_with(manga_request_id)
+    mock_entity_db_with_mock_updates_out_of_date_chapter.authors.update.assert_not_called()
+    mock_entity_db_with_mock_updates_out_of_date_chapter.covers.update.assert_not_called()
+    mock_entity_db_with_mock_updates_out_of_date_chapter.volumes.update.assert_not_called()
+    mock_entity_db_with_mock_updates_out_of_date_chapter.covers.download.assert_not_called()
 
 
 def test_entity_db_update_calls_each_entity_when_no_existing_metadata(

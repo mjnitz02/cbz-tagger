@@ -30,6 +30,10 @@ class MetadataEntity(BaseEntity):
         return self.attributes.get("updatedAt")
 
     @property
+    def latest_chapter(self) -> str:
+        return self.attributes.get("latestUploadedChapter")
+
+    @property
     def completed(self) -> bool:
         return self.attributes["status"] == "completed"
 
