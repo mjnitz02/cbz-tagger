@@ -4,24 +4,16 @@ from typing import Any
 from typing import List
 from xml.etree import ElementTree
 
+from cbz_tagger.common.enums import Plugins
 from cbz_tagger.common.enums import Urls
-from cbz_tagger.entities.chapter_entity import ChapterEntity
+from cbz_tagger.entities.chapter_plugins.plugin import ChapterPluginEntity
 
 
-class ChapterEntityMSE(ChapterEntity):
+class ChapterPluginMSE(ChapterPluginEntity):
     entity_url = f"https://{Urls.MSE}/rss/"
 
     @classmethod
-    def from_server_url(cls, query_params=None):
-        entity_id = query_params["ids[]"][0]
-        response = cls.parse_rss_feed(entity_id)
-        return [cls(data) for data in response]
-
-    def get_chapter_url(self):
-        return self.attributes.get("url", "")
-
-    @classmethod
-    def parse_rss_feed(cls, entity_id: str) -> List[Any]:
+    def parse_info_feed(cls, entity_id: str) -> List[Any]:
         url = f"{cls.entity_url}{entity_id}.xml"
         response = cls.request_with_retry(url)
 
@@ -37,7 +29,7 @@ class ChapterEntityMSE(ChapterEntity):
             content.append(
                 {
                     "id": f"{entity_id}-{title}".replace(" ", "-").lower(),
-                    "type": "chapter-manga-see",
+                    "type": Plugins.MSE,
                     "attributes": {
                         "title": title,
                         "url": link,
@@ -74,7 +66,6 @@ class ChapterEntityMSE(ChapterEntity):
         page_root_url = (
             f"https://{chapter_metadata['path_name']}/manga/{chapter_metadata['index_name']}/{chapter_string}"
         )
-        self.content["attributes"]["pages"] = chapter_metadata["pages"]
         for page in range(1, chapter_metadata["pages"] + 1):
             links.append(f"{page_root_url}-{page:03}.png")
         return links

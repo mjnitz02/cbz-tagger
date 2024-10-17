@@ -30,6 +30,7 @@ class EntityDB:
         entity_names=None,
         entity_downloads=None,
         entity_tracked=None,
+        entity_chapter_plugin=None,
         metadata=None,
         covers=None,
         authors=None,
@@ -42,6 +43,7 @@ class EntityDB:
         self.entity_names: Dict[str, str] = {} if entity_names is None else entity_names
         self.entity_downloads = set() if entity_downloads is None else entity_downloads
         self.entity_tracked = set() if entity_tracked is None else entity_tracked
+        self.entity_chapter_plugin: Dict[str, str] = {} if entity_chapter_plugin is None else entity_chapter_plugin
 
         self.metadata: MetadataEntityDB = MetadataEntityDB() if metadata is None else metadata
         self.covers: CoverEntityDB = CoverEntityDB() if covers is None else covers
@@ -83,6 +85,7 @@ class EntityDB:
             "entity_names": self.entity_names,
             "entity_downloads": list(self.entity_downloads),
             "entity_tracked": list(self.entity_tracked),
+            "entity_chapter_plugin": self.entity_chapter_plugin,
             "metadata": self.metadata.to_json(),
             "covers": self.covers.to_json(),
             "authors": self.authors.to_json(),
@@ -109,6 +112,7 @@ class EntityDB:
             entity_names=content["entity_names"],
             entity_downloads=set(tuple(item) for item in content.get("entity_downloads", [])),
             entity_tracked=set(content.get("entity_tracked", [])),
+            entity_chapter_plugin=content.get("entity_chapter_plugin", {}),
             metadata=MetadataEntityDB.from_json(content["metadata"]),
             covers=CoverEntityDB.from_json(content["covers"]),
             authors=AuthorEntityDB.from_json(content["authors"]),
@@ -150,6 +154,11 @@ class EntityDB:
             self.entity_names[entity_id] = self.clean_entity_name(entity_name)
         else:
             print(f"Entity {manga_name} already exists in the database.")
+
+        if track:
+            backend = self.select_a_chapter_backend()
+            if backend is not None:
+                self.entity_chapter_plugin[entity_id] = backend
 
         if update:
             self.update_manga_entity_id(entity_id)
@@ -219,6 +228,27 @@ class EntityDB:
         return response == "y"
 
     @staticmethod
+    def select_a_chapter_backend():
+        counter = 0
+        plugins_types = list(ChapterEntityDB.entity_class.plugins.keys())
+        print("Select a chapter backend for the series: (Default: mdx)")
+        for plugins_type in plugins_types:
+            print(f"{counter+1}. {plugins_type}")
+            counter += 1
+        choice = get_input(
+            "Please select the chapter backend to use for the series: ", counter + 1, allow_negative_exit=True
+        )
+        if choice <= 1:
+            return None
+
+        backend = plugins_types[choice - 1]
+        plugin_id = get_raw_input(f"Please enter the {backend} plugin manga ID: ")
+        return {
+            "plugin_type": backend,
+            "plugin_id": plugin_id,
+        }
+
+    @staticmethod
     def find_manga_entry(search_term):
         print(f">>> SEARCHING FOR NEW SERIES [{search_term}]")
         meta_entries = MetadataEntity.from_server_url(query_params={"title": search_term})
@@ -246,6 +276,7 @@ class EntityDB:
         manga_name = self.entity_names.get(entity_id)
         if entity_id is not None:
             try:
+                chapter_plugin = self.entity_chapter_plugin.get(entity_id, {})
                 print(f"Checking for updates {manga_name}: {entity_id}")
                 last_updated = None
                 if self.metadata[entity_id] is not None:
@@ -253,11 +284,14 @@ class EntityDB:
 
                 self.metadata.update(entity_id)
                 if last_updated == self.metadata[entity_id].updated:
+                    if chapter_plugin:
+                        self.chapters.update(entity_id, **chapter_plugin)
+                        self.save()
                     return
 
                 # Update the collections
                 print(f"Updating {manga_name}: {entity_id}")
-                self.chapters.update(entity_id)
+                self.chapters.update(entity_id, **chapter_plugin)
                 self.volumes.update(entity_id)
                 self.covers.update(entity_id)
                 self.authors.update(self.metadata[entity_id].author_entities)

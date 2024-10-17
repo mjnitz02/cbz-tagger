@@ -5,13 +5,29 @@ from typing import List
 from PIL import Image
 from PIL import ImageFile
 
+from cbz_tagger.common.enums import Plugins
 from cbz_tagger.entities.base_entity import BaseEntity
+from cbz_tagger.entities.chapter_plugins.cmk import ChapterPluginCMK
+from cbz_tagger.entities.chapter_plugins.mdx import ChapterPluginMDX
+from cbz_tagger.entities.chapter_plugins.mse import ChapterPluginMSE
 
 
 class ChapterEntity(BaseEntity):
     download_url: str
     paginated: bool = False
     quality = "data"
+    plugins = {
+        Plugins.MDX: ChapterPluginMDX,
+        Plugins.MSE: ChapterPluginMSE,
+        Plugins.CMK: ChapterPluginCMK,
+    }
+
+    @classmethod
+    def from_server_url(cls, query_params=None, **kwargs):
+        plugin_type = kwargs.get("plugin_type", Plugins.MDX)
+        entity_plugin = cls.plugins[plugin_type]
+        response = entity_plugin.from_server_url(query_params=query_params, **kwargs)
+        return [cls(data) for data in response]
 
     @property
     def chapter_number(self):
@@ -49,6 +65,17 @@ class ChapterEntity(BaseEntity):
             return str(self.chapter_number)
 
     @property
+    def entity_type(self):
+        # Backwards compatibility for old chapter types
+        if self.content.get("type", "") == "chapter":
+            return Plugins.MDX
+        return self.content.get("type", Plugins.MDX)
+
+    @property
+    def entity_plugin(self):
+        return self.plugins[self.entity_type](self.content)
+
+    @property
     def volume_number(self):
         return float(self.attributes.get("volume"))
 
@@ -66,10 +93,10 @@ class ChapterEntity(BaseEntity):
         return group.get("id", "none")
 
     def get_chapter_url(self):
-        raise NotImplementedError
+        return self.entity_plugin.get_chapter_url()
 
     def parse_chapter_download_links(self, url: str) -> List[str]:
-        raise NotImplementedError
+        return self.entity_plugin.parse_chapter_download_links(url)
 
     def download_chapter(self, filepath) -> List[str]:
         # Get chapter image urls
@@ -92,7 +119,9 @@ class ChapterEntity(BaseEntity):
                     ImageFile.LOAD_TRUNCATED_IMAGES = True
                     in_memory_image.save(image_path, quality=95, optimize=True)
 
-        if len(cached_images) != self.pages:
+        if self.pages != -1 and len(cached_images) != self.pages:
+            raise EnvironmentError(f"Failed to download chapter {self.entity_id}, not enough pages saved from server")
+        if self.pages == -1 and len(cached_images) != len(download_links):
             raise EnvironmentError(f"Failed to download chapter {self.entity_id}, not enough pages saved from server")
 
         return cached_images

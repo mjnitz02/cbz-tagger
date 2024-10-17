@@ -4,15 +4,16 @@ from unittest.mock import patch
 
 import pytest
 
+from cbz_tagger.common.enums import Plugins
 from cbz_tagger.common.enums import Urls
 from cbz_tagger.entities.base_entity import BaseEntity
-from cbz_tagger.entities.chapter_plugins.plugin_mdx import ChapterEntityMDX
+from cbz_tagger.entities.chapter_entity import ChapterEntity
 from cbz_tagger.entities.cover_entity import CoverEntity
 
 
 @pytest.fixture
 def chapter_entity():
-    return ChapterEntityMDX(
+    return ChapterEntity(
         {
             "id": "chapter_id",
             "attributes": {"chapter": "1", "translatedLanguage": "en", "pages": 2},
@@ -22,9 +23,9 @@ def chapter_entity():
 
 
 def test_chapter_entity(chapter_request_content):
-    entity = ChapterEntityMDX(content=chapter_request_content)
+    entity = ChapterEntity(content=chapter_request_content)
     assert entity.entity_id == "1361d404-d03c-4fd9-97b4-2c297914b098"
-    assert entity.entity_type == "chapter"
+    assert entity.entity_type == Plugins.MDX
 
     assert entity.volume_number == 1.0
     assert entity.chapter_number == 5
@@ -36,9 +37,9 @@ def test_chapter_entity(chapter_request_content):
 
 def test_chapter_entity_with_decimal_chapter(chapter_request_content):
     chapter_request_content["attributes"]["chapter"] = "5.5"
-    entity = ChapterEntityMDX(content=chapter_request_content)
+    entity = ChapterEntity(content=chapter_request_content)
     assert entity.entity_id == "1361d404-d03c-4fd9-97b4-2c297914b098"
-    assert entity.entity_type == "chapter"
+    assert entity.entity_type == Plugins.MDX
 
     assert entity.volume_number == 1.0
     assert entity.chapter_number == 5.5
@@ -50,9 +51,9 @@ def test_chapter_entity_with_decimal_chapter(chapter_request_content):
 
 def test_chapter_entity_with_double_decimal_chapter(chapter_request_content):
     chapter_request_content["attributes"]["chapter"] = "5.5.1"
-    entity = ChapterEntityMDX(content=chapter_request_content)
+    entity = ChapterEntity(content=chapter_request_content)
     assert entity.entity_id == "1361d404-d03c-4fd9-97b4-2c297914b098"
-    assert entity.entity_type == "chapter"
+    assert entity.entity_type == Plugins.MDX
 
     assert entity.volume_number == 1.0
     assert entity.chapter_number == 5.51
@@ -64,9 +65,9 @@ def test_chapter_entity_with_double_decimal_chapter(chapter_request_content):
 
 def test_chapter_entity_with_triple_decimal_chapter(chapter_request_content):
     chapter_request_content["attributes"]["chapter"] = "5.5.1.2"
-    entity = ChapterEntityMDX(content=chapter_request_content)
+    entity = ChapterEntity(content=chapter_request_content)
     assert entity.entity_id == "1361d404-d03c-4fd9-97b4-2c297914b098"
-    assert entity.entity_type == "chapter"
+    assert entity.entity_type == Plugins.MDX
 
     assert entity.volume_number == 1.0
     assert entity.chapter_number == 5.512
@@ -77,9 +78,9 @@ def test_chapter_entity_with_triple_decimal_chapter(chapter_request_content):
 
 
 def test_chapter_from_url(chapter_request_response):
-    with mock.patch("cbz_tagger.entities.chapter_plugins.ChapterEntityMDX.unpaginate_request") as mock_request:
+    with mock.patch("cbz_tagger.entities.chapter_plugins.mdx.ChapterPluginMDX.unpaginate_request") as mock_request:
         mock_request.return_value = chapter_request_response["data"]
-        entities = ChapterEntityMDX.from_server_url(query_params={"ids[]": ["1361d404-d03c-4fd9-97b4-2c297914b098"]})
+        entities = ChapterEntity.from_server_url(query_params={"ids[]": ["1361d404-d03c-4fd9-97b4-2c297914b098"]})
         # This test will see the english cover
         assert len(entities) == 4
         assert entities[0].entity_id == "1361d404-d03c-4fd9-97b4-2c297914b098"
@@ -98,10 +99,10 @@ def test_cover_entity_can_store_and_load(cover_request_content, check_entity_for
     check_entity_for_save_and_load(entity)
 
 
-@patch("cbz_tagger.entities.chapter_plugins.ChapterEntityMDX.request_with_retry")
+@patch("cbz_tagger.entities.chapter_plugins.mdx.ChapterPluginMDX.request_with_retry")
 @patch("cbz_tagger.entities.chapter_entity.Image.open")
 @patch("cbz_tagger.entities.chapter_entity.os.path.exists", return_value=False)
-@patch("cbz_tagger.entities.chapter_plugins.ChapterEntityMDX.download_file")
+@patch("cbz_tagger.entities.chapter_entity.ChapterEntity.download_file")
 def test_download_chapter(mock_download_file, mock_path_exists, mock_image_open, mock_requests_get, chapter_entity):
     _ = mock_path_exists
     mock_requests_get.return_value.json.return_value = {
@@ -122,9 +123,9 @@ def test_download_chapter(mock_download_file, mock_path_exists, mock_image_open,
     assert mock_image.save.call_count == 2
 
 
-@patch("cbz_tagger.entities.chapter_plugins.ChapterEntityMDX.request_with_retry")
+@patch("cbz_tagger.entities.chapter_plugins.mdx.ChapterPluginMDX.request_with_retry")
 @patch("cbz_tagger.entities.chapter_entity.os.path.exists", return_value=False)
-@patch("cbz_tagger.entities.chapter_plugins.ChapterEntityMDX.download_file")
+@patch("cbz_tagger.entities.chapter_entity.ChapterEntity.download_file")
 def test_download_chapter_raises_environment_error(
     mock_download_file, mock_path_exists, mock_requests_get, chapter_entity
 ):
@@ -141,7 +142,7 @@ def test_download_chapter_raises_environment_error(
     mock_requests_get.assert_called_once_with(f"https://api.{Urls.MDX}/at-home/server/chapter_id")
 
 
-@patch("cbz_tagger.entities.chapter_plugins.ChapterEntityMDX.request_with_retry")
+@patch("cbz_tagger.entities.chapter_plugins.mdx.ChapterPluginMDX.request_with_retry")
 def test_mdx_parse_chapter_download_links(mock_request_with_retry, chapter_entity):
     mock_response = MagicMock()
     mock_response.json.return_value = {

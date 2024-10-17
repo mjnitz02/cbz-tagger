@@ -13,7 +13,7 @@ from cbz_tagger.database.entity_db import EntityDB
 from cbz_tagger.database.metadata_entity_db import MetadataEntityDB
 from cbz_tagger.database.volume_entity_db import VolumeEntityDB
 from cbz_tagger.entities.author_entity import AuthorEntity
-from cbz_tagger.entities.chapter_plugins.plugin_mdx import ChapterEntityMDX
+from cbz_tagger.entities.chapter_entity import ChapterEntity
 from cbz_tagger.entities.cover_entity import CoverEntity
 from cbz_tagger.entities.metadata_entity import MetadataEntity
 from cbz_tagger.entities.volume_entity import VolumeEntity
@@ -53,7 +53,7 @@ def mock_volume_db(volume_request_response, manga_request_id):
 
 @pytest.fixture
 def mock_chapter_db(chapter_request_response, manga_request_id):
-    entities = [ChapterEntityMDX(data) for data in chapter_request_response["data"]]
+    entities = [ChapterEntity(data) for data in chapter_request_response["data"]]
     entity_db = ChapterEntityDB()
     entity_db.database[manga_request_id] = entities
     return entity_db
@@ -107,7 +107,7 @@ def mock_entity_db_with_mock_updates(mock_entity_db, manga_request_id, manga_req
 @pytest.fixture
 def mock_entity_db_with_metadata_update(mock_entity_db, manga_request_content):
     class MockMetadataEntityDB(MetadataEntityDB):
-        def update(self, entity_ids: Union[List[str], str], skip_on_exist=False):
+        def update(self, entity_ids: Union[List[str], str], skip_on_exist=False, **kwargs):
             if not isinstance(entity_ids, list):
                 entity_ids = [entity_ids]
 

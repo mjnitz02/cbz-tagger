@@ -41,7 +41,7 @@ class BaseEntityDB(BaseEntityObject):
             database[key] = cls.entity_class.from_json(value)
         return cls(database=database)
 
-    def update(self, entity_ids: Union[List[str], str], skip_on_exist=False):
+    def update(self, entity_ids: Union[List[str], str], skip_on_exist=False, **kwargs):
         if not isinstance(entity_ids, list):
             entity_ids = [entity_ids]
 
@@ -49,7 +49,7 @@ class BaseEntityDB(BaseEntityObject):
             if skip_on_exist and entity_id in self.database:
                 return
 
-            content = self.entity_class.from_server_url(query_params={self.query_param_field: [entity_id]})
+            content = self.entity_class.from_server_url(query_params={self.query_param_field: [entity_id]}, **kwargs)
             self.database[entity_id] = self.format_content_for_entity(content, entity_id)
 
     def format_content_for_entity(self, content, entity_id=None):

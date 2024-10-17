@@ -5,19 +5,11 @@ from typing import Optional
 
 from cbz_tagger.database.base_db import BaseEntityDB
 from cbz_tagger.entities.chapter_entity import ChapterEntity
-from cbz_tagger.entities.chapter_plugins import plugins
 
 
 class ChapterEntityDB(BaseEntityDB):
     database: Dict[str, List[ChapterEntity]]
     entity_class = ChapterEntity
-    plugins = plugins
-
-    def __init__(self, database=None, default_class: Optional[str] = None):
-        if default_class is None:
-            default_class = "mdx"
-        self.entity_class = self.plugins[default_class]
-        super().__init__(database=database)
 
     @staticmethod
     def remove_chapter_duplicate_entries(list_of_chapters) -> List[Optional[str]]:

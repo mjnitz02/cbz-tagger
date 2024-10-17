@@ -2,11 +2,14 @@ from unittest import mock
 
 import pytest
 
-from cbz_tagger.entities.chapter_plugins import plugins
-
 
 @pytest.fixture
 def end_to_end_manga_name():
+    return None
+
+
+@pytest.fixture
+def end_to_end_chapter_name():
     return None
 
 
@@ -14,17 +17,18 @@ def test_end_to_end_disabled_on_commits(end_to_end_manga_name):
     assert end_to_end_manga_name is None
 
 
+@pytest.mark.skip("Debugging only")
 @mock.patch("cbz_tagger.database.entity_db.get_input")
 @mock.patch("cbz_tagger.database.entity_db.get_raw_input")
-def test_end_to_end_live(
+def test_end_to_end_mdx(
     mock_get_raw_input, mock_get_input, integration_scanner, end_to_end_manga_name, capture_input_fixture
 ):
     """This test is designed for triggering a live test in a local environment"""
     if end_to_end_manga_name is None:
         return
 
-    mock_get_input.side_effect = capture_input_fixture(end_to_end_manga_name)
-    mock_get_raw_input.side_effect = capture_input_fixture(end_to_end_manga_name)
+    mock_get_input.side_effect = capture_input_fixture(end_to_end_manga_name, backend=1)
+    mock_get_raw_input.side_effect = capture_input_fixture(end_to_end_manga_name, backend=1)
 
     # Assert we can add a "tracked" entity to the database, and we're marking everything as completed
     integration_scanner.add_tracked_entity()
@@ -32,18 +36,58 @@ def test_end_to_end_live(
     # Refresh the database to run all downloads, nothing should be downloaded since the actual request
     # to the server is mocked above. We will run everything else though against real APIs.
     integration_scanner.refresh()
+    assert True
 
 
-def test_end_to_end_live_rss(integration_scanner, end_to_end_manga_name):
+@pytest.mark.skip("Debugging only")
+@mock.patch("cbz_tagger.database.entity_db.get_input")
+@mock.patch("cbz_tagger.database.entity_db.get_raw_input")
+def test_end_to_end_live_mse(
+    mock_get_raw_input,
+    mock_get_input,
+    capture_input_fixture,
+    integration_scanner,
+    end_to_end_manga_name,
+    end_to_end_chapter_name,
+):
     """This test is designed for triggering a live test in a local environment"""
     if end_to_end_manga_name is None:
         return
 
-    query_params = {"ids[]": [end_to_end_manga_name]}
-    chapters = plugins["mse"].from_server_url(query_params)
-    assert len(chapters) > 1
-    for idx, chapter in enumerate(chapters):
-        if idx > 0:
-            break
-        chapter.download_chapter(integration_scanner.storage_path)
-    assert chapters
+    mock_get_input.side_effect = capture_input_fixture(
+        end_to_end_manga_name, backend=2, backend_id=end_to_end_chapter_name
+    )
+    mock_get_raw_input.side_effect = capture_input_fixture(
+        end_to_end_manga_name, backend=2, backend_id=end_to_end_chapter_name
+    )
+
+    integration_scanner.add_tracked_entity()
+    integration_scanner.refresh()
+    assert True
+
+
+@pytest.mark.skip("Debugging only")
+@mock.patch("cbz_tagger.database.entity_db.get_input")
+@mock.patch("cbz_tagger.database.entity_db.get_raw_input")
+def test_end_to_end_live_cmk(
+    mock_get_raw_input,
+    mock_get_input,
+    capture_input_fixture,
+    integration_scanner,
+    end_to_end_manga_name,
+    end_to_end_chapter_name,
+):
+    """This test is designed for triggering a live test in a local environment"""
+    if end_to_end_manga_name is None:
+        return
+
+    mock_get_input.side_effect = capture_input_fixture(
+        end_to_end_manga_name, backend=3, backend_id=end_to_end_chapter_name
+    )
+    mock_get_raw_input.side_effect = capture_input_fixture(
+        end_to_end_manga_name, backend=3, backend_id=end_to_end_chapter_name
+    )
+
+    integration_scanner.add_tracked_entity()
+    integration_scanner.refresh()
+    assert True

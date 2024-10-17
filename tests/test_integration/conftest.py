@@ -29,7 +29,7 @@ def build_test_cbz(tests_fixtures_path, scan_path, manga_name):
 
 @pytest.fixture
 def capture_input_fixture():
-    def _func(manga_name, mark_all_chapters=False):
+    def _func(manga_name, mark_all_chapters=False, backend=None, backend_id=None):
         def capture_input(test_input, *args, **kwargs):
             _ = args, kwargs
             if test_input == "Enter a new name to search for: ":
@@ -42,6 +42,10 @@ def capture_input_fixture():
                 return 1
             if test_input == "Select a manga to delete: ":
                 return 1
+            if backend and test_input == "Please select the chapter backend to use for the series: ":
+                return backend
+            if backend_id and "plugin manga ID" in test_input:
+                return backend_id
             if "Mark all chapters" in test_input:
                 if mark_all_chapters:
                     return "y"
