@@ -40,7 +40,7 @@ class ChapterPluginCMK(ChapterPluginEntity):
         for item in items:
             # link = str(item.find("link").text)
             group_id = None
-            if len(item["group_name"]) > 0:
+            if isinstance(item["group_name"], list) and len(item["group_name"]) > 0:
                 group_id = item["group_name"][0]
             content.append(
                 {

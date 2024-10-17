@@ -32,7 +32,7 @@ def chapter_entity(requests_mock):
                         "title": "Chapter 2",
                         "vol": None,
                         "lang": "en",
-                        "group_name": ["Official"],
+                        "group_name": None,
                         "hid": "Ce82S7St",
                     },
                     {
@@ -41,7 +41,7 @@ def chapter_entity(requests_mock):
                         "title": "Chapter 1.5",
                         "vol": None,
                         "lang": "en",
-                        "group_name": ["Official"],
+                        "group_name": [],
                         "hid": "Be82S7St",
                     },
                     {
@@ -131,7 +131,7 @@ def test_parse_info_feed(chapter_entity):
                 "pages": -1,
                 "volume": None,
             },
-            "relationships": [{"type": "scanlation_group", "id": "Official"}],
+            "relationships": [{"type": "scanlation_group", "id": None}],
         },
         {
             "id": "ACprvUWn-Be82S7St",
@@ -144,7 +144,7 @@ def test_parse_info_feed(chapter_entity):
                 "pages": -1,
                 "volume": None,
             },
-            "relationships": [{"type": "scanlation_group", "id": "Official"}],
+            "relationships": [{"type": "scanlation_group", "id": None}],
         },
         {
             "id": "ACprvUWn-Ae82S7St",
