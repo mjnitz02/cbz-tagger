@@ -6,21 +6,6 @@ from cbz_tagger.common.env import AppEnv
 logger = logging.getLogger()
 
 
-def get_input_from_list(desc, input_list, allow_negative_exit=False):
-    print(desc)
-    counter = 0
-    items = list(input_list)
-    for item in items:
-        print(f"{counter + 1}. {item}")
-        counter += 1
-    choice = get_input(
-        "Please select the local and storage name number: ", counter + 1, allow_negative_exit=allow_negative_exit
-    )
-    if choice <= 0:
-        return None
-    return choice - 1
-
-
 def get_input(desc, max_val, allow_negative_exit=False):
     """Allow selection from a list of inputs"""
     while True:
