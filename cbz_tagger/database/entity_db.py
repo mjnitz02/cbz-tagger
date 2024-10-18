@@ -396,7 +396,7 @@ class EntityDB:
 
         volume = self.volumes[entity_id].get_volume(chapter_number)
         cover_entity = None
-        if volume != "none":
+        if volume != "-1":
             cover_entity = next((cover for cover in self.covers[entity_id] if cover.volume == volume), None)
         if cover_entity is None:
             cover_art_entity_id = self.metadata[entity_id].cover_art_id
