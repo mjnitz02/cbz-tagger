@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import re
 import shutil
@@ -20,6 +21,8 @@ from cbz_tagger.database.cover_entity_db import CoverEntityDB
 from cbz_tagger.database.metadata_entity_db import MetadataEntityDB
 from cbz_tagger.database.volume_entity_db import VolumeEntityDB
 from cbz_tagger.entities.metadata_entity import MetadataEntity
+
+logger = logging.getLogger()
 
 
 class EntityDB:
@@ -201,7 +204,7 @@ class EntityDB:
 
     def remove_entity_id_from_tracking(self, entity_id):
         self.entity_tracked.discard(entity_id)
-        print(f"Removed {entity_id} from tracking.")
+        logger.warning("Removed %s from tracking.", entity_id)
 
         # Remove the downloaded chapters
         downloaded_chapters = []
@@ -210,7 +213,7 @@ class EntityDB:
                 downloaded_chapters.append(chapter)
         for chapter in downloaded_chapters:
             self.entity_downloads.discard(chapter)
-        print(f"Removed downloaded chapters for {entity_id} from tracking.")
+        logger.warning("Removed downloaded chapters for %s from tracking.", entity_id)
 
     def delete_entity_id(self, entity_id_to_remove, entity_name_to_remove):
         self.remove_entity_id_from_tracking(entity_id_to_remove)
@@ -220,7 +223,7 @@ class EntityDB:
         self.covers.database.pop(entity_id_to_remove, None)
         self.volumes.database.pop(entity_id_to_remove, None)
         self.chapters.database.pop(entity_id_to_remove, None)
-        print(f"Deleted entity from database {entity_name_to_remove} ({entity_id_to_remove}).")
+        logger.warning("Deleted entity from database %s (%s).", entity_name_to_remove, entity_id_to_remove)
 
     @staticmethod
     def should_mark_all_tracked(manga_name):
@@ -277,7 +280,7 @@ class EntityDB:
         if entity_id is not None:
             try:
                 chapter_plugin = self.entity_chapter_plugin.get(entity_id, {})
-                print(f"Checking for updates {manga_name}: {entity_id}")
+                logger.info("Checking for updates %s: %s", manga_name, entity_id)
                 last_updated = None
                 latest_chapter = None
                 if self.metadata[entity_id] is not None:
@@ -292,7 +295,7 @@ class EntityDB:
                     return
 
                 # Update the collections
-                print(f"Updating {manga_name}: {entity_id}")
+                logger.info("Updating %s: %s", manga_name, entity_id)
                 self.chapters.update(entity_id, **chapter_plugin)
                 self.volumes.update(entity_id)
                 self.covers.update(entity_id)
@@ -306,17 +309,17 @@ class EntityDB:
                 self.save()
 
             except EnvironmentError as err:
-                print(f"API Down >> Unable to update {manga_name} metadata.", err)
+                logger.info("API Down >> Unable to update %s metadata. %s", manga_name, err)
 
     def refresh(self, storage_path):
-        print("Refreshing database...")
+        logger.info("Refreshing database...")
         for entity_id in sorted(self.metadata.keys()):
             self.update_manga_entity_id(entity_id)
-        print("Cleaning orphaned covers...")
+        logger.info("Cleaning orphaned covers...")
         self.covers.remove_orphaned_covers(self.image_db_path)
-        print("Downloading missing chapters...")
+        logger.info("Downloading missing chapters...")
         self.download_missing_chapters(storage_path)
-        print("Refresh complete.")
+        logger.info("Refresh complete.")
 
     def download_chapter(self, entity_id, chapter_item, storage_path):
         if (entity_id, chapter_item.entity_id) in self.entity_downloads:
@@ -326,7 +329,7 @@ class EntityDB:
         chapter_name = f"{manga_name} - Chapter {chapter_item.padded_chapter_string}"
 
         chapter_filepath = os.path.join(storage_path, manga_name, chapter_name)
-        print(f"Downloading {chapter_name}...")
+        logger.info("Downloading %s...", chapter_name)
         try:
             os.makedirs(chapter_filepath, exist_ok=True)
             # Build the chapter metadata files
@@ -345,7 +348,7 @@ class EntityDB:
             # Set the ownership of the file
             set_file_ownership(f"{chapter_filepath}.cbz")
         except EnvironmentError as err:
-            print(f"Could not download chapter: {entity_id}, {chapter_item.entity_id}", err)
+            logger.info("Could not download chapter: %s, %s, %s", entity_id, chapter_item.entity_id, err)
             if os.path.exists(f"{chapter_filepath}.cbz"):
                 os.remove(f"{chapter_filepath}.cbz")
             if (entity_id, chapter_item.entity_id) in self.entity_downloads:
@@ -393,7 +396,7 @@ class EntityDB:
 
         volume = self.volumes[entity_id].get_volume(chapter_number)
         cover_entity = None
-        if volume != "none":
+        if volume != "-1":
             cover_entity = next((cover for cover in self.covers[entity_id] if cover.volume == volume), None)
         if cover_entity is None:
             cover_art_entity_id = self.metadata[entity_id].cover_art_id
@@ -474,5 +477,5 @@ class EntityDB:
             try:
                 self.download_chapter(entity_id, chapter_item, storage_path)
             except EnvironmentError as err:
-                print(f"Error occurred in chapter: {entity_id}, {chapter_item.entity_id}", err)
+                logger.error("Error occurred in chapter: %s, %s, %s", entity_id, chapter_item.entity_id, err)
         return missing_chapters

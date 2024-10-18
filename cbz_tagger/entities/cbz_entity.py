@@ -1,9 +1,12 @@
+import logging
 import os
 import re
 from zipfile import ZIP_DEFLATED
 from zipfile import ZipFile
 
 from cbz_tagger.common.helpers import set_file_ownership
+
+logger = logging.getLogger()
 
 
 class CbzEntity:
@@ -108,7 +111,7 @@ class CbzEntity:
         cover_image_path = self.get_entity_cover_image_path(entity_image_path)
 
         if os.path.exists(write_path):
-            print("ERROR >> Destination file already present!")
+            logger.error("ERROR >> Destination file already present!")
             return
 
         with ZipFile(read_path, "r") as zip_read:

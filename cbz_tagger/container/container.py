@@ -1,10 +1,13 @@
 import argparse
+import logging
 import os
 
 from cbz_tagger.common.enums import ContainerMode
 from cbz_tagger.common.env import AppEnv
 from cbz_tagger.container.manual_container import ManualContainer
 from cbz_tagger.container.timer_container import TimerContainer
+
+logger = logging.getLogger()
 
 
 def get_arg_parser():
@@ -38,9 +41,9 @@ def get_environment_variables():
         "environment": env.get_user_environment(),
     }
 
-    print("Environment Variables:")
-    print(env_vars)
-    print(f"proxy_url: {env.PROXY_URL}")
+    logger.info("Environment Variables:")
+    logger.info(env_vars)
+    logger.info("proxy_url: %s", env.PROXY_URL)
 
     return env_vars
 
@@ -55,8 +58,8 @@ def run_container(**kwargs):
         Dictionary from get_arg_parser() containing command line inputs
     """
 
-    print("CBZ Tagger v2.0")
-    print("----------------------")
+    logger.info("CBZ Tagger v3.0")
+    logger.info("----------------------")
 
     env_vars = get_environment_variables()
 

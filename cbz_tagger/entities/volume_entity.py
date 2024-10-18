@@ -59,4 +59,4 @@ class VolumeEntity(BaseEntity):
             for chapter in volume_contents:
                 if str(chapter_number) == chapter:
                     return volume
-        return "none"
+        return "-1"

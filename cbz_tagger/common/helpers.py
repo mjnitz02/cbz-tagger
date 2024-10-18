@@ -1,6 +1,9 @@
+import logging
 import os
 
 from cbz_tagger.common.env import AppEnv
+
+logger = logging.getLogger()
 
 
 def get_input(desc, max_val, allow_negative_exit=False):
@@ -30,4 +33,4 @@ def set_file_ownership(file_path):
     try:
         os.chown(file_path, int(env.PUID), int(env.PGID))
     except PermissionError as err:
-        print(f"ERROR >> Unable to set permissions on {file_path}, {env.PUID}, {env.PGID}", err)
+        logger.error("ERROR >> Unable to set permissions on %s, %s, %s, %s", file_path, env.PUID, env.PGID, err)

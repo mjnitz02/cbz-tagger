@@ -1,6 +1,9 @@
+import logging
 import time
 
 from cbz_tagger.container.base_container import BaseContainer
+
+logger = logging.getLogger()
 
 
 class TimerContainer(BaseContainer):
@@ -10,9 +13,9 @@ class TimerContainer(BaseContainer):
         self.scanner.add_missing = False
 
     def _info(self):
-        print("Container running in Timer Scan mode.")
-        print("Manual scans can also be triggered through the container console.")
-        print(f"Timer Monitoring with {self.timer_delay}s delay: {self.scan_path}")
+        logger.info("Container running in Timer Scan mode.")
+        logger.info("Manual scans can also be triggered through the container console.")
+        logger.info("Timer Monitoring with %s(s) delay: %s", self.timer_delay, self.scan_path)
 
     def _run(self):
         self.scanner.run()

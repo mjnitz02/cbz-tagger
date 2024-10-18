@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 import time
@@ -6,6 +7,8 @@ from zipfile import BadZipFile
 
 from cbz_tagger.database.entity_db import EntityDB
 from cbz_tagger.entities.cbz_entity import CbzEntity
+
+logger = logging.getLogger()
 
 
 class FileScanner:
@@ -36,20 +39,20 @@ class FileScanner:
         while True:
             completed = self.scan()
             if not completed:
-                print("Scan not completed. Sleeping 120s")
+                logger.info("Scan not completed. Sleeping 120s")
                 time.sleep(120)
-                print("Initiating rescan...")
+                logger.info("Initiating rescan...")
             else:
-                print("Scan completed.")
+                logger.info("Scan completed.")
                 return
 
     def scan(self):
-        print("Starting scan....")
+        logger.info("Starting scan....")
         for filepath in self.get_cbz_files():
             try:
                 self.process(filepath)
             except BadZipFile:
-                print("Unable to read file... files are either in use or corrupted.")
+                logger.error("Unable to read file... files are either in use or corrupted.")
                 return False
 
         # Remove empty directories
@@ -80,7 +83,7 @@ class FileScanner:
 
     def get_cbz_comicinfo_and_image(self, cbz_entity: CbzEntity):
         manga_name, chapter_number = cbz_entity.get_name_and_chapter()
-        print(cbz_entity.filepath, manga_name, chapter_number)
+        logger.info("%s, %s, %s", cbz_entity.filepath, manga_name, chapter_number)
 
         try:
             # If we haven't updated the metadata on this scan, update the metadata records
@@ -101,7 +104,7 @@ class FileScanner:
             return entity_name, entity_xml, entity_image_path
 
         except (RuntimeError, EnvironmentError) as err:
-            print(f"ERROR >> {manga_name} not in database. Run manual mode to add new series.", err)
+            logger.error("ERROR >> %s not in database. Run manual mode to add new series. %s", manga_name, err)
             return None, None, None
 
     def add_tracked_entity(self):
