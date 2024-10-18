@@ -1,4 +1,5 @@
 import json
+import logging
 from json import JSONDecodeError
 from time import sleep
 from typing import Any
@@ -10,6 +11,8 @@ import requests
 from cbz_tagger.common.enums import DELAY_PER_REQUEST
 from cbz_tagger.common.enums import Urls
 from cbz_tagger.common.env import AppEnv
+
+logger = logging.getLogger()
 
 
 class BaseEntityObject:
@@ -74,12 +77,12 @@ class BaseEntity(BaseEntityObject):
                     return response
                 # If the status code wasn't success, retry
                 attempt += 1
-                print(f"Error downloading {url}: {response.status_code}. Attempt: {attempt}")
+                logger.error("Error downloading %s: %s. Attempt: %s", url, response.status_code, attempt)
                 sleep(5 * attempt)
             # If the request times out, retry
             except requests.exceptions.Timeout:
                 attempt += 1
-                print(f"Error downloading {url}. Attempt: {attempt}")
+                logger.error("Error downloading %s. Attempt: %s", url, attempt)
                 sleep(5 * attempt)
 
         raise EnvironmentError(f"Failed to receive response from {url} after {retries} attempts")

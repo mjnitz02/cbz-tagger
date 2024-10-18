@@ -1,3 +1,4 @@
+import logging
 import os
 from io import BytesIO
 from os import path
@@ -8,6 +9,8 @@ from PIL import Image
 
 from cbz_tagger.database.base_db import BaseEntityDB
 from cbz_tagger.entities.cover_entity import CoverEntity
+
+logger = logging.getLogger()
 
 
 class CoverEntityDB(BaseEntityDB):
@@ -57,7 +60,7 @@ class CoverEntityDB(BaseEntityDB):
         for cover in self[entity_id]:
             image_path = path.join(filepath, cover.local_filename)
             if not path.exists(image_path):
-                print(f"Downloading: {cover.cover_url}")
+                logger.info("Downloading: %s", cover.cover_url)
                 image = cover.download_file(cover.cover_url)
                 in_memory_image = Image.open(BytesIO(image))
                 if in_memory_image.format != "JPEG":
