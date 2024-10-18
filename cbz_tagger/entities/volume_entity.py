@@ -58,5 +58,7 @@ class VolumeEntity(BaseEntity):
         for volume, volume_contents in self.volumes.items():
             for chapter in volume_contents:
                 if str(chapter_number) == chapter:
+                    if volume == "none":
+                        return "-1"
                     return volume
         return "-1"
