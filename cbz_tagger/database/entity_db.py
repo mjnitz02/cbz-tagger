@@ -400,7 +400,12 @@ class EntityDB:
             cover_entity = next((cover for cover in self.covers[entity_id] if cover.volume == volume), None)
         if cover_entity is None:
             cover_art_entity_id = self.metadata[entity_id].cover_art_id
-            cover_entity = next(cover for cover in self.covers[entity_id] if cover.entity_id == cover_art_entity_id)
+            cover_entity = next(
+                (cover for cover in self.covers[entity_id] if cover.entity_id == cover_art_entity_id), None
+            )
+            # If the art id was associated as a bad language in the databases, try to find the latest cover
+            if cover_entity is None:
+                cover_entity = self.covers.get_latest_cover_for_entity(entity_id)
 
         return cover_entity.local_filename if cover_entity else None
 

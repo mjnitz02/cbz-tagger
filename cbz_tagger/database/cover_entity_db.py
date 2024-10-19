@@ -38,6 +38,9 @@ class CoverEntityDB(BaseEntityDB):
         for cover in orphaned_covers:
             os.remove(path.join(image_db_path, cover))
 
+    def get_latest_cover_for_entity(self, entity_id: str) -> CoverEntity:
+        return sorted(self[entity_id], key=lambda x: x.attributes["createdAt"], reverse=True)[0]
+
     def format_content_for_entity(self, content, entity_id=None):
         _ = entity_id
 

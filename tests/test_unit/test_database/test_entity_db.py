@@ -112,6 +112,16 @@ def test_entity_db_to_local_image_file(mock_entity_db, manga_name, chapter_numbe
     assert expected_filename == actual
 
 
+def test_entity_db_to_local_image_file_if_not_found(mock_entity_db, manga_request_id, manga_name):
+    # Artificially remove the volume 2 cover
+    mock_entity_db.covers.database[manga_request_id].pop(1)
+    # Artificially remove the fallback cover, volume 4
+    mock_entity_db.covers.database[manga_request_id].pop(0)
+    actual = mock_entity_db.to_local_image_file(manga_name, "4")
+    # Fallback should end up as volume 3 cover
+    assert "a2b7bbe2-3a79-46a4-8960-e0e65a666194.jpg" == actual
+
+
 def test_entity_db_to_xml_str_chapter_1(mock_entity_db, manga_name, mock_chapter_1_xml):
     actual = mock_entity_db.to_xml_string(manga_name, "1")
     assert mock_chapter_1_xml == actual

@@ -9,6 +9,7 @@ import pytest
 from cbz_tagger.common.enums import Urls
 from cbz_tagger.database.author_entity_db import AuthorEntityDB
 from cbz_tagger.database.chapter_entity_db import ChapterEntityDB
+from cbz_tagger.database.cover_entity_db import CoverEntityDB
 from cbz_tagger.database.entity_db import EntityDB
 from cbz_tagger.database.metadata_entity_db import MetadataEntityDB
 from cbz_tagger.database.volume_entity_db import VolumeEntityDB
@@ -38,7 +39,7 @@ def mock_author_db(author_request_content):
 @pytest.fixture
 def mock_cover_db(cover_request_response, manga_request_id):
     entities = [CoverEntity(data) for data in cover_request_response["data"]]
-    entity_db = VolumeEntityDB()
+    entity_db = CoverEntityDB()
     entity_db.database[manga_request_id] = entities
     return entity_db
 
