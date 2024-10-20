@@ -35,7 +35,10 @@ class ChapterEntity(BaseEntity):
         if chapter.count(".") > 1:
             chapter_split = chapter.split(".")
             chapter = f"{chapter_split[0]}.{''.join(chapter_split[1:])}"
-        return float(chapter)
+        try:
+            return float(chapter)
+        except ValueError:
+            return None
 
     @property
     def chapter_string(self) -> str:

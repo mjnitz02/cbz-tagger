@@ -18,6 +18,9 @@ class ChapterEntityDB(BaseEntityDB):
         for chapter in list_of_chapters:
             if chapter.translated_language != "en":
                 continue
+            # Some chapters are not numbered, these are errors in the databases
+            if chapter.chapter_number is None:
+                continue
             grouped_chapters[chapter.chapter_number].append(chapter)
             scanlation_groups.append(chapter.scanlation_group)
 
