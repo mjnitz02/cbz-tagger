@@ -23,7 +23,7 @@ class MetadataEntity(BaseEntity):
 
     @property
     def description(self) -> Optional[str]:
-        return next((item for item in self.attributes["description"].values()), None)
+        return self.attributes["description"].get("en")
 
     @property
     def updated(self) -> str:
