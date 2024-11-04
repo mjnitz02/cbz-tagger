@@ -17,7 +17,7 @@ def test_end_to_end_disabled_on_commits(end_to_end_manga_name):
     assert end_to_end_manga_name is None
 
 
-@pytest.mark.skip("Debugging only")
+# @pytest.mark.skip("Debugging only")
 @mock.patch("cbz_tagger.database.entity_db.get_input")
 @mock.patch("cbz_tagger.database.entity_db.get_raw_input")
 def test_end_to_end_mdx(

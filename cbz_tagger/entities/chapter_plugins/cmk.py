@@ -53,6 +53,8 @@ class ChapterPluginCMK(ChapterPluginEntity):
                         "translatedLanguage": "en",
                         "pages": -1,
                         "volume": item["vol"],
+                        "createdAt": item.get("created_at"),
+                        "updatedAt": item.get("updated_at"),
                     },
                     "relationships": [{"type": "scanlation_group", "id": group_id}],
                 }
