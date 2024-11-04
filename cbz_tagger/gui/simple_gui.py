@@ -11,7 +11,7 @@ logger = logging.getLogger()
 
 
 def refresh_scanner(scanner):
-    scanner.refresh()
+    scanner.run()
 
 
 class SimpleGui:
