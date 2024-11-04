@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from io import BytesIO
 from typing import List
 
@@ -32,6 +33,8 @@ class ChapterEntity(BaseEntity):
     @property
     def chapter_number(self):
         chapter = str(self.attributes.get("chapter", ""))
+        if chapter[0] == ".":
+            chapter = chapter[1:]
         if chapter.count(".") > 1:
             chapter_split = chapter.split(".")
             chapter = f"{chapter_split[0]}.{''.join(chapter_split[1:])}"
@@ -94,6 +97,19 @@ class ChapterEntity(BaseEntity):
     def scanlation_group(self):
         group = next(iter(rel for rel in self.relationships if rel["type"] == "scanlation_group"), {})
         return group.get("id", "none")
+
+    @property
+    def updated(self):
+        return self.attributes.get("updatedAt")
+
+    @property
+    def updated_date(self):
+        try:
+            return datetime.fromisoformat(self.updated)
+        except ValueError:
+            return datetime.strptime(self.updated, "%a, %d %b %Y %H:%M:%S %z")
+        except TypeError:
+            return None
 
     def get_chapter_url(self):
         return self.entity_plugin.get_chapter_url()

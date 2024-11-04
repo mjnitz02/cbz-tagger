@@ -29,6 +29,11 @@ def test_chapter_number_multiple_dots(get_chapter_entity):
     assert entity.chapter_number == 1.23
 
 
+def test_chapter_number_leading_dots(get_chapter_entity):
+    entity = get_chapter_entity(".1.2.3")
+    assert entity.chapter_number == 1.23
+
+
 def test_chapter_number_invalid_float(get_chapter_entity):
     entity = get_chapter_entity("invalid")
     assert entity.chapter_number is None
