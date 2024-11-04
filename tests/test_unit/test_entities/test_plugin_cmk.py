@@ -131,7 +131,7 @@ def test_parse_info_feed(chapter_entity):
             "type": "cmk",
             "attributes": {
                 "title": "Chapter 2",
-                "url": "https://api.comick.fun/chapter/Ce82S7St?tachiyomi=true",
+                "url": f"https://{Urls.CMK}/chapter/Ce82S7St?tachiyomi=true",
                 "chapter": "2",
                 "translatedLanguage": "en",
                 "pages": -1,
@@ -146,7 +146,7 @@ def test_parse_info_feed(chapter_entity):
             "type": "cmk",
             "attributes": {
                 "title": "Chapter 1.5",
-                "url": "https://api.comick.fun/chapter/Be82S7St?tachiyomi=true",
+                "url": f"https://{Urls.CMK}/chapter/Be82S7St?tachiyomi=true",
                 "chapter": "1.5",
                 "translatedLanguage": "en",
                 "pages": -1,
@@ -161,7 +161,7 @@ def test_parse_info_feed(chapter_entity):
             "type": "cmk",
             "attributes": {
                 "title": "Chapter 1",
-                "url": "https://api.comick.fun/chapter/Ae82S7St?tachiyomi=true",
+                "url": f"https://{Urls.CMK}/chapter/Ae82S7St?tachiyomi=true",
                 "chapter": "1",
                 "translatedLanguage": "en",
                 "pages": -1,
