@@ -4,6 +4,7 @@ import os
 
 from cbz_tagger.common.enums import ContainerMode
 from cbz_tagger.common.env import AppEnv
+from cbz_tagger.container.gui_container import GuiContainer
 from cbz_tagger.container.manual_container import ManualContainer
 from cbz_tagger.container.timer_container import TimerContainer
 
@@ -65,7 +66,9 @@ def run_container(**kwargs):
 
     if kwargs.get("entrymode"):
         container_mode = AppEnv.CONTAINER_MODE
-        if container_mode == ContainerMode.TIMER:
+        if container_mode == ContainerMode.GUI:
+            container = GuiContainer(**env_vars)
+        elif container_mode == ContainerMode.TIMER:
             container = TimerContainer(**env_vars)
         else:
             container = ManualContainer(**env_vars)

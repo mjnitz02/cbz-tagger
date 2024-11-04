@@ -117,6 +117,7 @@ class FileScanner:
         self.entity_database.delete()
 
     def refresh(self):
+        logger.info("Refreshing database...")
         self.entity_database.refresh(self.storage_path)
 
     def download_chapters(self, storage_path):

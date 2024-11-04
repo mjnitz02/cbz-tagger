@@ -26,6 +26,7 @@ class ChapterPluginMSE(ChapterPluginEntity):
         for item in items:
             title = item.find("title").text.replace(f"{title_name} ", "")
             link = str(item.find("link").text)
+            updated = str(item.find("pubDate").text)
             content.append(
                 {
                     "id": f"{entity_id}-{title}".replace(" ", "-").lower(),
@@ -37,6 +38,7 @@ class ChapterPluginMSE(ChapterPluginEntity):
                         "translatedLanguage": "en",
                         "pages": -1,
                         "volume": -1,
+                        "updatedAt": updated,
                     },
                 }
             )

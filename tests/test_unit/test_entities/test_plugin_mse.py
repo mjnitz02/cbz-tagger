@@ -105,6 +105,7 @@ def test_parse_info_feed(chapter_entity):
             "type": "mse",
             "attributes": {
                 "title": "Chapter 2",
+                "updatedAt": "Tue, 08 Oct 2024 23:16:39 +0000",
                 "url": "https://url.com/series-name-chapter-2-page-1.html",
                 "chapter": "2",
                 "translatedLanguage": "en",
@@ -117,6 +118,7 @@ def test_parse_info_feed(chapter_entity):
             "type": "mse",
             "attributes": {
                 "title": "Chapter 1.5",
+                "updatedAt": "Tue, 01 Oct 2024 22:09:02 +0000",
                 "url": "https://url.com/series-name-chapter-1.5-page-1.html",
                 "chapter": "1.5",
                 "translatedLanguage": "en",
@@ -129,6 +131,7 @@ def test_parse_info_feed(chapter_entity):
             "type": "mse",
             "attributes": {
                 "title": "Chapter 1",
+                "updatedAt": "Tue, 01 Oct 2024 22:09:02 +0000",
                 "url": "https://url.com/series-name-chapter-1-page-1.html",
                 "chapter": "1",
                 "translatedLanguage": "en",

@@ -123,6 +123,22 @@ class EntityDB:
             chapters=ChapterEntityDB.from_json(content.get("chapters", "{}")),
         )
 
+    def to_state(self):
+        state = []
+        for entity_name, entity_id in self.entity_map.items():
+            entity_metadata = self.metadata[entity_id]
+            latest_chapter = self.chapters.get_latest_chapter(entity_id)
+            state.append(
+                {
+                    "entity_name": entity_name,
+                    "entity_id": entity_id,
+                    "updated": entity_metadata.updated,
+                    "latest_chapter": latest_chapter.chapter_string if latest_chapter else None,
+                    "latest_chapter_date": latest_chapter.updated_date if latest_chapter else None,
+                }
+            )
+        return state
+
     def check_manga_missing(self, manga_name):
         return manga_name not in self.keys()
 
