@@ -21,4 +21,4 @@ class GuiContainer(BaseContainer):
 
     def _run(self):
         SimpleGui(self.scanner)
-        ui.run()
+        ui.run(reload=False)
