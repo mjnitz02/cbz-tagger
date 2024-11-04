@@ -11,6 +11,7 @@ class Mode:
 class ContainerMode:
     TIMER: str = "timer"
     MANUAL: str = "manual"
+    GUI: str = "gui"
 
 
 class Urls:

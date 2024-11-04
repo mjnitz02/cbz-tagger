@@ -5,64 +5,30 @@ from datetime import datetime
 from nicegui import ui
 
 from cbz_tagger.common.env import AppEnv
-from cbz_tagger.database.file_scanner import FileScanner
+from cbz_tagger.common.log_element_handler import LogElementHandler
 
 logger = logging.getLogger()
 
 
-class Backend:
-    @classmethod
-    def get_scanner(cls):
-        env = AppEnv()
-        scanner = FileScanner(
-            config_path=env.CONFIG_PATH,
-            scan_path=env.SCAN_PATH,
-            storage_path=env.STORAGE_PATH,
-            environment=env.get_user_environment(),
-        )
-        return scanner
-
-    def refresh(self):
-        scanner = self.get_scanner()
-        scanner.refresh()
-
-    @classmethod
-    def get_scanner_state(cls):
-        scanner = cls.get_scanner()
-        state = scanner.entity_database.to_state()
-        formatted_state = []
-        for item in state:
-            if len(item["entity_name"]) > 50:
-                item["entity_name"] = item["entity_name"][:50] + "..."
-            formatted_state.append(item)
-        return formatted_state
+def refresh_scanner(scanner):
+    scanner.refresh()
 
 
-class LogElementHandler(logging.Handler):
-    """A logging handler that emits messages to a log element."""
-
-    def __init__(self, element: ui.log, level: int = logging.DEBUG) -> None:
-        self.element = element
-        super().__init__(level)
-
-    def emit(self, record: logging.LogRecord) -> None:
-        # noinspection PyBroadException
-        try:
-            msg = f"{record.levelname}:{record.filename}:{record.funcName}:{self.format(record)}"
-            self.element.push(msg)
-        except Exception:  # pylint: disable=broad-except
-            self.handleError(record)
-
-
-class CbzGui:
-    def __init__(self):
-        self.backend = Backend()
+class SimpleGui:
+    def __init__(self, scanner):
+        self.env = AppEnv()
+        self.scanning_state = False
+        self.scanner = scanner
         self.table = None
+
+        with ui.left_drawer().classes("bg-blue-100") as left_drawer:
+            ui.label("Side menu")
+            ui.button("Refresh Database", on_click=self.refresh)
+            ui.button("Refresh Table", on_click=self.refresh_table)
 
         with ui.header().classes(replace="row items-center"):
             # pylint: disable=unnecessary-lambda
-            ui.button(icon="menu").props("flat color=white")
-            # ui.button(on_click=lambda: left_drawer.toggle(), icon="menu").props("flat color=white")
+            ui.button(on_click=lambda: left_drawer.toggle(), icon="menu").props("flat color=white")
             ui.html("<h2><strong>CBZ Tagger GUI v0.1 </strong></h2>")
             ui.space()
             with ui.tabs() as tabs:
@@ -72,11 +38,6 @@ class CbzGui:
 
         with ui.footer(value=True):
             ui.label("Footer")
-
-        with ui.left_drawer().classes("bg-blue-100") as left_drawer:
-            ui.label("Side menu")
-            ui.button("Refresh Database", on_click=self.refresh)
-            ui.button("Refresh Table", on_click=self.refresh_table)
 
         with ui.tab_panels(tabs, value="Series").classes("w-full"):
             with ui.tab_panel("Series"):
@@ -88,6 +49,9 @@ class CbzGui:
                 handler.setLevel(logging.INFO)
                 logger.addHandler(handler)
                 # ui.context.client.on_disconnect(lambda: logger.removeHandler(handler))
+
+        logger.info("UI scan timer started with delay: %s", self.env.TIMER_DELAY)
+        ui.timer(self.env.TIMER_DELAY, self.refresh_on_timer)
 
     def series_tab(self):
         columns = [
@@ -112,20 +76,33 @@ class CbzGui:
         self.table = ui.table(columns=columns, rows=[], row_key="entity_name")
         self.refresh_table()
 
+    def get_scanner_state(self):
+        state = self.scanner.entity_database.to_state()
+        formatted_state = []
+        for item in state:
+            if len(item["entity_name"]) > 50:
+                item["entity_name"] = item["entity_name"][:50] + "..."
+            formatted_state.append(item)
+        return formatted_state
+
     def refresh_table(self):
-        state = self.backend.get_scanner_state()
+        state = self.get_scanner_state()
         self.table.rows = state
         ui.notify("Series GUI Refreshed")
 
+    async def refresh_on_timer(self):
+        await self.refresh()
+
     async def refresh(self):
+        if self.scanning_state:
+            ui.notify("Scanning in progress already...")
+            return
+        self.scanning_state = True
         ui.notify("Refreshing database... please wait")
         logger.warning(datetime.now().strftime("%X.%f")[:-5])
         logger.info("info")
         loop = asyncio.get_event_loop()
-        await loop.run_in_executor(None, self.backend.refresh)
+        await loop.run_in_executor(None, refresh_scanner, self.scanner)
         self.refresh_table()
         ui.notify("Series Database Refreshed")
-
-
-gui = CbzGui()
-ui.run()
+        self.scanning_state = False

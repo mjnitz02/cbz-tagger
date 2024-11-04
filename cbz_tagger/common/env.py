@@ -41,7 +41,9 @@ class AppEnv:
     else:
         STORAGE_PATH = "\\storage"
 
-    if os.getenv("TIMER_MODE") == "true":
+    if os.getenv("GUI_MODE") == "true":
+        CONTAINER_MODE = ContainerMode.GUI
+    elif os.getenv("TIMER_MODE") == "true":
         CONTAINER_MODE = ContainerMode.TIMER
     else:
         CONTAINER_MODE = ContainerMode.MANUAL
