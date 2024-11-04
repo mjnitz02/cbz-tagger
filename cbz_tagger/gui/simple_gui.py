@@ -12,10 +12,12 @@ logger = logging.getLogger()
 
 def refresh_scanner(scanner):
     scanner.run()
+    return scanner
 
 
 class SimpleGui:
     def __init__(self, scanner):
+        logger.info("Starting GUI")
         self.env = AppEnv()
         self.scanning_state = False
         self.scanner = scanner
@@ -50,8 +52,9 @@ class SimpleGui:
                 logger.addHandler(handler)
                 # ui.context.client.on_disconnect(lambda: logger.removeHandler(handler))
 
+        logger.info("proxy_url: %s", self.env.PROXY_URL)
         logger.info("UI scan timer started with delay: %s", self.env.TIMER_DELAY)
-        ui.timer(self.env.TIMER_DELAY, self.refresh_on_timer)
+        ui.timer(self.env.TIMER_DELAY, self.refresh, once=True)
 
     def series_tab(self):
         columns = [
@@ -77,7 +80,7 @@ class SimpleGui:
         self.refresh_table()
 
     def get_scanner_state(self):
-        state = self.scanner.entity_database.to_state()
+        state = self.scanner.to_state()
         formatted_state = []
         for item in state:
             if len(item["entity_name"]) > 50:
@@ -86,12 +89,14 @@ class SimpleGui:
         return formatted_state
 
     def refresh_table(self):
-        state = self.get_scanner_state()
-        self.table.rows = state
+        state = self.scanner.to_state()
+        formatted_state = []
+        for item in state:
+            if len(item["entity_name"]) > 50:
+                item["entity_name"] = item["entity_name"][:50] + "..."
+            formatted_state.append(item)
+        self.table.rows = formatted_state
         ui.notify("Series GUI Refreshed")
-
-    async def refresh_on_timer(self):
-        await self.refresh()
 
     async def refresh(self):
         if self.scanning_state:
@@ -102,7 +107,7 @@ class SimpleGui:
         logger.warning(datetime.now().strftime("%X.%f")[:-5])
         logger.info("info")
         loop = asyncio.get_event_loop()
-        await loop.run_in_executor(None, refresh_scanner, self.scanner)
+        self.scanner = await loop.run_in_executor(None, refresh_scanner, self.scanner)
         self.refresh_table()
         ui.notify("Series Database Refreshed")
         self.scanning_state = False
