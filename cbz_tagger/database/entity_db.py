@@ -11,6 +11,7 @@ from xml.etree import ElementTree
 from zipfile import ZIP_DEFLATED
 from zipfile import ZipFile
 
+from cbz_tagger.common.enums import Plugins
 from cbz_tagger.common.enums import Urls
 from cbz_tagger.common.helpers import get_input
 from cbz_tagger.common.helpers import get_raw_input
@@ -135,6 +136,8 @@ class EntityDB:
                     "updated": entity_metadata.updated,
                     "latest_chapter": latest_chapter.chapter_string if latest_chapter else None,
                     "latest_chapter_date": latest_chapter.updated_date if latest_chapter else None,
+                    "plugin": self.entity_chapter_plugin.get(entity_id, {}).get("plugin_type", Plugins.MDX),
+                    "tracked": entity_id in self.entity_tracked,
                 }
             )
         return state
