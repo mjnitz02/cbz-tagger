@@ -151,6 +151,27 @@ class EntityDB:
 
     def add(self, manga_name: Optional[str], update=True, track=False):
         entity_id, entity_name = self.search(manga_name)
+
+        if track:
+            backend = InputEntity.select_a_chapter_backend()
+            mark_as_tracked = InputEntity.should_mark_all_tracked(manga_name)
+        else:
+            backend = None
+            mark_as_tracked = False
+
+        self.add_entity(
+            entity_name,
+            entity_id,
+            manga_name=manga_name,
+            backend=backend,
+            update=update,
+            track=track,
+            mark_as_tracked=mark_as_tracked,
+        )
+
+    def add_entity(
+        self, entity_name, entity_id, manga_name=None, backend=None, update=True, track=False, mark_as_tracked=False
+    ):
         if manga_name is None:
             manga_name = self.clean_entity_name(entity_name)
 
@@ -159,9 +180,9 @@ class EntityDB:
             self.entity_names[entity_id] = self.clean_entity_name(entity_name)
         else:
             print(f"Entity {manga_name} already exists in the database.")
+            return
 
         if track:
-            backend = InputEntity.select_a_chapter_backend()
             if backend is not None:
                 self.entity_chapter_plugin[entity_id] = backend
 
@@ -170,7 +191,7 @@ class EntityDB:
 
         if track:
             self.entity_tracked.add(entity_id)
-            if InputEntity.should_mark_all_tracked(manga_name):
+            if mark_as_tracked:
                 self.entity_downloads.update((entity_id, chapter.entity_id) for chapter in self.chapters[entity_id])
 
         self.save()
