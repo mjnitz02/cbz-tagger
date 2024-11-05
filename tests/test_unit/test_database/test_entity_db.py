@@ -4,6 +4,7 @@ from unittest import mock
 
 import pytest
 
+from cbz_tagger.common.input import InputEntity
 from cbz_tagger.database.entity_db import EntityDB
 from cbz_tagger.entities.metadata_entity import MetadataEntity
 
@@ -132,15 +133,16 @@ def test_entity_db_to_xml_str_chapter_10(mock_entity_db, manga_name, mock_chapte
     assert mock_chapter_10_xml == actual
 
 
-@mock.patch("cbz_tagger.database.entity_db.get_input")
+@mock.patch("cbz_tagger.common.input.get_input")
 def test_entity_db_search(mock_get_input, simple_mock_entity_db, manga_name, manga_request_id, manga_request_response):
+    _ = simple_mock_entity_db
     with mock.patch.object(MetadataEntity, "from_server_url") as mock_from_server_url:
         mock_from_server_url.return_value = [MetadataEntity(data) for data in manga_request_response["data"]]
 
         # Simulate user selecting 1 for each input
         mock_get_input.return_value = 1
 
-        entity_id, entity_name = simple_mock_entity_db.search(manga_name)
+        entity_id, entity_name = InputEntity.search(manga_name)
 
         assert entity_id == manga_request_id
         assert entity_name == "Oshimai"
@@ -187,8 +189,8 @@ def test_entity_db_add_new_manga_with_update(
         simple_mock_entity_db.update_manga_entity_id.assert_called_once_with(manga_request_id)
 
 
-@mock.patch("cbz_tagger.database.entity_db.get_raw_input")
-@mock.patch("cbz_tagger.database.entity_db.get_input")
+@mock.patch("cbz_tagger.common.input.get_raw_input")
+@mock.patch("cbz_tagger.common.input.get_input")
 def test_entity_db_add_new_manga_with_tracking_and_mark_all_downloaded(
     mock_get_input,
     mock_get_raw_input,
@@ -222,8 +224,8 @@ def test_entity_db_add_new_manga_with_tracking_and_mark_all_downloaded(
         }
 
 
-@mock.patch("cbz_tagger.database.entity_db.get_raw_input")
-@mock.patch("cbz_tagger.database.entity_db.get_input")
+@mock.patch("cbz_tagger.common.input.get_raw_input")
+@mock.patch("cbz_tagger.common.input.get_input")
 def test_entity_db_add_new_manga_with_tracking(
     mock_get_input,
     mock_get_raw_input,
@@ -252,8 +254,8 @@ def test_entity_db_add_new_manga_with_tracking(
         assert simple_mock_entity_db.entity_downloads == set()
 
 
-@mock.patch("cbz_tagger.database.entity_db.get_raw_input")
-@mock.patch("cbz_tagger.database.entity_db.get_input")
+@mock.patch("cbz_tagger.common.input.get_raw_input")
+@mock.patch("cbz_tagger.common.input.get_input")
 def test_entity_db_remove_manga_from_tracking(
     mock_get_input,
     mock_get_raw_input,
@@ -288,8 +290,8 @@ def test_entity_db_remove_manga_from_tracking(
         assert simple_mock_entity_db.entity_downloads == set()
 
 
-@mock.patch("cbz_tagger.database.entity_db.get_raw_input")
-@mock.patch("cbz_tagger.database.entity_db.get_input")
+@mock.patch("cbz_tagger.common.input.get_raw_input")
+@mock.patch("cbz_tagger.common.input.get_input")
 def test_entity_db_delete_manga(
     mock_get_input,
     mock_get_raw_input,

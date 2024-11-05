@@ -13,15 +13,14 @@ from zipfile import ZipFile
 
 from cbz_tagger.common.enums import Plugins
 from cbz_tagger.common.enums import Urls
-from cbz_tagger.common.helpers import get_input
-from cbz_tagger.common.helpers import get_raw_input
 from cbz_tagger.common.helpers import set_file_ownership
+from cbz_tagger.common.input import InputEntity
+from cbz_tagger.common.input import console_selector
 from cbz_tagger.database.author_entity_db import AuthorEntityDB
 from cbz_tagger.database.chapter_entity_db import ChapterEntityDB
 from cbz_tagger.database.cover_entity_db import CoverEntityDB
 from cbz_tagger.database.metadata_entity_db import MetadataEntityDB
 from cbz_tagger.database.volume_entity_db import VolumeEntityDB
-from cbz_tagger.entities.metadata_entity import MetadataEntity
 
 logger = logging.getLogger()
 
@@ -145,26 +144,10 @@ class EntityDB:
     def check_manga_missing(self, manga_name):
         return manga_name not in self.keys()
 
-    def search(self, search_term: Optional[str] = None):
-        if search_term is None:
-            search_term = get_raw_input("Enter a new name to search for: ")
-
-        entity = None
-        while entity is None:
-            entity = self.find_manga_entry(search_term)
-            if entity is None:
-                search_term = get_raw_input("Enter a new name to search for: ")
-        entity_id = entity.entity_id
-
-        print("Select a storage name for the series:")
-        counter = 0
-        for title in entity.all_titles:
-            print(f"{counter+1}. {title}")
-            counter += 1
-        choice = get_input("Please select the local and storage name number: ", counter + 1)
-        entity_name = entity.all_titles[choice - 1]
-
-        return entity_id, entity_name
+    @staticmethod
+    def search(manga_name: Optional[str] = None):
+        """This is a temporary abstraction to the new class"""
+        return InputEntity.search(manga_name)
 
     def add(self, manga_name: Optional[str], update=True, track=False):
         entity_id, entity_name = self.search(manga_name)
@@ -178,7 +161,7 @@ class EntityDB:
             print(f"Entity {manga_name} already exists in the database.")
 
         if track:
-            backend = self.select_a_chapter_backend()
+            backend = InputEntity.select_a_chapter_backend()
             if backend is not None:
                 self.entity_chapter_plugin[entity_id] = backend
 
@@ -187,20 +170,17 @@ class EntityDB:
 
         if track:
             self.entity_tracked.add(entity_id)
-            if self.should_mark_all_tracked(manga_name):
+            if InputEntity.should_mark_all_tracked(manga_name):
                 self.entity_downloads.update((entity_id, chapter.entity_id) for chapter in self.chapters[entity_id])
 
         self.save()
 
     def remove(self):
-        print("Select a manga to remove tracking for:")
-        counter = 0
         tracked_ids = list(self.entity_tracked)
-        for entity_id in tracked_ids:
-            title = self.entity_names[entity_id]
-            print(f"{counter+1}. {title} ({entity_id})")
-            counter += 1
-        choice = get_input("Please select the local and storage name number: ", counter + 1)
+        choices = list(f"{self.entity_names[entity_id]} ({entity_id})" for entity_id in tracked_ids)
+        choice = console_selector(
+            choices, "Select a manga to remove tracking for", "Please select the local and storage name number"
+        )
 
         # Remove the entity from tracking
         entity_id_to_remove = tracked_ids[choice - 1]
@@ -208,13 +188,11 @@ class EntityDB:
         self.save()
 
     def delete(self):
-        print("Select a manga to delete:")
-        counter = 0
         all_ids = list(self.entity_map.items())
-        for entity_name, entity_id in all_ids:
-            print(f"{counter+1}. {entity_name} ({entity_id})")
-            counter += 1
-        choice = get_input("Please select the local and storage name number: ", counter + 1)
+        choices = list(f"{name} ({entity_id})" for name, entity_id in all_ids)
+        choice = console_selector(
+            choices, "Select a manga to delete", "Please select the local and storage name number"
+        )
 
         # Remove the entity from tracking
         entity_name_to_remove, entity_id_to_remove = all_ids[choice - 1]
@@ -243,52 +221,6 @@ class EntityDB:
         self.volumes.database.pop(entity_id_to_remove, None)
         self.chapters.database.pop(entity_id_to_remove, None)
         logger.warning("Deleted entity from database %s (%s).", entity_name_to_remove, entity_id_to_remove)
-
-    @staticmethod
-    def should_mark_all_tracked(manga_name):
-        response = get_raw_input(f"Mark all chapters for {manga_name} as tracked? (y/n): ")
-        return response == "y"
-
-    @staticmethod
-    def select_a_chapter_backend():
-        counter = 0
-        plugins_types = list(ChapterEntityDB.entity_class.plugins.keys())
-        print("Select a chapter backend for the series: (Default: mdx)")
-        for plugins_type in plugins_types:
-            print(f"{counter+1}. {plugins_type}")
-            counter += 1
-        choice = get_input(
-            "Please select the chapter backend to use for the series: ", counter + 1, allow_negative_exit=True
-        )
-        if choice <= 1:
-            return None
-
-        backend = plugins_types[choice - 1]
-        plugin_id = get_raw_input(f"Please enter the {backend} plugin manga ID: ")
-        return {
-            "plugin_type": backend,
-            "plugin_id": plugin_id,
-        }
-
-    @staticmethod
-    def find_manga_entry(search_term):
-        print(f">>> SEARCHING FOR NEW SERIES [{search_term}]")
-        meta_entries = MetadataEntity.from_server_url(query_params={"title": search_term})
-
-        counter = 0
-        for manga in meta_entries:
-            print(f"{counter+1}. {manga.title} ({manga.alt_title}) - {manga.created_at.year} - {manga.age_rating}")
-            counter += 1
-        print(" ")
-        print("!!! INPUT -1 TO ENTER A NEW NAME TO SEARCH FOR IF THESE RESULTS ARE BAD !!!")
-        choice = get_input(
-            "Please select the manga that you are searching for in number: ", counter + 1, allow_negative_exit=True
-        )
-        if choice < 0:
-            return None
-
-        entity = meta_entries[choice - 1]
-        return entity
 
     def update_manga_entity_name(self, manga_name):
         entity_id = self.entity_map.get(manga_name)
