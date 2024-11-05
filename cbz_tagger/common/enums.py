@@ -24,3 +24,7 @@ class Plugins:
     MDX = "mdx"
     MSE = "mse"
     CMK = "cmk"
+
+    @classmethod
+    def all(cls):
+        return [cls.MDX, cls.MSE, cls.CMK]
