@@ -2,7 +2,7 @@ import os
 from unittest import mock
 
 
-@mock.patch("cbz_tagger.database.entity_db.get_input")
+@mock.patch("cbz_tagger.common.input.get_input")
 def test_process_cbz_files(mock_get_input, integration_scanner, build_test_cbz):
     """This test will generate a fake cached cbz file, and then process it with the scanner.
     The output should place the cleaned and parsed file into the storage after hitting all the

@@ -2,6 +2,7 @@ import logging
 import os
 import shutil
 import time
+from datetime import datetime
 from typing import Dict
 from zipfile import BadZipFile
 
@@ -29,6 +30,7 @@ class FileScanner:
         return self.entity_database.to_state()
 
     def run(self):
+        logger.info("File scanner started. %s", datetime.now())
         # Reload the entity database at the start of a run to make sure it is up to date
         self.entity_database = EntityDB.load(root_path=self.config_path)
         self.run_scan()
