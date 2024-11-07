@@ -9,7 +9,7 @@ logger = logging.getLogger()
 
 
 class GuiContainer(BaseContainer):
-    NICEGUI_DEBUG = True
+    NICEGUI_DEBUG = False
 
     def __init__(self, config_path, scan_path, storage_path, timer_delay, environment=None):
         super().__init__(config_path, scan_path, storage_path, timer_delay, environment=environment)
