@@ -210,7 +210,6 @@ class EntityDB:
         # Remove the entity from tracking
         entity_id_to_remove = tracked_ids[choice - 1]
         self.remove_entity_id_from_tracking(entity_id_to_remove)
-        self.save()
 
     def delete(self):
         all_ids = list(self.entity_map.items())
@@ -222,7 +221,6 @@ class EntityDB:
         # Remove the entity from tracking
         entity_name_to_remove, entity_id_to_remove = all_ids[choice - 1]
         self.delete_entity_id(entity_id_to_remove, entity_name_to_remove)
-        self.save()
 
     def remove_entity_id_from_tracking(self, entity_id):
         self.entity_tracked.discard(entity_id)
@@ -236,6 +234,7 @@ class EntityDB:
         for chapter in downloaded_chapters:
             self.entity_downloads.discard(chapter)
         logger.warning("Removed downloaded chapters for %s from tracking.", entity_id)
+        self.save()
 
     def delete_entity_id(self, entity_id_to_remove, entity_name_to_remove):
         self.remove_entity_id_from_tracking(entity_id_to_remove)
@@ -246,6 +245,7 @@ class EntityDB:
         self.volumes.database.pop(entity_id_to_remove, None)
         self.chapters.database.pop(entity_id_to_remove, None)
         logger.warning("Deleted entity from database %s (%s).", entity_name_to_remove, entity_id_to_remove)
+        self.save()
 
     def update_manga_entity_name(self, manga_name):
         entity_id = self.entity_map.get(manga_name)
@@ -291,11 +291,14 @@ class EntityDB:
         logger.info("Refreshing database...")
         for entity_id in sorted(self.metadata.keys()):
             self.update_manga_entity_id(entity_id)
-        logger.info("Cleaning orphaned covers...")
-        self.covers.remove_orphaned_covers(self.image_db_path)
+        self.remove_orphaned_covers()
         logger.info("Downloading missing chapters...")
         self.download_missing_chapters(storage_path)
         logger.info("Refresh complete.")
+
+    def remove_orphaned_covers(self):
+        logger.info("Cleaning orphaned covers...")
+        self.covers.remove_orphaned_covers(self.image_db_path)
 
     def download_chapter(self, entity_id, chapter_item, storage_path):
         if (entity_id, chapter_item.entity_id) in self.entity_downloads:

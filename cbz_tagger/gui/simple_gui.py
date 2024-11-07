@@ -35,6 +35,9 @@ class SimpleGui:
         self.add_backend_input_box = None
         self.add_mark_all_tracked = None
 
+        self.delete_series_ids = []
+        self.delete_series_selector = None
+
         self.initialize_gui()
         self.initialize()
 
@@ -52,6 +55,7 @@ class SimpleGui:
             with ui.tabs() as tabs:
                 ui.tab("Series")
                 ui.tab("Add")
+                ui.tab("Delete")
                 ui.tab("Configuration")
                 ui.tab("Log")
             ui.space()
@@ -63,12 +67,9 @@ class SimpleGui:
             with ui.tab_panel("Series"):
                 ui.label("Series")
                 self.series_table = series_table()
-                ui.label("Latest chapter may not be the highest number. Sometimes chapters are retroactively updated.")
             with ui.tab_panel("Add"):
                 ui.label("Add Series")
-                with ui.row():
-                    ui.button("Refresh Series List", on_click=self.refresh_series_search)
-                    ui.button("Refresh Series Name List", on_click=self.refresh_series_names)
+                ui.button("Search for New Series", on_click=self.refresh_series_search)
 
                 self.add_series_input_box = ui.input(
                     "Please enter the name of a series to search for", placeholder="Series Name"
@@ -96,6 +97,18 @@ class SimpleGui:
                 ui.label("Mark all chapters as tracked?")
                 self.add_mark_all_tracked = ui.radio(["Yes", "No"], value="No").classes("w-2/3").props("inline")
                 ui.button("Add New Series", on_click=self.add_new_series)
+            with ui.tab_panel("Delete"):
+                ui.label("Delete Series")
+                self.delete_series_selector = ui.select(
+                    label="Select a series (type to filter)",
+                    options=["Please refresh series list"],
+                    with_input=True,
+                    value="Please refresh series list",
+                ).classes("w-2/3")
+                with ui.row():
+                    ui.button("Refresh Series List", on_click=self.refresh_delete_series)
+                    ui.button("Delete Selected Series", on_click=self.delete_series)
+                    ui.button("Clean Orphaned Files", on_click=self.clean_orphaned_files)
             with ui.tab_panel("Configuration"):
                 ui.label("Server Configuration")
                 self.config_table = config_table()
@@ -124,6 +137,21 @@ class SimpleGui:
         self.add_name_selector.options = self.meta_entries[entity_index].all_titles
         self.add_name_selector.value = self.meta_entries[entity_index].all_titles[0]
 
+    def refresh_delete_series(self):
+        self.delete_series_ids = list(self.scanner.entity_database.entity_map.items())
+        choices = [f"{name} ({entity_id})" for name, entity_id in self.delete_series_ids]
+        self.delete_series_selector.options = choices
+        self.delete_series_selector.value = choices[0]
+
+    def delete_series(self):
+        self.delete_series_ids = list(self.scanner.entity_database.entity_map.items())
+        choices = [f"{name} ({entity_id})" for name, entity_id in self.delete_series_ids]
+        entity_index = choices.index(self.delete_series_selector.value)
+        entity_name_to_remove, entity_id_to_remove = self.delete_series_ids[entity_index]
+        notify_and_log(f"Removing {entity_name_to_remove} from the database...")
+        self.scanner.entity_database.delete_entity_id(entity_id_to_remove, entity_name_to_remove)
+        notify_and_log(f"Removed {entity_name_to_remove} from the database")
+
     async def add_new_series(self):
         entity_index = self.meta_choices.index(self.add_series_selector.value)
         entity = self.meta_entries[entity_index]
@@ -141,13 +169,13 @@ class SimpleGui:
             backend = None
         mark_as_tracked = self.add_mark_all_tracked.value == "Yes"
 
-        ui.notify("Adding new series... please wait")
+        notify_and_log("Adding new series... please wait")
         loop = asyncio.get_event_loop()
         self.scanner = await loop.run_in_executor(
             None, add_new_to_scanner, self.scanner, entity_name, entity_id, backend, mark_as_tracked
         )
 
-        ui.notify("New series added!")
+        notify_and_log("New series added!")
 
     def initialize(self):
         logger.info("proxy_url: %s", self.env.PROXY_URL)
@@ -179,3 +207,7 @@ class SimpleGui:
 
         notify_and_log("Series Database Refreshed")
         self.scanning_state = False
+
+    def clean_orphaned_files(self):
+        notify_and_log("Removing orphaned files...")
+        self.scanner.entity_database.remove_orphaned_covers()
