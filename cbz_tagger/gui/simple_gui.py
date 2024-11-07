@@ -9,31 +9,11 @@ from cbz_tagger.entities.metadata_entity import MetadataEntity
 from cbz_tagger.gui.elements.config_table import config_table
 from cbz_tagger.gui.elements.series_table import series_table
 from cbz_tagger.gui.elements.ui_logger import ui_logger
+from cbz_tagger.gui.functions import add_new_to_scanner
+from cbz_tagger.gui.functions import notify_and_log
+from cbz_tagger.gui.functions import refresh_scanner
 
 logger = logging.getLogger()
-
-
-def refresh_scanner(scanner):
-    scanner.run()
-    return scanner
-
-
-def add_new_to_scanner(scanner, entity_name, entity_id, backend, mark_as_tracked):
-    scanner.entity_database.add(
-        entity_name,
-        entity_id,
-        manga_name=None,
-        backend=backend,
-        update=True,
-        track=True,
-        mark_as_tracked=mark_as_tracked,
-    )
-    return scanner
-
-
-def notify_and_log(msg):
-    ui.notify(msg)
-    logger.info(msg)
 
 
 class SimpleGui:
@@ -98,6 +78,7 @@ class SimpleGui:
                     options=["Please refresh series list"],
                     with_input=True,
                     value="Please refresh series list",
+                    on_change=self.refresh_series_names,
                 ).classes("w-2/3")
                 self.add_name_selector = ui.select(
                     label="Select the name of the series (type to filter)",

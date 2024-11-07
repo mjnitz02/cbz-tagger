@@ -179,7 +179,7 @@ class EntityDB:
             self.entity_map[manga_name] = entity_id
             self.entity_names[entity_id] = self.clean_entity_name(entity_name)
         else:
-            print(f"Entity {manga_name} already exists in the database.")
+            logger.warning("Entity %s (%s) already exists in the database.", manga_name, entity_id)
             return
 
         if track:
@@ -190,9 +190,13 @@ class EntityDB:
             self.update_manga_entity_id(entity_id)
 
         if track:
+            logger.info("Tracking: %s (%s)", entity_name, entity_id)
             self.entity_tracked.add(entity_id)
             if mark_as_tracked:
+                logger.info("Marking all chapters as downloaded. %s (%s)", entity_name, entity_id)
                 self.entity_downloads.update((entity_id, chapter.entity_id) for chapter in self.chapters[entity_id])
+            else:
+                logger.info("No chapters marked as downloaded. %s (%s)", entity_name, entity_id)
 
         self.save()
 

@@ -9,6 +9,8 @@ logger = logging.getLogger()
 
 
 class GuiContainer(BaseContainer):
+    NICEGUI_DEBUG = True
+
     def __init__(self, config_path, scan_path, storage_path, timer_delay, environment=None):
         super().__init__(config_path, scan_path, storage_path, timer_delay, environment=environment)
         # Disable automatic adding of series
@@ -21,4 +23,4 @@ class GuiContainer(BaseContainer):
 
     def _run(self):
         SimpleGui(self.scanner)
-        ui.run(reload=True)
+        ui.run(reload=self.NICEGUI_DEBUG)
