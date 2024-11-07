@@ -54,7 +54,7 @@ class ChapterPluginCMK(ChapterPluginEntity):
                         "pages": -1,
                         "volume": item["vol"],
                         "createdAt": item.get("created_at"),
-                        "updatedAt": item.get("updated_at"),
+                        "updatedAt": item.get("created_at"),  # updatedAt is unreliable for CMK
                     },
                     "relationships": [{"type": "scanlation_group", "id": group_id}],
                 }

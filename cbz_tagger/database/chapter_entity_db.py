@@ -64,9 +64,7 @@ class ChapterEntityDB(BaseEntityDB):
     def get_latest_chapter(self, entity_id):
         chapters = self.database[entity_id]
         latest_chapter = None
-        latest_date = None
         for chapter in chapters:
-            if latest_date is None or chapter.updated_date > latest_date:
-                latest_date = chapter.updated_date
+            if latest_chapter is None or chapter.chapter_number > latest_chapter.chapter_number:
                 latest_chapter = chapter
         return latest_chapter

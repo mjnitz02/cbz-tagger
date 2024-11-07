@@ -134,7 +134,7 @@ class EntityDB:
                     "entity_name": entity_name,
                     "entity_id": entity_id,
                     "updated": entity_metadata.updated,
-                    "latest_chapter": latest_chapter.chapter_string if latest_chapter else None,
+                    "latest_chapter": latest_chapter.chapter_number if latest_chapter else None,
                     "latest_chapter_date": latest_chapter.updated_date if latest_chapter else None,
                     "plugin": self.entity_chapter_plugin.get(entity_id, {}).get("plugin_type", Plugins.MDX),
                     "tracked": entity_id in self.entity_tracked,
