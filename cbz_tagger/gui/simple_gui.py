@@ -42,6 +42,8 @@ class SimpleGui:
         self.initialize()
 
     def initialize_gui(self):
+        ui.page_title('CBZ Tagger')
+
         with ui.left_drawer().classes("bg-blue-100") as left_drawer:
             ui.label("Navigation")
             ui.button("Refresh Table", on_click=self.refresh_table)
@@ -56,7 +58,7 @@ class SimpleGui:
                 ui.tab("Series")
                 ui.tab("Add")
                 ui.tab("Delete")
-                ui.tab("Configuration")
+                ui.tab("Config")
                 ui.tab("Log")
             ui.space()
 
@@ -109,7 +111,7 @@ class SimpleGui:
                     ui.button("Refresh Series List", on_click=self.refresh_delete_series)
                     ui.button("Delete Selected Series", on_click=self.delete_series)
                     ui.button("Clean Orphaned Files", on_click=self.clean_orphaned_files)
-            with ui.tab_panel("Configuration"):
+            with ui.tab_panel("Config"):
                 ui.label("Server Configuration")
                 self.config_table = config_table()
             with ui.tab_panel("Log"):

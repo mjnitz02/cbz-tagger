@@ -224,6 +224,7 @@ class EntityDB:
 
     def remove_entity_id_from_tracking(self, entity_id):
         self.entity_tracked.discard(entity_id)
+        self.entity_chapter_plugin.pop(entity_id, None)
         logger.warning("Removed %s from tracking.", entity_id)
 
         # Remove the downloaded chapters
