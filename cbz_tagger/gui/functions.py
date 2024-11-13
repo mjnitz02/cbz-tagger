@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 
 from nicegui import ui
 
@@ -25,4 +26,4 @@ def add_new_to_scanner(scanner, entity_name, entity_id, backend, mark_as_tracked
 
 def notify_and_log(msg):
     ui.notify(msg)
-    logger.info(msg)
+    logger.info("%s %s", datetime.now(), msg)

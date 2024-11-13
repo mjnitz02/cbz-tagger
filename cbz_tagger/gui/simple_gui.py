@@ -20,11 +20,13 @@ class SimpleGui:
     def __init__(self, scanner):
         logger.info("Starting GUI")
         self.env = AppEnv()
+        self.first_scan = True
         self.scanning_state = False
         self.scanner = scanner
         self.series_table = None
         self.config_table = None
         self.ui_logger = None
+        self.timer = None
 
         self.meta_entries = []
         self.meta_choices = []
@@ -42,7 +44,7 @@ class SimpleGui:
         self.initialize()
 
     def initialize_gui(self):
-        ui.page_title('CBZ Tagger')
+        ui.page_title("CBZ Tagger")
 
         with ui.left_drawer().classes("bg-blue-100") as left_drawer:
             ui.label("Navigation")
@@ -118,6 +120,12 @@ class SimpleGui:
                 ui.label("Server Logs")
                 self.ui_logger = ui_logger()
 
+    def initialize(self):
+        logger.info("proxy_url: %s", self.env.PROXY_URL)
+        logger.info("UI scan timer started with delay: %s", self.env.TIMER_DELAY)
+        self.timer = ui.timer(self.env.TIMER_DELAY, self.refresh_database)
+        self.refresh_table()
+
     def refresh_series_search(self):
         search_term = self.add_series_input_box.value
         if len(search_term) == 0:
@@ -179,12 +187,6 @@ class SimpleGui:
 
         notify_and_log("New series added!")
 
-    def initialize(self):
-        logger.info("proxy_url: %s", self.env.PROXY_URL)
-        logger.info("UI scan timer started with delay: %s", self.env.TIMER_DELAY)
-        ui.timer(self.env.TIMER_DELAY, self.refresh_database, once=True)
-        self.refresh_table()
-
     def refresh_table(self):
         logger.info("Refreshing series table")
         state = self.scanner.to_state()
@@ -197,6 +199,10 @@ class SimpleGui:
         notify_and_log("Series GUI Refreshed")
 
     async def refresh_database(self):
+        if self.first_scan:
+            self.first_scan = False
+            logger.info("Timer setup scan triggered. Skipping startup run.")
+            return
         if self.scanning_state:
             notify_and_log("Scanning in progress already...")
             return
