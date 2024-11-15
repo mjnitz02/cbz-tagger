@@ -3,6 +3,8 @@ import logging
 
 from nicegui import ui
 
+from cbz_tagger.common.enums import APPLICATION_MAJOR_VERSION
+from cbz_tagger.common.enums import Emoji
 from cbz_tagger.common.enums import Plugins
 from cbz_tagger.common.env import AppEnv
 from cbz_tagger.entities.metadata_entity import MetadataEntity
@@ -45,16 +47,16 @@ class SimpleGui:
 
     def initialize_gui(self):
         ui.page_title("CBZ Tagger")
+        ui.colors(primary="#2F4F4F")
 
-        with ui.left_drawer().classes("bg-blue-100") as left_drawer:
-            ui.label("Navigation")
+        with ui.left_drawer().style("background-color: #bfd9d9").props("width=225") as left_drawer:
             ui.button("Refresh Table", on_click=self.refresh_table)
             ui.button("Refresh Database", on_click=self.refresh_database)
 
         with ui.header().classes(replace="row items-center"):
             # pylint: disable=unnecessary-lambda
             ui.button(on_click=lambda: left_drawer.toggle(), icon="menu").props("flat color=white")
-            ui.html("<h2><strong>CBZ Tagger</strong></h2>")
+            ui.html(f"<h2><strong>CBZ Tagger {APPLICATION_MAJOR_VERSION}</strong></h2>")
             ui.space()
             with ui.tabs() as tabs:
                 ui.tab("Series")
@@ -64,13 +66,23 @@ class SimpleGui:
                 ui.tab("Log")
             ui.space()
 
-        with ui.footer(value=True):
-            ui.label("CBZ Tagger GUI v0.1")
-
         with ui.tab_panels(tabs, value="Series").classes("w-full"):
             with ui.tab_panel("Series"):
-                ui.label("Series")
+                with ui.row():
+                    for column in ["Entity ID", "Metadata Updated", "Plugin"]:
+                        # noinspection PyUnresolvedReferences
+                        ui.switch(column, value=False, on_change=lambda e, column=column: self.toggle(column))
                 self.series_table = series_table()
+                with ui.row():
+                    ui.label(f"{Emoji.CHECK_GREEN} Completed")
+                    ui.label(f"{Emoji.CIRCLE_GREEN} Ongoing/Tracked")
+                    ui.label(f"{Emoji.CIRCLE_YELLOW} Hiatus")
+                    ui.label(f"{Emoji.CIRCLE_RED} Cancelled")
+                    ui.label(f"{Emoji.QUESTION_MARK} Unknown/Other")
+                with ui.row():
+                    ui.label(f"{Emoji.SQUARE_GREEN} Updated < 45 days")
+                    ui.label(f"{Emoji.SQUARE_ORANGE} Updated 45 - 90 days")
+                    ui.label(f"{Emoji.SQUARE_RED} Updated > 90 days")
             with ui.tab_panel("Add"):
                 ui.label("Add Series")
                 ui.button("Search for New Series", on_click=self.refresh_series_search)
@@ -125,6 +137,14 @@ class SimpleGui:
         logger.info("UI scan timer started with delay: %s", self.env.TIMER_DELAY)
         self.timer = ui.timer(self.env.TIMER_DELAY, self.refresh_database)
         self.refresh_table()
+
+    def toggle(self, column: str) -> None:
+        column_index = [e["label"] for e in self.series_table.columns].index(column)
+        column = self.series_table.columns[column_index]
+        visible = not column.get("classes", "") == ""
+        column["classes"] = "" if visible else "hidden"
+        column["headerClasses"] = "" if visible else "hidden"
+        self.series_table.update()
 
     def refresh_series_search(self):
         search_term = self.add_series_input_box.value
