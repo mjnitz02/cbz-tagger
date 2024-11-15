@@ -11,6 +11,7 @@ from xml.etree import ElementTree
 from zipfile import ZIP_DEFLATED
 from zipfile import ZipFile
 
+from cbz_tagger.common.enums import Emoji
 from cbz_tagger.common.enums import Plugins
 from cbz_tagger.common.enums import Urls
 from cbz_tagger.common.helpers import set_file_ownership
@@ -135,8 +136,9 @@ class EntityDB:
                     "updated": entity_metadata.updated,
                     "latest_chapter": latest_chapter.chapter_number if latest_chapter else None,
                     "latest_chapter_date": latest_chapter.updated_date if latest_chapter else None,
+                    "status": entity_metadata.status_indicator,
                     "plugin": self.entity_chapter_plugin.get(entity_id, {}).get("plugin_type", Plugins.MDX),
-                    "tracked": entity_id in self.entity_tracked,
+                    "tracked": Emoji.CIRCLE_GREEN if entity_id in self.entity_tracked else Emoji.CIRCLE_BROWN,
                 }
             )
         return state

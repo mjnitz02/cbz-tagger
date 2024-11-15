@@ -28,3 +28,23 @@ class Plugins:
     @classmethod
     def all(cls):
         return [cls.MDX, cls.MSE, cls.CMK]
+
+
+class Status:
+    ONGOING = "ongoing"
+    COMPLETED = "completed"
+    HIATUS = "hiatus"
+    CANCELLED = "cancelled"
+    DROPPED = "dropped"
+
+
+class Emoji:
+    CIRCLE_GREEN = "🟢"
+    CIRCLE_YELLOW = "🟡"
+    CIRCLE_RED = "🔴"
+    CIRCLE_BROWN = "🟤"
+    CHECK_GREEN = "✅"
+    QUESTION_MARK = "❓"
+    SQUARE_GREEN = "🟩"
+    SQUARE_RED = "🟥"
+    SQUARE_ORANGE = "🟧"
