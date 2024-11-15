@@ -3,7 +3,7 @@ import logging
 
 from nicegui import ui
 
-from cbz_tagger.common.enums import Emoji
+from cbz_tagger.common.enums import Emoji, APPLICATION_MAJOR_VERSION
 from cbz_tagger.common.enums import Plugins
 from cbz_tagger.common.env import AppEnv
 from cbz_tagger.entities.metadata_entity import MetadataEntity
@@ -45,7 +45,7 @@ class SimpleGui:
         self.initialize()
 
     def initialize_gui(self):
-        ui.page_title("CBZ Tagger")
+        ui.page_title(f"CBZ Tagger")
         ui.colors(primary="#2F4F4F")
 
         with ui.left_drawer().style("background-color: #bfd9d9").props("width=225") as left_drawer:
@@ -55,7 +55,7 @@ class SimpleGui:
         with ui.header().classes(replace="row items-center"):
             # pylint: disable=unnecessary-lambda
             ui.button(on_click=lambda: left_drawer.toggle(), icon="menu").props("flat color=white")
-            ui.html("<h2><strong>CBZ Tagger</strong></h2>")
+            ui.html(f"<h2><strong>CBZ Tagger {APPLICATION_MAJOR_VERSION}</strong></h2>")
             ui.space()
             with ui.tabs() as tabs:
                 ui.tab("Series")
