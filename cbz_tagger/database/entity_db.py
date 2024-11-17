@@ -330,12 +330,12 @@ class EntityDB:
             # Set the ownership of the file
             set_file_ownership(f"{chapter_filepath}.cbz")
         except EnvironmentError as err:
-            logger.info("Could not download chapter: %s, %s, %s", entity_id, chapter_item.entity_id, err)
+            logger.error("Could not download chapter: %s, %s, %s", entity_id, chapter_item.entity_id, err)
             if os.path.exists(f"{chapter_filepath}.cbz"):
-                logger.info("Removing CBZ: %s, %s", entity_id, chapter_item.entity_id)
+                logger.error("Removing CBZ: %s, %s", entity_id, chapter_item.entity_id)
                 os.remove(f"{chapter_filepath}.cbz")
             if (entity_id, chapter_item.entity_id) in self.entity_downloads:
-                logger.info("Removing download record: %s, %s", entity_id, chapter_item.entity_id)
+                logger.error("Removing download record: %s, %s", entity_id, chapter_item.entity_id)
                 self.entity_downloads.discard((entity_id, chapter_item.entity_id))
                 self.save()
         finally:
