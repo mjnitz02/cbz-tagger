@@ -1,3 +1,4 @@
+import logging
 import os
 from datetime import datetime
 from io import BytesIO
@@ -12,6 +13,8 @@ from cbz_tagger.entities.chapter_plugins.cmk import ChapterPluginCMK
 from cbz_tagger.entities.chapter_plugins.mdx import ChapterPluginMDX
 from cbz_tagger.entities.chapter_plugins.mse import ChapterPluginMSE
 from cbz_tagger.entities.chapter_plugins.wbc import ChapterPluginWBC
+
+logger = logging.getLogger()
 
 
 class ChapterEntity(BaseEntity):
@@ -141,8 +144,10 @@ class ChapterEntity(BaseEntity):
                     in_memory_image.save(image_path, quality=95, optimize=True)
 
         if self.pages != -1 and len(cached_images) != self.pages:
+            logger.error("Failed to download chapter %s, not enough pages saved from server", self.entity_id)
             raise EnvironmentError(f"Failed to download chapter {self.entity_id}, not enough pages saved from server")
         if self.pages == -1 and len(cached_images) != len(download_links):
+            logger.error("Failed to download chapter %s, not enough pages saved from server", self.entity_id)
             raise EnvironmentError(f"Failed to download chapter {self.entity_id}, not enough pages saved from server")
 
         return cached_images
