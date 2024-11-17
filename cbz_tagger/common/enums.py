@@ -19,16 +19,18 @@ class Urls:
     MDX = "mangadex.org"
     MSE = "mangasee123.com"
     CMK = "api.comick.fun"
+    WBC = "weebcentral.com"
 
 
 class Plugins:
     MDX = "mdx"
     MSE = "mse"
     CMK = "cmk"
+    WBC = "wbc"
 
     @classmethod
     def all(cls):
-        return [cls.MDX, cls.MSE, cls.CMK]
+        return [cls.MDX, cls.MSE, cls.CMK, cls.WBC]
 
 
 class Status:
