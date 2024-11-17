@@ -91,3 +91,30 @@ def test_end_to_end_live_cmk(
     integration_scanner.add_tracked_entity()
     integration_scanner.refresh()
     assert True
+
+
+@pytest.mark.skip("Debugging only")
+@mock.patch("cbz_tagger.common.input.get_input")
+@mock.patch("cbz_tagger.common.input.get_raw_input")
+def test_end_to_end_live_wbc(
+    mock_get_raw_input,
+    mock_get_input,
+    capture_input_fixture,
+    integration_scanner,
+    end_to_end_manga_name,
+    end_to_end_chapter_name,
+):
+    """This test is designed for triggering a live test in a local environment"""
+    if end_to_end_manga_name is None:
+        return
+
+    mock_get_input.side_effect = capture_input_fixture(
+        end_to_end_manga_name, backend=4, backend_id=end_to_end_chapter_name
+    )
+    mock_get_raw_input.side_effect = capture_input_fixture(
+        end_to_end_manga_name, backend=4, backend_id=end_to_end_chapter_name
+    )
+
+    integration_scanner.add_tracked_entity()
+    integration_scanner.refresh()
+    assert True

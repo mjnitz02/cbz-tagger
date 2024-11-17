@@ -15,4 +15,5 @@ disable=line-too-long,
     too-many-instance-attributes,
     too-many-locals,
     too-many-statements,
-    redefined-outer-name
+    redefined-outer-name,
+    duplicate-code

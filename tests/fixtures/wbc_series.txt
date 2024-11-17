@@ -1,0 +1,28 @@
+<a href="https://site.com/chapters/01JCVM87VK3JFDWJ3HMK08Y6SP" class="hover:bg-base-300 flex items-center p-2" x-data="{ new_chapter: checkNewChapter('2024-11-16T23:17:11.672863Z') }">
+    <span class="grow flex items-center gap-2">
+        <span class="">Chapter 2</span>
+        <span class="flex gap-2 items-center text-primary" x-show="last_read_chapter === '01JCVM87VK3JFDWJ3HMK08Y6SP'">
+            <span class="hidden md:inline">Last Read</span>
+        </span>
+    </span>
+    <time class="text-datetime opacity-50" datetime="2024-11-16T23:17:11.672Z">2024-11-16T23:17:11.672863Z</time>
+</a>
+
+<a href="https://site.com/chapters/01JBQ5XGY6VGM1557EPNDZMV8J" class="hover:bg-base-300 flex items-center p-2" x-data="{ new_chapter: checkNewChapter('2024-11-02T19:34:00.903012Z') }">
+    <span class="grow flex items-center gap-2">
+        <span class="">Chapter 1.5</span>
+        <span class="flex gap-2 items-center text-primary" x-show="last_read_chapter === '01JBQ5XGY6VGM1557EPNDZMV8J'">
+            <span class="hidden md:inline">Last Read</span>
+        </span>
+    </span>
+    <time class="text-datetime opacity-50" datetime="2024-11-02T19:34:00.903Z">2024-11-02T19:34:00.903012Z</time>
+</a>
+
+<a href="https://site.com/chapters/01JAM51V6HR5JRA3C2KETZBB7G" class="hover:bg-base-300 flex items-center p-2" x-data="{ new_chapter: checkNewChapter('2024-10-20T05:05:28.784849Z') }">
+    <span class="grow flex items-center gap-2">
+        <span class="">Chapter 1</span>
+        <span class="flex gap-2 items-center text-primary" x-show="last_read_chapter === '01JAM51V6HR5JRA3C2KETZBB7G'">
+        </span>
+    </span>
+    <time class="text-datetime opacity-50" datetime="2024-10-20T05:05:28.784Z">2024-10-20T05:05:28.784849Z</time>
+</a>
