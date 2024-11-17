@@ -6,6 +6,7 @@ from typing import Any
 from typing import Dict
 from typing import List
 
+import cloudscraper
 import requests
 
 from cbz_tagger.common.enums import DELAY_PER_REQUEST
@@ -18,8 +19,8 @@ logger = logging.getLogger()
 class BaseEntityObject:
     base_url = f"https://api.{Urls.MDX}"
     base_header = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/"
-        "537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/131.0.0.0 Safari/537.36"
     }
 
 
@@ -75,6 +76,11 @@ class BaseEntity(BaseEntityObject):
                 if response.status_code == 200:
                     sleep(DELAY_PER_REQUEST)
                     return response
+                if response.status_code == 403:
+                    scraper = cloudscraper.create_scraper()
+                    scraper_response = scraper.get(url)
+                    if scraper_response.status_code == 200:
+                        return scraper_response
                 # If the status code wasn't success, retry
                 attempt += 1
                 logger.error("Error downloading %s: %s. Attempt: %s", url, response.status_code, attempt)

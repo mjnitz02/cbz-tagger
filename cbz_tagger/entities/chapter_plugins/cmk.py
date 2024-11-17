@@ -11,7 +11,7 @@ class ChapterPluginCMK(ChapterPluginEntity):
 
     @classmethod
     def parse_info_feed(cls, entity_id: str) -> List[Any]:
-        url = f"{cls.entity_url}comic/{entity_id}"
+        url = f"{cls.entity_url}comic/{entity_id}?tachiyomi=true"
         response = cls.request_with_retry(url)
         info = response.json()
 
