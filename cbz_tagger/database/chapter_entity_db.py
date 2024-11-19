@@ -61,7 +61,7 @@ class ChapterEntityDB(BaseEntityDB):
 
         raise EnvironmentError(f"Chapter {chapter_id} not found for {entity_id}")
 
-    def get_latest_chapter(self, entity_id):
+    def get_latest_chapter(self, entity_id) -> ChapterEntity:
         chapters = self.database[entity_id]
         latest_chapter = None
         for chapter in chapters:

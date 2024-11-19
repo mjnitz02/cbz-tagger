@@ -260,15 +260,14 @@ class EntityDB:
             try:
                 chapter_plugin = self.entity_chapter_plugin.get(entity_id, {})
                 logger.info("Checking for updates %s: %s", manga_name, entity_id)
-                last_updated = None
-                latest_chapter = None
+
+                previous_content = None
                 if self.metadata[entity_id] is not None:
-                    last_updated = self.metadata[entity_id].updated
-                    latest_chapter = self.metadata[entity_id].latest_chapter
+                    previous_content = self.metadata[entity_id].content
 
                 self.metadata.update(entity_id)
-                if last_updated == self.metadata[entity_id].updated:
-                    if chapter_plugin or latest_chapter != self.metadata[entity_id].latest_chapter:
+                if previous_content == self.metadata[entity_id].content:
+                    if chapter_plugin:
                         self.chapters.update(entity_id, **chapter_plugin)
                         self.save()
                     return
@@ -414,10 +413,12 @@ class EntityDB:
             if md_entry is not None:
                 ElementTree.SubElement(root, cix_entry).text = f"{md_entry}"
 
+        latest_chapter = self.chapters.get_latest_chapter(entity_id)
+
         assign("Series", self.metadata[entity_id].title)
         assign("LocalizedSeries", self.metadata[entity_id].alt_title)
         assign("Number", chapter_number)
-        assign("Count", self.volumes[entity_id].chapter_count if self.metadata[entity_id].completed else -1)
+        assign("Count", latest_chapter.chapter_number if self.metadata[entity_id].completed else -1)
         assign("Volume", self.volumes[entity_id].get_volume(chapter_number))
         assign("Summary", self.metadata[entity_id].description)
         assign("Year", self.metadata[entity_id].created_at.year)

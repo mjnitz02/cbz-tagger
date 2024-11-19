@@ -18,10 +18,10 @@ class ContainerMode:
 
 
 class Urls:
-    MDX = base64.b64decode("bWFuZ2FkZXgub3Jn").decode('utf-8')
-    MSE = base64.b64decode("bWFuZ2FzZWUxMjMuY29t").decode('utf-8')
-    CMK = base64.b64decode("YXBpLmNvbWljay5mdW4=").decode('utf-8')
-    WBC = base64.b64decode("d2VlYmNlbnRyYWwuY29t").decode('utf-8')
+    MDX = base64.b64decode("bWFuZ2FkZXgub3Jn").decode("utf-8")
+    MSE = base64.b64decode("bWFuZ2FzZWUxMjMuY29t").decode("utf-8")
+    CMK = base64.b64decode("YXBpLmNvbWljay5mdW4=").decode("utf-8")
+    WBC = base64.b64decode("d2VlYmNlbnRyYWwuY29t").decode("utf-8")
 
 
 class Plugins:
