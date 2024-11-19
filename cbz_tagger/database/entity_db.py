@@ -414,10 +414,12 @@ class EntityDB:
             if md_entry is not None:
                 ElementTree.SubElement(root, cix_entry).text = f"{md_entry}"
 
+        latest_chapter = self.chapters.get_latest_chapter(entity_id)
+
         assign("Series", self.metadata[entity_id].title)
         assign("LocalizedSeries", self.metadata[entity_id].alt_title)
         assign("Number", chapter_number)
-        assign("Count", self.volumes[entity_id].chapter_count if self.metadata[entity_id].completed else -1)
+        assign("Count", latest_chapter.chapter_number if self.metadata[entity_id].completed else -1)
         assign("Volume", self.volumes[entity_id].get_volume(chapter_number))
         assign("Summary", self.metadata[entity_id].description)
         assign("Year", self.metadata[entity_id].created_at.year)
