@@ -65,22 +65,18 @@ class BaseEntity(BaseEntityObject):
     @classmethod
     def request_with_retry(cls, url, params=None, retries=3, timeout=30):
         env = AppEnv()
-        request_parameters = {"url": url, "params": params, "headers": cls.base_header, "timeout": timeout}
+        request_parameters = {"url": url, "params": params, "timeout": timeout}
         if env.PROXY_URL is not None:
             request_parameters["proxies"] = {"http": env.PROXY_URL, "https": env.PROXY_URL}
 
         attempt = 0
         while attempt < retries:
             try:
-                response = requests.get(**request_parameters)
+                scraper = cloudscraper.create_scraper()
+                response = scraper.get(**request_parameters)
                 if response.status_code == 200:
                     sleep(DELAY_PER_REQUEST)
                     return response
-                if response.status_code == 403:
-                    scraper = cloudscraper.create_scraper()
-                    scraper_response = scraper.get(url)
-                    if scraper_response.status_code == 200:
-                        return scraper_response
                 # If the status code wasn't success, retry
                 attempt += 1
                 logger.error("Error downloading %s: %s. Attempt: %s", url, response.status_code, attempt)
