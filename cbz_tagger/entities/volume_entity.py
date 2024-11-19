@@ -1,4 +1,6 @@
 from typing import List
+from typing import Set
+from typing import Tuple
 
 import requests
 
@@ -33,7 +35,25 @@ class VolumeEntity(BaseEntity):
         return volumes
 
     @property
-    def chapters(self) -> List[str]:
+    def volume_map(self) -> List[Tuple[str, float, float]]:
+        volume_list = []
+        for volume_key, volume in self.volumes.items():
+            if volume_key == "none":
+                continue
+            volume = [float(chapter) for chapter in volume]
+            volume_list.append((volume_key, min(volume)))
+
+        volume_list = sorted(volume_list, key=lambda x: float(x[0]))
+        volume_ends = [item[1] for item in volume_list][1:] + [999999]
+
+        volume_map = []
+        for (volume_key, volume_start), volume_end in zip(volume_list, volume_ends):
+            volume_map.append((volume_key, volume_start, volume_end))
+
+        return volume_map
+
+    @property
+    def chapters(self) -> Set[str]:
         chapters = set()
         for volume_chapters in self.volumes.values():
             chapters.update(set(volume_chapters))
@@ -55,10 +75,8 @@ class VolumeEntity(BaseEntity):
         return len(self.chapters)
 
     def get_volume(self, chapter_number: str) -> str:
-        for volume, volume_contents in self.volumes.items():
-            for chapter in volume_contents:
-                if str(chapter_number) == chapter:
-                    if volume == "none":
-                        return "-1"
-                    return volume
+        for volume_number, volume_start, volume_end in self.volume_map:
+            if volume_start <= float(chapter_number) < volume_end:
+                return volume_number
+
         return "-1"
