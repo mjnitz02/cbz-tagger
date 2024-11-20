@@ -138,6 +138,34 @@ class SimpleGui:
         self.timer = ui.timer(self.env.TIMER_DELAY, self.refresh_database)
         self.refresh_table()
 
+    @staticmethod
+    def database_operation(func):
+        def wrapper(self):
+            if self.can_use_database():
+                self.lock_database()
+            else:
+                return
+            try:
+                func(self)
+            finally:
+                self.unlock_database()
+
+        return wrapper
+
+    @staticmethod
+    def database_operation_async(func):
+        async def wrapper(self):
+            if self.can_use_database():
+                self.lock_database()
+            else:
+                return
+            try:
+                await func(self)
+            finally:
+                self.unlock_database()
+
+        return wrapper
+
     def toggle(self, column: str) -> None:
         column_index = [e["label"] for e in self.series_table.columns].index(column)
         column = self.series_table.columns[column_index]
@@ -196,12 +224,8 @@ class SimpleGui:
     def unlock_database(self):
         self.scanning_state = False
 
+    @database_operation_async
     async def add_new_series(self):
-        if self.can_use_database():
-            self.lock_database()
-        else:
-            return
-
         entity_index = self.meta_choices.index(self.add_series_selector.value)
         entity = self.meta_entries[entity_index]
         entity_id = entity.entity_id
@@ -225,14 +249,9 @@ class SimpleGui:
         )
 
         notify_and_log("New series added!")
-        self.unlock_database()
 
+    @database_operation
     def delete_series(self):
-        if self.can_use_database():
-            self.lock_database()
-        else:
-            return
-
         self.delete_series_ids = list(self.scanner.entity_database.entity_map.items())
         choices = [f"{name} ({entity_id})" for name, entity_id in self.delete_series_ids]
         entity_index = choices.index(self.delete_series_selector.value)
@@ -240,20 +259,13 @@ class SimpleGui:
         notify_and_log(f"Removing {entity_name_to_remove} from the database...")
         self.scanner.entity_database.delete_entity_id(entity_id_to_remove, entity_name_to_remove)
         notify_and_log(f"Removed {entity_name_to_remove} from the database")
-        self.unlock_database()
 
+    @database_operation_async
     async def refresh_database(self):
         if self.first_scan:
             self.first_scan = False
             logger.info("Timer setup scan triggered. Skipping startup run.")
             return
-
-        if self.can_use_database():
-            self.lock_database()
-        else:
-            return
-
-        self.scanning_state = True
         notify_and_log("Refreshing database... please wait")
 
         loop = asyncio.get_event_loop()
@@ -261,14 +273,8 @@ class SimpleGui:
         self.refresh_table()
 
         notify_and_log("Series Database Refreshed")
-        self.unlock_database()
 
+    @database_operation
     def clean_orphaned_files(self):
-        if self.can_use_database():
-            self.lock_database()
-        else:
-            return
-
         notify_and_log("Removing orphaned files...")
         self.scanner.entity_database.remove_orphaned_covers()
-        self.unlock_database()

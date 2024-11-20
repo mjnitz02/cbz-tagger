@@ -419,7 +419,7 @@ class EntityDB:
         assign("Series", self.metadata[entity_id].title)
         assign("LocalizedSeries", self.metadata[entity_id].alt_title)
         assign("Number", chapter_number)
-        assign("Count", math.floor(latest_chapter.chapter_number) if self.metadata[entity_id].completed else -1)
+        assign("Count", int(math.floor(latest_chapter.chapter_number)) if self.metadata[entity_id].completed else -1)
         assign("Volume", self.volumes[entity_id].get_volume(chapter_number))
         assign("Summary", self.metadata[entity_id].description)
         assign("Year", self.metadata[entity_id].created_at.year)
