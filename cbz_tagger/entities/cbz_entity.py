@@ -11,11 +11,19 @@ logger = logging.getLogger()
 
 
 class CbzEntity:
-    def __init__(self, filepath: str, config_path: str = "", scan_path: str = "", storage_path: str = ""):
+    def __init__(
+        self,
+        filepath: str,
+        config_path: str = "",
+        scan_path: str = "",
+        storage_path: str = "",
+        chapter_is_volume: bool = False,
+    ):
         self.filepath = filepath
         self.config_path = config_path
         self.scan_path = scan_path
         self.storage_path = storage_path
+        self.chapter_is_volume = chapter_is_volume
 
     def check_path(self):
         if len(os.path.split(self.filepath)) > 2:
@@ -103,6 +111,8 @@ class CbzEntity:
             chapter_number_string = chapter_number_string.zfill(fill)
         else:
             chapter_number_string = chapter_number_string.zfill(3)
+        if self.chapter_is_volume:
+            return os.path.join(self.storage_path, entity_name, f"{entity_name} - Volume {chapter_number_string}.cbz")
         return os.path.join(self.storage_path, entity_name, f"{entity_name} - Chapter {chapter_number_string}.cbz")
 
     def build(self, entity_name, entity_xml, entity_image_path, remove_on_write=True, environment=None):
