@@ -42,3 +42,20 @@ def test_chapter_number_invalid_float(get_chapter_entity):
 def test_chapter_number_missing_entry(get_chapter_entity):
     entity = get_chapter_entity(None)
     assert entity.chapter_number is None
+
+
+def test_scanlation_group(get_chapter_entity):
+    entity = get_chapter_entity("1")
+    assert entity.scanlation_group == "group_id"
+
+
+def test_scanlation_group_with_no_relationships(get_chapter_entity):
+    entity = get_chapter_entity("1")
+    entity.content["relationships"] = []
+    assert entity.scanlation_group == "none"
+
+
+def test_scanlation_group_with_no_defined_group(get_chapter_entity):
+    entity = get_chapter_entity("1")
+    entity.content["relationships"] = [{"type": "scanlation_group", "id": None}]
+    assert entity.scanlation_group == "none"
