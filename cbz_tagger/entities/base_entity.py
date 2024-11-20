@@ -68,8 +68,8 @@ class BaseEntity(BaseEntityObject):
         attempt = 0
         while attempt < retries:
             try:
-                scraper = cloudscraper.create_scraper()
-                response = scraper.get(**request_parameters)
+                with cloudscraper.create_scraper() as scraper:
+                    response = scraper.get(**request_parameters)
                 if response.status_code == 200:
                     sleep(DELAY_PER_REQUEST)
                     return response
