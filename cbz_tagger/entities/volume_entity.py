@@ -2,8 +2,6 @@ from typing import List
 from typing import Set
 from typing import Tuple
 
-import requests
-
 from cbz_tagger.entities.base_entity import BaseEntity
 
 
@@ -15,8 +13,9 @@ class VolumeEntity(BaseEntity):
     def from_server_url(cls, query_params=None, **kwargs):
         entity_id = query_params["ids[]"][0]
 
-        response = requests.get(f"{cls.entity_url}/{entity_id}/aggregate", timeout=60).json()
-        return [cls(response)]
+        response = cls.request_with_retry(f"{cls.entity_url}/{entity_id}/aggregate")
+        response_json = response.json()
+        return [cls(response_json)]
 
     @property
     def aggregate(self):

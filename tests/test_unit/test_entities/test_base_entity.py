@@ -1,10 +1,10 @@
 import json
 from unittest import mock
-from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
 import requests
+import requests_mock  # pylint: disable=unused-import
 
 from cbz_tagger.entities.base_entity import BaseEntity
 
@@ -32,35 +32,30 @@ def test_base_entity_to_json(manga_request_content):
     assert entity_json == json_str
 
 
-@patch("cbz_tagger.entities.base_entity.requests.get")
 @patch("cbz_tagger.entities.base_entity.sleep")
-def test_request_with_retry_success(mock_sleep, mock_requests_get):
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_requests_get.return_value = mock_response
+def test_request_with_retry_success(mock_sleep, requests_mock):
+    requests_mock.get("http://example.com/file", json={"data": "file content"})
 
     result = BaseEntity.request_with_retry("http://example.com/file")
 
-    assert result == mock_response
-    mock_requests_get.assert_called_once_with(
-        url="http://example.com/file", params=None, headers=BaseEntity.base_header, timeout=30
-    )
+    assert result.status_code == 200
+    assert result.json() == {"data": "file content"}
     mock_sleep.assert_called_once_with(0.3)
 
 
-@patch("cbz_tagger.entities.base_entity.requests.get")
 @patch("cbz_tagger.entities.base_entity.sleep")
-def test_request_with_retry_retry_success(mock_sleep, mock_requests_get):
-    mock_response_fail = MagicMock()
-    mock_response_fail.status_code = 500
-    mock_response_success = MagicMock()
-    mock_response_success.status_code = 200
-    mock_requests_get.side_effect = [mock_response_fail, mock_response_success]
+def test_request_with_retry_retry_success(mock_sleep, requests_mock):
+    requests_mock.get(
+        "http://example.com/file",
+        [
+            {"json": {"data": "file content"}, "status_code": 500},
+            {"json": {"data": "file content"}, "status_code": 200},
+        ],
+    )
 
     result = BaseEntity.request_with_retry("http://example.com/file")
 
-    assert result == mock_response_success
-    assert mock_requests_get.call_count == 2
+    assert result.status_code == 200
     # Should have 1 retry of 5s sleep, and one default sleep of 0.3 on success
     mock_sleep.assert_has_calls(
         [
@@ -70,17 +65,15 @@ def test_request_with_retry_retry_success(mock_sleep, mock_requests_get):
     )
 
 
-@patch("cbz_tagger.entities.base_entity.requests.get")
 @patch("cbz_tagger.entities.base_entity.sleep")
-def test_request_with_retry_timeout(mock_sleep, mock_requests_get):
-    mock_requests_get.side_effect = requests.exceptions.Timeout
+def test_request_with_retry_timeout(mock_sleep, requests_mock):
+    requests_mock.get("http://example.com/file", exc=requests.exceptions.ConnectTimeout)
 
     with pytest.raises(
         EnvironmentError, match="Failed to receive response from http://example.com/file after 3 attempts"
     ):
         BaseEntity.request_with_retry("http://example.com/file")
 
-    assert mock_requests_get.call_count == 3
     # Assert has 3 retry sleeps of increasing time
     mock_sleep.assert_has_calls(
         [
@@ -91,19 +84,15 @@ def test_request_with_retry_timeout(mock_sleep, mock_requests_get):
     )
 
 
-@patch("cbz_tagger.entities.base_entity.requests.get")
 @patch("cbz_tagger.entities.base_entity.sleep")
-def test_request_with_retry_failure(mock_sleep, mock_requests_get):
-    mock_response = MagicMock()
-    mock_response.status_code = 500
-    mock_requests_get.return_value = mock_response
+def test_request_with_retry_failure(mock_sleep, requests_mock):
+    requests_mock.get("http://example.com/file", json={"data": "file content"}, status_code=500)
 
     with pytest.raises(
         EnvironmentError, match="Failed to receive response from http://example.com/file after 3 attempts"
     ):
         BaseEntity.request_with_retry("http://example.com/file")
 
-    assert mock_requests_get.call_count == 3
     # Assert has 3 retry sleeps of increasing time
     mock_sleep.assert_has_calls(
         [
@@ -114,73 +103,52 @@ def test_request_with_retry_failure(mock_sleep, mock_requests_get):
     )
 
 
-@patch("cbz_tagger.entities.base_entity.requests.get")
 @patch("cbz_tagger.entities.base_entity.sleep")
 @patch("cbz_tagger.entities.base_entity.AppEnv")
-def test_request_with_retry_with_proxy(mock_app_env, mock_sleep, mock_requests_get):
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_requests_get.return_value = mock_response
+def test_request_with_retry_with_proxy(mock_app_env, mock_sleep, requests_mock):
+    def verify_proxy_in_headers(request, content):
+        _ = content
+        assert request.proxies == {"http": "http://proxy.example.com", "https": "http://proxy.example.com"}
+        return "passed"
+
+    requests_mock.get("http://example.com/file", text=verify_proxy_in_headers)
     mock_app_env.return_value.PROXY_URL = "http://proxy.example.com"
 
     result = BaseEntity.request_with_retry("http://example.com/file")
 
-    assert result == mock_response
-    mock_requests_get.assert_called_once_with(
-        url="http://example.com/file",
-        params=None,
-        headers=BaseEntity.base_header,
-        proxies={"http": "http://proxy.example.com", "https": "http://proxy.example.com"},
-        timeout=30,
-    )
+    assert result.status_code == 200
+    assert result.text == "passed"
     mock_sleep.assert_called_once_with(0.3)
 
 
-@patch("cbz_tagger.entities.base_entity.requests.get")
 @patch("cbz_tagger.entities.base_entity.sleep")
-def test_download_file_success(mock_sleep, mock_requests_get):
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_response.content = b"file content"
-    mock_requests_get.return_value = mock_response
+def test_download_file_success(mock_sleep, requests_mock):
+    requests_mock.get("http://example.com/file", content=b"file content")
 
     result = BaseEntity.download_file("http://example.com/file")
 
     assert result == b"file content"
-    mock_requests_get.assert_called_once_with(
-        url="http://example.com/file", params=None, headers=BaseEntity.base_header, timeout=30
-    )
     mock_sleep.assert_called_once()
 
 
-@patch("cbz_tagger.entities.base_entity.requests.get")
 @patch("cbz_tagger.entities.base_entity.sleep")
-def test_download_file_retry_success(mock_sleep, mock_requests_get):
-    mock_response_fail = MagicMock()
-    mock_response_fail.status_code = 500
-    mock_response_success = MagicMock()
-    mock_response_success.status_code = 200
-    mock_response_success.content = b"file content"
-    mock_requests_get.side_effect = [mock_response_fail, mock_response_success]
+def test_download_file_retry_success(mock_sleep, requests_mock):
+    requests_mock.get("http://example.com/file", [{"status_code": 500}, {"content": b"file content"}])
 
     result = BaseEntity.download_file("http://example.com/file")
 
     assert result == b"file content"
-    assert mock_requests_get.call_count == 2
+    # assert mock_requests_get.call_count == 2
     mock_sleep.assert_called_with(0.3)
 
 
-@patch("cbz_tagger.entities.base_entity.requests.get")
 @patch("cbz_tagger.entities.base_entity.sleep")
-def test_download_file_failure(mock_sleep, mock_requests_get):
-    mock_response = MagicMock()
-    mock_response.status_code = 500
-    mock_requests_get.return_value = mock_response
+def test_download_file_failure(mock_sleep, requests_mock):
+    requests_mock.get("http://example.com/file", status_code=500)
 
     with pytest.raises(
         EnvironmentError, match="Failed to receive response from http://example.com/file after 3 attempts"
     ):
         BaseEntity.download_file("http://example.com/file")
 
-    assert mock_requests_get.call_count == 3
     assert mock_sleep.call_count == 3

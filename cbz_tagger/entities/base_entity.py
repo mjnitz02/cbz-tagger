@@ -18,10 +18,6 @@ logger = logging.getLogger()
 
 class BaseEntityObject:
     base_url = f"https://api.{Urls.MDX}"
-    base_header = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/131.0.0.0 Safari/537.36"
-    }
 
 
 class BaseEntity(BaseEntityObject):
@@ -64,34 +60,30 @@ class BaseEntity(BaseEntityObject):
 
     @classmethod
     def request_with_retry(cls, url, params=None, retries=3, timeout=30):
-        env = AppEnv()
-        request_parameters = {"url": url, "params": params, "headers": cls.base_header, "timeout": timeout}
-        if env.PROXY_URL is not None:
-            request_parameters["proxies"] = {"http": env.PROXY_URL, "https": env.PROXY_URL}
+        with cloudscraper.create_scraper() as scraper:
+            env = AppEnv()
+            request_parameters = {"url": url, "params": params, "timeout": timeout}
+            if env.PROXY_URL is not None:
+                request_parameters["proxies"] = {"http": env.PROXY_URL, "https": env.PROXY_URL}
 
-        attempt = 0
-        while attempt < retries:
-            try:
-                response = requests.get(**request_parameters)
-                if response.status_code == 200:
-                    sleep(DELAY_PER_REQUEST)
-                    return response
-                if response.status_code == 403:
-                    scraper = cloudscraper.create_scraper()
-                    scraper_response = scraper.get(url)
-                    if scraper_response.status_code == 200:
-                        return scraper_response
-                # If the status code wasn't success, retry
-                attempt += 1
-                logger.error("Error downloading %s: %s. Attempt: %s", url, response.status_code, attempt)
-                sleep(5 * attempt)
-            # If the request times out, retry
-            except requests.exceptions.Timeout:
-                attempt += 1
-                logger.error("Error downloading %s. Attempt: %s", url, attempt)
-                sleep(5 * attempt)
+            attempt = 0
+            while attempt < retries:
+                try:
+                    response = scraper.get(**request_parameters)
+                    if response.status_code == 200:
+                        sleep(DELAY_PER_REQUEST)
+                        return response
+                    # If the status code wasn't success, retry
+                    attempt += 1
+                    logger.error("Error downloading %s: %s. Attempt: %s", url, response.status_code, attempt)
+                    sleep(5 * attempt)
+                # If the request times out, retry
+                except requests.exceptions.Timeout:
+                    attempt += 1
+                    logger.error("Error downloading %s. Attempt: %s", url, attempt)
+                    sleep(5 * attempt)
 
-        raise EnvironmentError(f"Failed to receive response from {url} after {retries} attempts")
+            raise EnvironmentError(f"Failed to receive response from {url} after {retries} attempts")
 
     @classmethod
     def download_file(cls, url):

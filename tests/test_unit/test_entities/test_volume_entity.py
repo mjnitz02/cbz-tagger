@@ -1,6 +1,5 @@
-from unittest import mock
-
 import pytest
+import requests_mock  # pylint: disable=unused-import
 
 from cbz_tagger.entities.volume_entity import VolumeEntity
 
@@ -112,12 +111,13 @@ def test_volume_entity_get_volume_for_chapter(volume_request_response, chapter, 
     assert expected_volume == entity.get_volume(chapter)
 
 
-def test_volume_entity_from_url(volume_request_response):
-    with mock.patch("cbz_tagger.entities.volume_entity.requests") as mock_request:
-        mock_request.get.return_value = mock.Mock(json=mock.MagicMock(return_value=volume_request_response))
-        entities = VolumeEntity.from_server_url(query_params={"ids[]": ["831b12b8-2d0e-4397-8719-1efee4c32f40"]})
-        assert len(entities) == 1
-        assert entities[0].chapter_count == 22
+def test_volume_entity_from_url(volume_request_response, requests_mock):
+    requests_mock.get(
+        f"{VolumeEntity.base_url}/manga/831b12b8-2d0e-4397-8719-1efee4c32f40/aggregate", json=volume_request_response
+    )
+    entities = VolumeEntity.from_server_url(query_params={"ids[]": ["831b12b8-2d0e-4397-8719-1efee4c32f40"]})
+    assert len(entities) == 1
+    assert entities[0].chapter_count == 22
 
 
 def test_volume_entity_can_store_and_load(volume_request_response, check_entity_for_save_and_load):
