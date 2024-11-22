@@ -25,8 +25,10 @@ class FileScanner:
         self.entity_database = EntityDB.load(root_path=self.config_path)
         self.recently_updated = []
 
-    def to_state(self):
+    def reload_scanner(self):
         self.entity_database = EntityDB.load(root_path=self.config_path)
+
+    def to_state(self):
         return self.entity_database.to_state()
 
     def run(self):
