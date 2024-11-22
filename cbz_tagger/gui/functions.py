@@ -11,15 +11,15 @@ def refresh_scanner(scanner):
     return scanner
 
 
-def add_new_to_scanner(scanner, entity_name, entity_id, backend, mark_as_tracked):
+def add_new_to_scanner(scanner, entity_name, entity_id, backend, enable_tracking, mark_all_tracked):
     scanner.entity_database.add_entity(
         entity_name,
         entity_id,
         manga_name=None,
         backend=backend,
         update=True,
-        track=True,
-        mark_as_tracked=mark_as_tracked,
+        track=enable_tracking,
+        mark_as_tracked=mark_all_tracked,
     )
     return scanner
 
