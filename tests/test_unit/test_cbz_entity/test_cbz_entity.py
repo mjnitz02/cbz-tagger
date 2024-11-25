@@ -21,15 +21,13 @@ def test_get_entity_cover_image_path(mock_cbz_entity):
     assert actual == "/config_path/images/image_filename.jpg"
 
 
-@mock.patch("shutil.chown")
+@mock.patch("os.chown")
 @mock.patch("os.makedirs")
-def test_get_entity_write_path(mock_os_makedirs, mock_shutil_chown, mock_cbz_entity):
+def test_get_entity_write_path(mock_os_makedirs, mock_os_chown, mock_cbz_entity):
     actual = mock_cbz_entity.get_entity_write_path("series name", "1")
     assert actual == "/storage_path/series name/series name - Chapter 001.cbz"
     mock_os_makedirs.assert_called_once_with(os.path.join("/storage_path", "series name"))
-    mock_shutil_chown.assert_called_once_with(
-        os.path.join("/storage_path", "series name"), user=mock.ANY, group=mock.ANY
-    )
+    mock_os_chown.assert_called_once_with(os.path.join("/storage_path", "series name"), mock.ANY, mock.ANY)
 
     actual = mock_cbz_entity.get_entity_write_path("series name", "10")
     assert actual == "/storage_path/series name/series name - Chapter 010.cbz"
