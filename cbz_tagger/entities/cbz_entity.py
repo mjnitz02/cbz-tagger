@@ -4,6 +4,7 @@ import re
 from zipfile import ZIP_DEFLATED
 from zipfile import ZipFile
 
+from cbz_tagger.common.helpers import make_directory_with_ownership
 from cbz_tagger.common.helpers import set_file_ownership
 
 logger = logging.getLogger()
@@ -89,7 +90,7 @@ class CbzEntity:
         return os.path.join(self.scan_path, self.filepath)
 
     def get_entity_write_path(self, entity_name, chapter_number):
-        os.makedirs(os.path.join(self.storage_path, entity_name), exist_ok=True)
+        make_directory_with_ownership(os.path.join(self.storage_path, entity_name))
         chapter_number_string = str(chapter_number)
         if "." in chapter_number_string:
             fill = 5

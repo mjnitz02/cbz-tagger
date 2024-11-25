@@ -15,6 +15,7 @@ from zipfile import ZipFile
 from cbz_tagger.common.enums import Emoji
 from cbz_tagger.common.enums import Plugins
 from cbz_tagger.common.enums import Urls
+from cbz_tagger.common.helpers import make_directory_with_ownership
 from cbz_tagger.common.helpers import set_file_ownership
 from cbz_tagger.common.input import InputEntity
 from cbz_tagger.common.input import console_selector
@@ -313,7 +314,7 @@ class EntityDB:
         chapter_filepath = os.path.join(storage_path, manga_name, chapter_name)
         logger.info("Downloading %s...", chapter_name)
         try:
-            os.makedirs(chapter_filepath, exist_ok=True)
+            make_directory_with_ownership(chapter_filepath)
             # Build the chapter metadata files
             self.build_chapter_metadata(manga_name, chapter_item, chapter_filepath)
 
