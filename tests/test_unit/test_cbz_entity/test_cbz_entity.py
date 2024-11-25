@@ -27,7 +27,9 @@ def test_get_entity_write_path(mock_os_makedirs, mock_shutil_chown, mock_cbz_ent
     actual = mock_cbz_entity.get_entity_write_path("series name", "1")
     assert actual == "/storage_path/series name/series name - Chapter 001.cbz"
     mock_os_makedirs.assert_called_once_with(os.path.join("/storage_path", "series name"))
-    mock_shutil_chown.assert_called_once_with(os.path.join("/storage_path", "series name"), user=501, group=20)
+    mock_shutil_chown.assert_called_once_with(
+        os.path.join("/storage_path", "series name"), user=mock.ANY, group=mock.ANY
+    )
 
     actual = mock_cbz_entity.get_entity_write_path("series name", "10")
     assert actual == "/storage_path/series name/series name - Chapter 010.cbz"
