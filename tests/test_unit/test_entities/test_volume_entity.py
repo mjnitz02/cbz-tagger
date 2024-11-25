@@ -45,7 +45,7 @@ def test_volume_entity(volume_request_response):
         "2": ["19", "18", "17", "16", "15", "14", "13", "12", "11", "10", "9", "8", "7", "6", "5", "4", "3", "2"],
         "1": ["19", "18", "17", "16", "15", "14", "13", "12", "11", "10", "9", "8", "7", "6", "5", "4", "3", "2", "1"],
     }
-    assert entity.volume_map == [("1", 1.0, 2.0), ("2", 2.0, 3.0), ("3", 3.0, 13.0), ("4", 13.0, 999999)]
+    assert entity.volume_map == [("1", 1.0, 2.0), ("2", 2.0, 3.0), ("3", 3.0, 13.0), ("4", 13.0, 22.0)]
 
 
 def test_volume_entity_with_broken_chapters(volume_request_response):
@@ -79,31 +79,19 @@ def test_volume_entity_with_broken_chapters(volume_request_response):
 @pytest.mark.parametrize(
     "chapter,expected_volume",
     [
-        (
-            "1",
-            "1",
-        ),
-        (
-            "2",
-            "2",
-        ),
-        (
-            "19",
-            "4",
-        ),
-        (
-            "3",
-            "3",
-        ),
-        (
-            "20",
-            "4",
-        ),
-        ("30", "4"),
-        ("0", "-1"),
-        ("100", "4"),
+        ("1", "1"),
+        ("2", "2"),
         ("2.5", "2"),
+        ("3", "3"),
         ("3.5", "3"),
+        ("19", "4"),
+        ("20", "4"),
+        ("21", "4"),
+        ("21.5", "4"),
+        ("22", "-1"),
+        ("30", "-1"),
+        ("0", "-1"),
+        ("100", "-1"),
     ],
 )
 def test_volume_entity_get_volume_for_chapter(volume_request_response, chapter, expected_volume):

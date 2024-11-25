@@ -1,3 +1,4 @@
+import math
 from typing import List
 from typing import Set
 from typing import Tuple
@@ -40,13 +41,14 @@ class VolumeEntity(BaseEntity):
             if volume_key == "none":
                 continue
             volume = [float(chapter) for chapter in volume]
-            volume_list.append((volume_key, min(volume)))
+            volume_list.append((volume_key, min(volume), max(volume)))
 
         volume_list = sorted(volume_list, key=lambda x: float(x[0]))
-        volume_ends = [item[1] for item in volume_list][1:] + [999999]
+        final_volume_chapter = volume_list[-1][2] + 1.0
+        volume_ends = [item[1] for item in volume_list][1:] + [final_volume_chapter]
 
         volume_map = []
-        for (volume_key, volume_start), volume_end in zip(volume_list, volume_ends):
+        for (volume_key, volume_start, _), volume_end in zip(volume_list, volume_ends):
             volume_map.append((volume_key, volume_start, volume_end))
 
         return volume_map
@@ -75,7 +77,7 @@ class VolumeEntity(BaseEntity):
 
     def get_volume(self, chapter_number: str) -> str:
         for volume_number, volume_start, volume_end in self.volume_map:
-            if volume_start <= float(chapter_number) < volume_end:
+            if volume_start <= math.floor(float(chapter_number)) < volume_end:
                 return volume_number
 
         return "-1"
