@@ -298,7 +298,7 @@ class SimpleGui:
         choices = [f"{name} ({entity_id})" for name, entity_id in self.delete_series_ids]
         entity_index = choices.index(self.gui_elements["selector_delete_series"].value)
         entity_name_to_remove, entity_id_to_remove = self.delete_series_ids[entity_index]
-        notify_and_log(f"Removing {entity_name_to_remove} from the database...")
+        logger.info("Removing %s from the database...", entity_name_to_remove)
         self.scanner.entity_database.delete_entity_id(entity_id_to_remove, entity_name_to_remove)
         notify_and_log(f"Removed {entity_name_to_remove} from the database")
         self.refresh_delete_series()

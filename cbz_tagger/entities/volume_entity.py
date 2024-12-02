@@ -44,6 +44,9 @@ class VolumeEntity(BaseEntity):
             volume_list.append((volume_key, min(volume), max(volume)))
 
         volume_list = sorted(volume_list, key=lambda x: float(x[0]))
+        if len(volume_list) == 0:
+            return [("-1", 0.0, 0.0)]
+
         final_volume_chapter = volume_list[-1][2] + 1.0
         volume_ends = [item[1] for item in volume_list][1:] + [final_volume_chapter]
 

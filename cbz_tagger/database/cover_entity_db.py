@@ -4,6 +4,8 @@ from io import BytesIO
 from os import path
 from typing import Dict
 from typing import List
+from typing import Set
+from typing import Tuple
 
 from PIL import Image
 
@@ -18,25 +20,46 @@ class CoverEntityDB(BaseEntityDB):
     database: Dict[str, List[CoverEntity]]
     query_param_field: str = "manga[]"
 
-    def get_indexed_covers(self) -> List[str]:
+    def get_indexed_covers(self) -> List[Tuple[str, str]]:
         covers = []
-        for _, cover_list in self.database.items():
+        for entity_id, cover_list in self.database.items():
             for cover_entity in cover_list:
-                covers.append(cover_entity.local_filename)
-        return sorted(covers)
+                covers.append((entity_id, cover_entity.local_filename))
+        return covers
 
-    def get_local_covers(self, image_db_path) -> List[str]:
+    def get_indexed_covers_with_entity_ids(self) -> List[Tuple[str, str]]:
+        covers = []
+        for entity_id, cover_list in self.database.items():
+            for cover_entity in cover_list:
+                covers.append((entity_id, cover_entity.local_filename))
+        return covers
+
+    @staticmethod
+    def get_local_covers(image_db_path) -> List[str]:
         return sorted(os.listdir(image_db_path))
 
     def get_orphaned_covers(self, image_db_path) -> List[str]:
         indexed_covers = self.get_indexed_covers()
+        indexed_cover_ids = [cover[1] for cover in indexed_covers]
         local_covers = self.get_local_covers(image_db_path)
-        return [cover for cover in local_covers if cover not in indexed_covers]
+        return [cover for cover in local_covers if cover not in indexed_cover_ids]
 
     def remove_orphaned_covers(self, image_db_path):
         orphaned_covers = self.get_orphaned_covers(image_db_path)
         for cover in orphaned_covers:
             os.remove(path.join(image_db_path, cover))
+
+    def get_missing_covers(self, image_db_path) -> Set[str]:
+        indexed_covers = self.get_indexed_covers()
+        local_covers = self.get_local_covers(image_db_path)
+        missing_covers = [item for item in indexed_covers if item[1] not in local_covers]
+        missing_entities = set(item[0] for item in missing_covers)
+        return missing_entities
+
+    def download_missing_covers(self, image_db_path):
+        missing_entities = self.get_missing_covers(image_db_path)
+        for entity_id in missing_entities:
+            self.download(entity_id, image_db_path)
 
     def get_latest_cover_for_entity(self, entity_id: str) -> CoverEntity:
         return sorted(self[entity_id], key=lambda x: x.attributes["createdAt"], reverse=True)[0]

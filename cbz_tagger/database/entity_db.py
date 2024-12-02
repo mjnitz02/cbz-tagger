@@ -295,6 +295,7 @@ class EntityDB:
         logger.info("Refreshing database...")
         for entity_id in sorted(self.metadata.keys()):
             self.update_manga_entity_id(entity_id)
+        self.download_missing_covers()
         self.remove_orphaned_covers()
         logger.info("Downloading missing chapters...")
         self.download_missing_chapters(storage_path)
@@ -303,6 +304,10 @@ class EntityDB:
     def remove_orphaned_covers(self):
         logger.info("Cleaning orphaned covers...")
         self.covers.remove_orphaned_covers(self.image_db_path)
+
+    def download_missing_covers(self):
+        logger.info("Downloading missing covers...")
+        self.covers.download_missing_covers(self.image_db_path)
 
     def download_chapter(self, entity_id, chapter_item, storage_path):
         if (entity_id, chapter_item.entity_id) in self.entity_downloads:
