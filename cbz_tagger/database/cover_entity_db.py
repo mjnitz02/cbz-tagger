@@ -27,13 +27,6 @@ class CoverEntityDB(BaseEntityDB):
                 covers.append((entity_id, cover_entity.local_filename))
         return covers
 
-    def get_indexed_covers_with_entity_ids(self) -> List[Tuple[str, str]]:
-        covers = []
-        for entity_id, cover_list in self.database.items():
-            for cover_entity in cover_list:
-                covers.append((entity_id, cover_entity.local_filename))
-        return covers
-
     @staticmethod
     def get_local_covers(image_db_path) -> List[str]:
         return sorted(os.listdir(image_db_path))

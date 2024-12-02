@@ -25,12 +25,6 @@ def test_get_indexed_covers(cover_entity_db):
     assert covers == expected_covers
 
 
-def test_get_indexed_covers_with_entity_ids(cover_entity_db):
-    covers = cover_entity_db.get_indexed_covers_with_entity_ids()
-    expected_covers = [("entity1", "cover1.jpg"), ("entity1", "cover2.jpg"), ("entity2", "cover3.jpg")]
-    assert covers == expected_covers
-
-
 @patch("os.listdir")
 def test_get_local_covers(mock_listdir):
     mock_listdir.return_value = ["cover1.jpg", "cover2.jpg", "cover3.jpg"]
