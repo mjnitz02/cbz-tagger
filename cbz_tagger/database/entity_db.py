@@ -297,16 +297,16 @@ class EntityDB:
             self.update_manga_entity_id(entity_id)
         self.download_missing_covers()
         self.remove_orphaned_covers()
-        logger.info("Downloading missing chapters...")
+        logger.debug("Downloading missing chapters...")
         self.download_missing_chapters(storage_path)
         logger.info("Refresh complete.")
 
     def remove_orphaned_covers(self):
-        logger.info("Cleaning orphaned covers...")
+        logger.debug("Cleaning orphaned covers...")
         self.covers.remove_orphaned_covers(self.image_db_path)
 
     def download_missing_covers(self):
-        logger.info("Downloading missing covers...")
+        logger.debug("Downloading missing covers...")
         self.covers.download_missing_covers(self.image_db_path)
 
     def download_chapter(self, entity_id, chapter_item, storage_path):

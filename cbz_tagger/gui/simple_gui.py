@@ -21,7 +21,7 @@ logger = logging.getLogger()
 
 class SimpleGui:
     def __init__(self, scanner):
-        logger.info("Starting GUI")
+        logger.debug("Starting GUI")
         self.env = AppEnv()
         self.first_scan = True
         self.scanning_state = False
@@ -222,7 +222,7 @@ class SimpleGui:
         self.gui_elements["selector_delete_series"].value = self.gui_elements["selector_delete_series"].options[0]
 
     def refresh_table(self):
-        logger.info("Refreshing series table")
+        logger.debug("Refreshing series table")
         self.scanner.reload_scanner()
         state = self.scanner.to_state()
         formatted_state = []
@@ -231,7 +231,7 @@ class SimpleGui:
                 item["entity_name"] = item["entity_name"][:50] + "..."
             formatted_state.append(item)
         self.gui_elements["table_series"].rows = formatted_state
-        logger.info("Series GUI Refreshed")
+        logger.debug("Series GUI Refreshed")
 
     def can_use_database(self):
         if self.scanning_state:
@@ -307,7 +307,7 @@ class SimpleGui:
     async def refresh_database(self):
         if self.first_scan:
             self.first_scan = False
-            logger.info("Timer setup scan triggered. Skipping startup run.")
+            logger.debug("Timer setup scan triggered. Skipping startup run.")
             return
         notify_and_log("Refreshing database... please wait")
 
