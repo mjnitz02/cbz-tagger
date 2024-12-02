@@ -31,5 +31,6 @@ def config_table():
             {"property": "PUID", "value": env.PUID},
             {"property": "PGID", "value": env.PGID},
             {"property": "UMASK", "value": env.UMASK},
+            {"property": "LOG_LEVEL", "value": env.LOG_LEVEL},
         ],
     )

@@ -6,7 +6,7 @@ from nicegui import ui
 class LogElementHandler(logging.Handler):
     """A logging handler that emits messages to a log element."""
 
-    def __init__(self, element: ui.log, level: int = logging.DEBUG) -> None:
+    def __init__(self, element: ui.log, level: int = logging.NOTSET) -> None:
         self.element = element
         super().__init__(level)
 
