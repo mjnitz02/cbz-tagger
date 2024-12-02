@@ -17,13 +17,11 @@ class CbzEntity:
         config_path: str = "",
         scan_path: str = "",
         storage_path: str = "",
-        chapter_is_volume: bool = False,
     ):
         self.filepath = filepath
         self.config_path = config_path
         self.scan_path = scan_path
         self.storage_path = storage_path
-        self.chapter_is_volume = chapter_is_volume
 
     def check_path(self):
         if len(os.path.split(self.filepath)) > 2:
@@ -36,6 +34,17 @@ class CbzEntity:
         self.check_path()
         manga_name = os.path.split(self.filepath)[0]
         return manga_name
+
+    @property
+    def chapter_is_volume(self):
+        """If the volume is removed are there any numbers left? If not this is a volume only entity"""
+        filename = self.chapter_name.replace(".cbz", "")
+        filename = str.lower(filename)
+        filename = re.sub(r"volume \d+", "", filename)
+        filename_numeric_only = re.sub(r"[^0-9.]", "", filename)
+        if len(filename_numeric_only) == 0:
+            return True
+        return False
 
     @property
     def chapter_name(self):
@@ -60,17 +69,18 @@ class CbzEntity:
     @property
     def chapter_number(self) -> str:
         filename = self.chapter_name.replace(".cbz", "")
+        filename = str.lower(filename)
 
         # Check if formatting with chapter title, if so remove the word title
         if filename.find("-") != filename.rfind("-") and filename.find("-") != -1 and filename.rfind("-") != -1:
-            chapter_pos = filename.find("Ch")
+            chapter_pos = filename.find("ch")
             if filename.find("-") < chapter_pos < filename.rfind("-"):
                 filename = filename[: filename.rfind("-")]
 
         filename = re.sub(r"\.\.+", "", filename)
         filename = re.sub(r"\(.*\)", "", filename)
-        filename = re.sub(r"Volume [0-9.].* ", "", filename)
-        filename = re.sub(r"Part [0-9.]", "", filename)
+        filename = re.sub(r"volume \d+ ", "", filename)
+        filename = re.sub(r"part \d+", "", filename)
         filename_numeric_only = re.sub(r"[^0-9.]", " ", filename)
         valid_parts = [p for p in filename_numeric_only.split(" ") if len(p) > 0]
         valid_parts = [self.convert_to_number(p) for p in valid_parts if self.convert_to_number(p) is not None]

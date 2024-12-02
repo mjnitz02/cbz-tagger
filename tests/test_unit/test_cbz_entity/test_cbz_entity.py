@@ -116,6 +116,36 @@ def test_chapter_name_parsing(filename, expected):
 
 
 @pytest.mark.parametrize(
+    "filename,expected",
+    [
+        ("Simple Name/Simple name - 1.cbz", False),
+        ("Simple Name/Simple name - 1.1.cbz", False),
+        ("Simple Name/Simple name - 1.2.cbz", False),
+        ("Simple Name/Simple name - 001.cbz", False),
+        ("Simple Name/Simple name - Chapter 1.cbz", False),
+        ("Simple Name/Simple name - Chapter 1.1.cbz", False),
+        ("Simple Name/Simple name - Chapter 1.2.cbz", False),
+        ("Simple Name/Simple name - Chapter 001.cbz", False),
+        ("Simple Name/Simple name - Volume 1 - Chapter 1.cbz", False),
+        ("Simple Name/Simple name - Volume 01 - Chapter 1.cbz", False),
+        ("Simple Name/Simple name - Volume 001 - Chapter 1.cbz", False),
+        ("Simple Name/Simple name - Volume 10 - Chapter 1.cbz", False),
+        ("Simple Name/Simple name - Volume 12 - Chapter 1.cbz", False),
+        ("Simple Name/Simple name - Volume 101 - Chapter 1.cbz", False),
+        ("Simple Name/Simple name - Volume 1.cbz", True),
+        ("Simple Name/Simple name - Volume 01.cbz", True),
+        ("Simple Name/Simple name - Volume 001.cbz", True),
+        ("Simple Name/Simple name - Volume 10.cbz", True),
+        ("Simple Name/Simple name - Volume 12.cbz", True),
+        ("Simple Name/Simple name - Volume 101.cbz", True),
+    ],
+)
+def test_chapter_is_volume_parsing(filename, expected):
+    entity = CbzEntity(filename)
+    assert entity.chapter_is_volume == expected
+
+
+@pytest.mark.parametrize(
     "chapter_prefix",
     [
         "Simple name",
@@ -126,6 +156,7 @@ def test_chapter_name_parsing(filename, expected):
         "Simple name 123",
         "Simple name #1",
         "Simple name .01",
+        "Simple name - Volume 1",
     ],
 )
 @pytest.mark.parametrize(
@@ -184,11 +215,13 @@ def test_chapter_number_parsing(
     filename = f"{chapter_prefix}/{chapter_prefix}{chapter_delimiter}{chapter_number_prefix}{chapter_number}{chapter_suffix}.cbz"
     entity = CbzEntity(filename)
     assert entity.chapter_number == expected
+    assert not entity.chapter_is_volume
 
     # Test \\ pathing
     filename = f"{chapter_prefix}\\{chapter_prefix}{chapter_delimiter}{chapter_number_prefix}{chapter_number}{chapter_suffix}.cbz"
     entity = CbzEntity(filename)
     assert entity.chapter_number == expected
+    assert not entity.chapter_is_volume
 
 
 @pytest.mark.parametrize(
