@@ -99,6 +99,7 @@ def mock_entity_db_with_mock_updates(mock_entity_db, manga_request_id, manga_req
     mock_entity_db.authors.update = mock.MagicMock()
     mock_entity_db.covers.update = mock.MagicMock()
     mock_entity_db.covers.download = mock.MagicMock()
+    mock_entity_db.covers.download_missing_covers = mock.MagicMock()
     mock_entity_db.volumes.update = mock.MagicMock()
     mock_entity_db.chapters.update = mock.MagicMock()
     mock_entity_db.metadata.database[manga_request_id] = metadata_entity

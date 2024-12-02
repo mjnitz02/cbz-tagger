@@ -459,3 +459,29 @@ def test_entity_database_calls_downloads_for_missing_chapters(mock_entity_db, ma
     mock_entity_db.download_chapter = mock.MagicMock()
     mock_entity_db.download_missing_chapters("storage_path")
     assert mock_entity_db.download_chapter.call_count == 4
+
+
+@mock.patch("cbz_tagger.database.entity_db.EntityDB.update_manga_entity_id")
+@mock.patch("cbz_tagger.database.entity_db.EntityDB.download_missing_covers")
+@mock.patch("cbz_tagger.database.entity_db.EntityDB.remove_orphaned_covers")
+@mock.patch("cbz_tagger.database.entity_db.EntityDB.download_missing_chapters")
+def test_refresh(
+    mock_download_missing_chapters,
+    mock_remove_orphaned_covers,
+    mock_download_missing_covers,
+    mock_update_manga_entity_id,
+):
+    mock_metadata = mock.MagicMock()
+    mock_metadata.keys.return_value = ["entity1", "entity2"]
+
+    entity_db = EntityDB(root_path="mock_path")
+    entity_db.metadata = mock_metadata
+
+    storage_path = "mock_storage_path"
+    entity_db.refresh(storage_path)
+
+    mock_update_manga_entity_id.assert_any_call("entity1")
+    mock_update_manga_entity_id.assert_any_call("entity2")
+    mock_download_missing_covers.assert_called_once()
+    mock_remove_orphaned_covers.assert_called_once()
+    mock_download_missing_chapters.assert_called_once_with(storage_path)

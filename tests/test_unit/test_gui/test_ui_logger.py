@@ -1,4 +1,5 @@
 import logging
+from unittest import mock
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
@@ -15,6 +16,6 @@ def test_ui_logger(mock_log_element_handler, mock_ui_log):
 
     ui_logger()
 
+    mock_log_element_handler.assert_called_once_with(mock.ANY, level=logging.INFO)
     mock_ui_log.assert_called_once_with(max_lines=1000)
     mock_log.classes.assert_called_once_with("w-full")
-    mock_handler.setLevel.assert_called_once_with(logging.INFO)

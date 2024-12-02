@@ -261,7 +261,7 @@ class EntityDB:
         if entity_id is not None:
             try:
                 chapter_plugin = self.entity_chapter_plugin.get(entity_id, {})
-                logger.info("Checking for updates %s: %s", manga_name, entity_id)
+                logger.debug("Checking for updates %s: %s", manga_name, entity_id)
 
                 previous_content = None
                 if self.metadata[entity_id] is not None:
@@ -295,14 +295,19 @@ class EntityDB:
         logger.info("Refreshing database...")
         for entity_id in sorted(self.metadata.keys()):
             self.update_manga_entity_id(entity_id)
+        self.download_missing_covers()
         self.remove_orphaned_covers()
-        logger.info("Downloading missing chapters...")
+        logger.debug("Downloading missing chapters...")
         self.download_missing_chapters(storage_path)
         logger.info("Refresh complete.")
 
     def remove_orphaned_covers(self):
-        logger.info("Cleaning orphaned covers...")
+        logger.debug("Cleaning orphaned covers...")
         self.covers.remove_orphaned_covers(self.image_db_path)
+
+    def download_missing_covers(self):
+        logger.debug("Downloading missing covers...")
+        self.covers.download_missing_covers(self.image_db_path)
 
     def download_chapter(self, entity_id, chapter_item, storage_path):
         if (entity_id, chapter_item.entity_id) in self.entity_downloads:
@@ -377,10 +382,13 @@ class EntityDB:
             return None
         return self.entity_names.get(entity_id)
 
-    def to_local_image_file(self, manga_name, chapter_number) -> Optional[str]:
+    def to_local_image_file(self, manga_name, chapter_number, chapter_is_volume=False) -> Optional[str]:
         entity_id = self.entity_map.get(manga_name)
 
-        volume = self.volumes[entity_id].get_volume(chapter_number)
+        if chapter_is_volume:
+            volume = str(int(chapter_number))
+        else:
+            volume = self.volumes[entity_id].get_volume(chapter_number)
         cover_entity = None
         if volume != "-1":
             cover_entity = next((cover for cover in self.covers[entity_id] if cover.volume == volume), None)
@@ -395,7 +403,7 @@ class EntityDB:
 
         return cover_entity.local_filename if cover_entity else None
 
-    def to_xml_tree(self, manga_name, chapter_number) -> ElementTree:
+    def to_xml_tree(self, manga_name, chapter_number, chapter_is_volume=False) -> ElementTree:
         entity_id = self.entity_map.get(manga_name)
         if entity_id is None:
             raise ValueError(f"Could not find an entity for {manga_name}")
@@ -416,13 +424,19 @@ class EntityDB:
             if md_entry is not None:
                 ElementTree.SubElement(root, cix_entry).text = f"{md_entry}"
 
-        latest_chapter = self.chapters.get_latest_chapter(entity_id)
+        if chapter_is_volume:
+            volume = str(int(chapter_number))
+            count = self.volumes[entity_id].last_volume
+        else:
+            volume = self.volumes[entity_id].get_volume(chapter_number)
+            latest_chapter = self.chapters.get_latest_chapter(entity_id)
+            count = str(int(math.floor(latest_chapter.chapter_number)) if self.metadata[entity_id].completed else -1)
 
         assign("Series", self.metadata[entity_id].title)
         assign("LocalizedSeries", self.metadata[entity_id].alt_title)
         assign("Number", chapter_number)
-        assign("Count", int(math.floor(latest_chapter.chapter_number)) if self.metadata[entity_id].completed else -1)
-        assign("Volume", self.volumes[entity_id].get_volume(chapter_number))
+        assign("Count", count)
+        assign("Volume", volume)
         assign("Summary", self.metadata[entity_id].description)
         assign("Year", self.metadata[entity_id].created_at.year)
         assign("Month", self.metadata[entity_id].created_at.month)
@@ -440,17 +454,17 @@ class EntityDB:
         assign("Web", f"https://{Urls.MDX}/title/{entity_id}")
         return root
 
-    def to_xml_string(self, manga_name, chapter_number) -> str:
-        root = self.to_xml_tree(manga_name, chapter_number)
+    def to_xml_string(self, manga_name, chapter_number, chapter_is_volume=False) -> str:
+        root = self.to_xml_tree(manga_name, chapter_number, chapter_is_volume)
         xmlstr = minidom.parseString(ElementTree.tostring(root)).toprettyxml()
         return xmlstr
 
-    def get_comicinfo_and_image(self, manga_name, chapter_number):
+    def get_comicinfo_and_image(self, manga_name, chapter_number, chapter_is_volume=False):
         entity_name = self.to_entity_name(manga_name)
         if entity_name is None:
             return None, None, None
-        entity_xml = self.to_xml_string(manga_name, chapter_number)
-        entity_image_path = self.to_local_image_file(manga_name, chapter_number)
+        entity_xml = self.to_xml_string(manga_name, chapter_number, chapter_is_volume)
+        entity_image_path = self.to_local_image_file(manga_name, chapter_number, chapter_is_volume)
         return entity_name, entity_xml, entity_image_path
 
     def get_missing_chapters(self):
