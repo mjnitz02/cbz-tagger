@@ -17,6 +17,7 @@ def test_config_table(mock_ui_table, mock_app_env):
     mock_env.PUID = "mock_puid"
     mock_env.PGID = "mock_pgid"
     mock_env.UMASK = "mock_umask"
+    mock_env.LOG_LEVEL = 20
     mock_app_env.return_value = mock_env
 
     config_table()
@@ -35,6 +36,7 @@ def test_config_table(mock_ui_table, mock_app_env):
         {"property": "PUID", "value": "mock_puid"},
         {"property": "PGID", "value": "mock_pgid"},
         {"property": "UMASK", "value": "mock_umask"},
+        {"property": "LOG_LEVEL", "value": 20},
     ]
 
     mock_ui_table.assert_called_once_with(columns=expected_columns, rows=expected_rows)
