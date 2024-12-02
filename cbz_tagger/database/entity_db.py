@@ -261,7 +261,7 @@ class EntityDB:
         if entity_id is not None:
             try:
                 chapter_plugin = self.entity_chapter_plugin.get(entity_id, {})
-                logger.info("Checking for updates %s: %s", manga_name, entity_id)
+                logger.debug("Checking for updates %s: %s", manga_name, entity_id)
 
                 previous_content = None
                 if self.metadata[entity_id] is not None:
