@@ -1,9 +1,12 @@
 import json
 import os
+from datetime import datetime
+from datetime import timezone
 from unittest import mock
 
 import pytest
 
+from cbz_tagger.common.enums import Urls
 from cbz_tagger.common.input import InputEntity
 from cbz_tagger.database.entity_db import EntityDB
 from cbz_tagger.entities.metadata_entity import MetadataEntity
@@ -423,6 +426,25 @@ def test_entity_db_update_does_nothing_with_unknown():
 def test_entity_database_image_db_path(mock_entity_db, temp_folder_path):
     expected = os.path.join(temp_folder_path, "images")
     assert expected == mock_entity_db.image_db_path
+
+
+def test_entity_database_to_state(mock_entity_db, manga_name):
+    state = mock_entity_db.to_state()
+    assert state == [
+        {
+            "entity_id": "831b12b8-2d0e-4397-8719-1efee4c32f40",
+            "entity_name": {
+                "link": f"https://{Urls.MDX}/title/831b12b8-2d0e-4397-8719-1efee4c32f40",
+                "name": manga_name,
+            },
+            "latest_chapter": 11.0,
+            "latest_chapter_date": datetime(2021, 7, 13, 8, 28, 1, tzinfo=timezone.utc),
+            "plugin": {"link": f"https://{Urls.MDX}/title/831b12b8-2d0e-4397-8719-1efee4c32f40", "name": "mdx"},
+            "status": "🟢",
+            "tracked": "🟤",
+            "updated": "2022-12-31T11:57:41+00:00",
+        }
+    ]
 
 
 def test_entity_database_creates_new_database_with_none_present(temp_folder_path):

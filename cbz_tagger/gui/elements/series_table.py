@@ -54,9 +54,17 @@ def series_table():
     ]
     table = ui.table(columns=columns, rows=[], row_key="entity_name").classes("table-auto").props("flat dense")
     table.add_slot(
+        "body-cell-entity_name",
+        """
+        <q-td :props="props">
+            <a :href="props.value.link">{{ props.value.name }}</a>
+        </q-td>
+        """,
+    )
+    table.add_slot(
         "body-cell-updated",
         """
-        <q-td key="updated" :props="props">
+        <q-td :props="props">
             <q-badge
                 :color="
                 Date.parse(props.value) > Date.now() - (45 * 86400000) ? 'green' :
@@ -70,7 +78,7 @@ def series_table():
     table.add_slot(
         "body-cell-latest_chapter_date",
         """
-        <q-td key="latest_chapter_date" :props="props">
+        <q-td :props="props">
             <q-badge
                 :color="
                 Date.parse(props.value) > Date.now() - (45 * 86400000) ? 'green' :
@@ -80,5 +88,13 @@ def series_table():
             </q-badge>
         </q-td>
     """,
+    )
+    table.add_slot(
+        "body-cell-plugin",
+        """
+        <q-td :props="props">
+            <a :href="props.value.link">{{ props.value.name }}</a>
+        </q-td>
+        """,
     )
     return table
