@@ -24,22 +24,18 @@ class Urls:
     WBC = base64.b64decode("d2VlYmNlbnRyYWwuY29t").decode("utf-8")
 
 
-class UrlTitles:
-    MDX = f"https://{Urls.MDX}/title/"
-    MSE = f"https://{Urls.MSE}/manga/"
-    CMK = f"https://{Urls.CMK}/comic/"
-    WBC = f"https://{Urls.WBC}/series/"
-
-    @classmethod
-    def get(cls, plugin):
-        return getattr(cls, plugin.upper())
-
-
 class Plugins:
     MDX = "mdx"
     MSE = "mse"
     CMK = "cmk"
     WBC = "wbc"
+
+    TITLE_URLS = {
+        MDX: f"https://{Urls.MDX}/title/",
+        MSE: f"https://{Urls.MSE}/manga/",
+        CMK: f"https://{Urls.CMK}/comic/",
+        WBC: f"https://{Urls.WBC}/series/",
+    }
 
     @classmethod
     def all(cls):

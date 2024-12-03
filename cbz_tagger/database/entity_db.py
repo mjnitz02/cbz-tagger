@@ -15,7 +15,6 @@ from zipfile import ZipFile
 from cbz_tagger.common.enums import Emoji
 from cbz_tagger.common.enums import Plugins
 from cbz_tagger.common.enums import Urls
-from cbz_tagger.common.enums import UrlTitles
 from cbz_tagger.common.helpers import make_directory_with_ownership
 from cbz_tagger.common.helpers import set_file_ownership
 from cbz_tagger.common.input import InputEntity
@@ -138,14 +137,14 @@ class EntityDB:
                 {
                     "entity_name": {
                         "name": entity_name if len(entity_name) < 51 else f"{entity_name[:50]}...",
-                        "link": f"{UrlTitles.MDX}{entity_id}",
+                        "link": f"{Plugins.TITLE_URLS[Plugins.MDX]}{entity_id}",
                     },
                     "entity_id": entity_id,
                     "updated": entity_metadata.updated,
                     "latest_chapter": latest_chapter.chapter_number if latest_chapter else None,
                     "latest_chapter_date": latest_chapter.updated_date if latest_chapter else None,
                     "status": entity_metadata.status_indicator,
-                    "plugin": {"name": plugin_type, "link": f"{UrlTitles.get(plugin_type)}{plugin_id}"},
+                    "plugin": {"name": plugin_type, "link": f"{Plugins.TITLE_URLS[plugin_type]}{plugin_id}"},
                     "tracked": Emoji.CIRCLE_GREEN if entity_id in self.entity_tracked else Emoji.CIRCLE_BROWN,
                 }
             )
