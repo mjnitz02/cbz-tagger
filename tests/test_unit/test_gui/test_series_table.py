@@ -65,4 +65,4 @@ def test_series_table(mock_ui_table):
 
     mock_ui_table.assert_called_once_with(columns=expected_columns, rows=[], row_key="entity_name")
     assert table == mock_table
-    assert mock_table.add_slot.call_count == 2
+    assert mock_table.add_slot.call_count == 4

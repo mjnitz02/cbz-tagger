@@ -131,15 +131,20 @@ class EntityDB:
         for entity_name, entity_id in self.entity_map.items():
             entity_metadata = self.metadata[entity_id]
             latest_chapter = self.chapters.get_latest_chapter(entity_id)
+            plugin_type = self.entity_chapter_plugin.get(entity_id, {}).get("plugin_type", Plugins.MDX)
+            plugin_id = self.entity_chapter_plugin.get(entity_id, {}).get("plugin_id", entity_id)
             state.append(
                 {
-                    "entity_name": entity_name,
+                    "entity_name": {
+                        "name": entity_name if len(entity_name) < 51 else f"{entity_name[:50]}...",
+                        "link": f"{Plugins.TITLE_URLS[Plugins.MDX]}{entity_id}",
+                    },
                     "entity_id": entity_id,
                     "updated": entity_metadata.updated,
                     "latest_chapter": latest_chapter.chapter_number if latest_chapter else None,
                     "latest_chapter_date": latest_chapter.updated_date if latest_chapter else None,
                     "status": entity_metadata.status_indicator,
-                    "plugin": self.entity_chapter_plugin.get(entity_id, {}).get("plugin_type", Plugins.MDX),
+                    "plugin": {"name": plugin_type, "link": f"{Plugins.TITLE_URLS[plugin_type]}{plugin_id}"},
                     "tracked": Emoji.CIRCLE_GREEN if entity_id in self.entity_tracked else Emoji.CIRCLE_BROWN,
                 }
             )

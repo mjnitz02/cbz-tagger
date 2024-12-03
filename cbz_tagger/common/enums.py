@@ -30,6 +30,13 @@ class Plugins:
     CMK = "cmk"
     WBC = "wbc"
 
+    TITLE_URLS = {
+        MDX: f"https://{Urls.MDX}/title/",
+        MSE: f"https://{Urls.MSE}/manga/",
+        CMK: f"https://{Urls.CMK}/comic/",
+        WBC: f"https://{Urls.WBC}/series/",
+    }
+
     @classmethod
     def all(cls):
         return [cls.MDX, cls.MSE, cls.CMK, cls.WBC]
