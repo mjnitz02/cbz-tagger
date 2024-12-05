@@ -83,16 +83,14 @@ class VolumeEntity(BaseEntity):
         return len(self.chapters)
 
     def get_volume(self, chapter_number: str) -> str:
+        if len(self.volume_map) == 0:
+            return "-1"
+
         for volume_number, volume_start, volume_end in self.volume_map:
             if volume_start <= math.floor(float(chapter_number)) < volume_end:
                 return volume_number
 
-        return self.get_synthetic_volume(chapter_number)
-
-    def get_synthetic_volume(self, chapter_number: str) -> str:
-        if len(self.volume_map) == 0:
-            return "-1"
-
+        # Attempt to allocate a synthetic volume
         chapter_num = float(chapter_number)
         if chapter_num > self.last_volume:
             # Determine the maximum chapters in a known volume
