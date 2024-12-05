@@ -9,6 +9,7 @@ import pytest
 from cbz_tagger.common.enums import Urls
 from cbz_tagger.common.input import InputEntity
 from cbz_tagger.database.entity_db import EntityDB
+from cbz_tagger.entities.cover_entity import CoverEntity
 from cbz_tagger.entities.metadata_entity import MetadataEntity
 
 
@@ -111,9 +112,71 @@ def test_entity_db_to_entity_with_missing(mock_entity_db):
         ("2", "39194a9c-719b-4a27-b8ef-99a3d6fa0997.jpg"),
         ("3", "a2b7bbe2-3a79-46a4-8960-e0e65a666194.jpg"),
         ("20", "87ad56cd-780b-48bc-82b1-fa425836f9a4.jpg"),
+        ("100", "87ad56cd-780b-48bc-82b1-fa425836f9a4.jpg"),
+    ],
+    ids=[
+        "chapter 1",
+        "chapter 2",
+        "chapter 3",
+        "chapter 20",
+        "chapter 100 - use the default cover id",
     ],
 )
 def test_entity_db_to_local_image_file(mock_entity_db, manga_name, chapter_number, expected_filename):
+    """Test behaviour when all covers have a volume present"""
+    actual = mock_entity_db.to_local_image_file(manga_name, chapter_number)
+    assert expected_filename == actual
+
+
+@pytest.mark.parametrize(
+    "chapter_number,expected_filename",
+    [
+        ("1", "1d387431-eb38-40e9-bc6e-97e4ea4092dc.jpg"),
+        ("2", "39194a9c-719b-4a27-b8ef-99a3d6fa0997.jpg"),
+        ("3", "a2b7bbe2-3a79-46a4-8960-e0e65a666194.jpg"),
+        ("20", "87ad56cd-780b-48bc-82b1-fa425836f9a4.jpg"),
+        ("22", "99ad56cd-780b-48bc-82b1-fa425836f9a4.jpg"),
+        ("30", "99ad56cd-780b-48bc-82b1-fa425836f9a4.jpg"),
+        ("40", "87ad56cd-780b-48bc-82b1-fa425836f9a4.jpg"),
+        ("100", "87ad56cd-780b-48bc-82b1-fa425836f9a4.jpg"),
+    ],
+    ids=[
+        "chapter 1",
+        "chapter 2",
+        "chapter 3",
+        "chapter 20",
+        "chapter 22 - synthetic volume on limit of range",
+        "chapter 30 - synthetic volume inside of range",
+        "chapter 40 - synthetic volume outside of range, use default cover id",
+        "chapter 100 - synthetic volume way outside of range, use default cover id",
+    ],
+)
+def test_entity_db_to_local_image_file_with_un_volumed_covers(
+    mock_entity_db, manga_name, manga_request_id, chapter_number, expected_filename
+):
+    """Test behaviour if there are covers for volumes not tracked. This uses the synthetic volume processing to
+    try and associate the volume with the cover"""
+    mock_entity_db.covers[manga_request_id].append(
+        CoverEntity(
+            {
+                "attributes": {
+                    "createdAt": "2021-05-24T18:04:01+00:00",
+                    "description": "",
+                    "fileName": "99ad56cd-780b-48bc-82b1-fa425836f9a4.jpg",
+                    "locale": "en",
+                    "updatedAt": "2021-11-09T20:59:36+00:00",
+                    "version": 4,
+                    "volume": "5",
+                },
+                "id": "9d64b6fb-0cac-4fa7-b3da-553fea602d2d",
+                "relationships": [
+                    {"id": manga_request_id, "type": "manga"},
+                    {"id": "f8cc4f8a-e596-4618-ab05-ef6572980bbf", "type": "user"},
+                ],
+                "type": "cover_art",
+            }
+        )
+    )
     actual = mock_entity_db.to_local_image_file(manga_name, chapter_number)
     assert expected_filename == actual
 
