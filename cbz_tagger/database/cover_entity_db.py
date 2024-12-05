@@ -85,3 +85,16 @@ class CoverEntityDB(BaseEntityDB):
                 if in_memory_image.format != "JPEG":
                     in_memory_image = in_memory_image.convert("RGB")
                 in_memory_image.save(image_path, quality=95, optimize=True)
+
+    def get_cover_for_volume(self, entity_id, volume, default_cover_art_id):
+        covers = self[entity_id]
+        cover_entity = None
+        if volume != "-1":
+            cover_entity = next((cover for cover in covers if cover.volume == volume), None)
+        if cover_entity is None:
+            cover_entity = next((cover for cover in covers if cover.entity_id == default_cover_art_id), None)
+            # If the art id was associated as a bad language in the databases, try to find the latest cover
+            if cover_entity is None:
+                cover_entity = self.get_latest_cover_for_entity(entity_id)
+
+        return cover_entity
