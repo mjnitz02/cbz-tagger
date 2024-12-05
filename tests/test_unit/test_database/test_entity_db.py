@@ -89,6 +89,8 @@ def test_entity_db_to_entity_name(mock_entity_db, manga_name):
         ("Simple Name: with colon", "Simple Name with colon"),
         ("Simple Name: with colon @ comic", "Simple Name with colon comic"),
         ("SOME×CONTENT", "SOME CONTENT"),
+        ("Simple Name Apostrophe'", "Simple Name Apostrophe'"),
+        ("Simple Name's Apostrophe", "Simple Name's Apostrophe"),
     ],
 )
 def test_entity_db_to_entity_name_cleaning(mock_entity_db, entity_name, expected):
