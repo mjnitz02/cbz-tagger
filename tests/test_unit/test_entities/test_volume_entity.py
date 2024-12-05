@@ -88,10 +88,10 @@ def test_volume_entity_with_broken_chapters(volume_request_response):
         ("20", "4"),
         ("21", "4"),
         ("21.5", "4"),
-        ("22", "-1"),
-        ("30", "-1"),
+        ("22", "5"),
+        ("30", "5"),
+        ("100", "12"),
         ("0", "-1"),
-        ("100", "-1"),
     ],
 )
 def test_volume_entity_get_volume_for_chapter(volume_request_response, chapter, expected_volume):

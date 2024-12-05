@@ -394,18 +394,8 @@ class EntityDB:
             volume = str(int(chapter_number))
         else:
             volume = self.volumes[entity_id].get_volume(chapter_number)
-        cover_entity = None
-        if volume != "-1":
-            cover_entity = next((cover for cover in self.covers[entity_id] if cover.volume == volume), None)
-        if cover_entity is None:
-            cover_art_entity_id = self.metadata[entity_id].cover_art_id
-            cover_entity = next(
-                (cover for cover in self.covers[entity_id] if cover.entity_id == cover_art_entity_id), None
-            )
-            # If the art id was associated as a bad language in the databases, try to find the latest cover
-            if cover_entity is None:
-                cover_entity = self.covers.get_latest_cover_for_entity(entity_id)
 
+        cover_entity = self.covers.get_cover_for_volume(entity_id, volume, self.metadata[entity_id].cover_art_id)
         return cover_entity.local_filename if cover_entity else None
 
     def to_xml_tree(self, manga_name, chapter_number, chapter_is_volume=False) -> ElementTree:
