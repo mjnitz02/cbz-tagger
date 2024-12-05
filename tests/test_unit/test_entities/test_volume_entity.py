@@ -90,6 +90,8 @@ def test_volume_entity_with_broken_chapters(volume_request_response):
         ("21.5", "4"),
         ("22", "5"),
         ("30", "5"),
+        ("40", "6"),
+        ("50", "7"),
         ("100", "12"),
         ("0", "-1"),
     ],
