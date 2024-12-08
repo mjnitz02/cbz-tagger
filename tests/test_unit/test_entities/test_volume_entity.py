@@ -102,6 +102,12 @@ def test_volume_entity_get_volume_for_chapter(volume_request_response, chapter, 
     assert expected_volume == entity.get_volume(chapter)
 
 
+def test_volume_entity_get_volume_for_chapter_with_no_volume_map():
+    entity = VolumeEntity(content={"result": "ok", "volumes": {}})
+    assert "-1" == entity.get_volume("1")
+    assert "-1" == entity.get_volume("10")
+
+
 def test_volume_entity_from_url(volume_request_response, requests_mock):
     requests_mock.get(
         f"{VolumeEntity.base_url}/manga/831b12b8-2d0e-4397-8719-1efee4c32f40/aggregate", json=volume_request_response

@@ -86,6 +86,9 @@ class VolumeEntity(BaseEntity):
         if len(self.volume_map) == 0:
             return "-1"
 
+        if len(self.volume_map) == 1 and self.volume_map[0][0] == "-1":
+            return "-1"
+
         for volume_number, volume_start, volume_end in self.volume_map:
             if volume_start <= math.floor(float(chapter_number)) < volume_end:
                 return volume_number
