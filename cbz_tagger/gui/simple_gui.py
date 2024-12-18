@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from datetime import datetime
 
 from nicegui import ui
 
@@ -140,6 +141,11 @@ class SimpleGui:
             with ui.tab_panel("Log"):
                 ui.label("Server Logs")
                 self.gui_elements["logger"] = ui_logger()
+                ui.chip("Clear", icon="delete", color="red", on_click=self.clear_log)
+
+    def clear_log(self):
+        self.gui_elements["logger"].clear()
+        logger.info("Log file cleared. %s", datetime.now())
 
     def initialize(self):
         logger.info("proxy_url: %s", self.env.PROXY_URL)
