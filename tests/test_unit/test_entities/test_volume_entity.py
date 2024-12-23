@@ -120,3 +120,94 @@ def test_volume_entity_from_url(volume_request_response, requests_mock):
 def test_volume_entity_can_store_and_load(volume_request_response, check_entity_for_save_and_load):
     entity = VolumeEntity(content=volume_request_response)
     check_entity_for_save_and_load(entity)
+
+
+def test_last_volume_with(volume_request_response):
+    entity = VolumeEntity(content=volume_request_response)
+    assert entity.last_volume == 4
+
+
+def test_last_volume_with_only_integer_keys():
+    content = {
+        "result": "ok",
+        "volumes": {
+            "2": {
+                "volume": "2",
+                "count": 1,
+                "chapters": {
+                    "2": {},
+                },
+            },
+            "1": {
+                "volume": "1",
+                "count": 1,
+                "chapters": {
+                    "1": {},
+                },
+            },
+        },
+    }
+    entity = VolumeEntity(content)
+    assert entity.last_volume == 2
+
+
+def test_last_volume_with_only_integer_and_none_keys():
+    content = {
+        "result": "ok",
+        "volumes": {
+            "none": {
+                "volume": "none",
+                "count": 3,
+                "chapters": {
+                    "none": {},
+                },
+            },
+            "2": {
+                "volume": "2",
+                "count": 1,
+                "chapters": {
+                    "2": {},
+                },
+            },
+            "1": {
+                "volume": "1",
+                "count": 1,
+                "chapters": {
+                    "1": {},
+                },
+            },
+        },
+    }
+    entity = VolumeEntity(content)
+    assert entity.last_volume == 2
+
+
+def test_last_volume_with_only_integer_and_decimal_keys():
+    content = {
+        "result": "ok",
+        "volumes": {
+            "3.5": {
+                "volume": "3.5",
+                "count": 1,
+                "chapters": {
+                    "none": {},
+                },
+            },
+            "2": {
+                "volume": "2",
+                "count": 1,
+                "chapters": {
+                    "2": {},
+                },
+            },
+            "1": {
+                "volume": "1",
+                "count": 1,
+                "chapters": {
+                    "1": {},
+                },
+            },
+        },
+    }
+    entity = VolumeEntity(content)
+    assert entity.last_volume == 3
