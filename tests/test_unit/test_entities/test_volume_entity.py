@@ -122,7 +122,7 @@ def test_volume_entity_can_store_and_load(volume_request_response, check_entity_
     check_entity_for_save_and_load(entity)
 
 
-def test_last_volume_with(volume_request_response):
+def test_last_volume(volume_request_response):
     entity = VolumeEntity(content=volume_request_response)
     assert entity.last_volume == 4
 
