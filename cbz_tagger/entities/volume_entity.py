@@ -58,7 +58,8 @@ class VolumeEntity(BaseEntity):
 
     @property
     def last_volume(self):
-        return max(int(key) for key in self.volumes if key != "none")
+        max_volume = max(float(key) for key in self.volumes if key != "none")
+        return int(math.floor(max_volume))
 
     @property
     def chapters(self) -> Set[str]:
