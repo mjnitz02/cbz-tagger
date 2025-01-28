@@ -15,9 +15,9 @@ def check_entity_download_links(entity, entity_link_count):
 @pytest.mark.parametrize(
     "entity_id,plugin_type,plugin_id,entity_count,first_entity_count,second_entity_count",
     [
-        # ("11afa5c2-41dc-4cf3-8451-f306a3caf1ab", Plugins.MDX, "", 132, 7, 7),
-        # ("example_manga", Plugins.CMK, "itadaki", 5, 21, 20),
-        # ("example_manga", Plugins.MSE, "Itadaki", 5, 21, 20),
+        ("11afa5c2-41dc-4cf3-8451-f306a3caf1ab", Plugins.MDX, "", 132, 7, 7),
+        ("example_manga", Plugins.CMK, "itadaki", 5, 21, 20),
+        ("example_manga", Plugins.MSE, "Itadaki", 5, 21, 20),
         ("example_manga", Plugins.WBC, "01J76XY9B20J1KHJ1FWVZ8N1PK", 5, 21, 20),
     ],
 )
