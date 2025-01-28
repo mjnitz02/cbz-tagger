@@ -62,13 +62,13 @@ def test_from_server_url(chapter_entity):
         {"ids[]": ["example_manga"]}, plugin_type=Plugins.WBC, plugin_id="example_manga"
     )
 
-    assert len(result) == 3
-    assert result[0].entity_id == "example_manga-01jcvm87vk3jfdwj3hmk08y6sp"
-    assert result[0].get_chapter_url() == "https://site.com/chapters/01JCVM87VK3JFDWJ3HMK08Y6SP"
-    assert result[1].entity_id == "example_manga-01jbq5xgy6vgm1557epndzmv8j"
-    assert result[1].get_chapter_url() == "https://site.com/chapters/01JBQ5XGY6VGM1557EPNDZMV8J"
-    assert result[2].entity_id == "example_manga-01jam51v6hr5jra3c2ketzbb7g"
-    assert result[2].get_chapter_url() == "https://site.com/chapters/01JAM51V6HR5JRA3C2KETZBB7G"
+    assert len(result) == 5
+    assert result[2].entity_id == "example_manga-01j76xz09ng81kb3c8x2v3p74y"
+    assert result[2].get_chapter_url() == "https://site.com/chapters/01J76XZ09NG81KB3C8X2V3P74Y"
+    assert result[3].entity_id == "example_manga-01j76xz09n6jydfdpwr4r85y03"
+    assert result[3].get_chapter_url() == "https://site.com/chapters/01J76XZ09N6JYDFDPWR4R85Y03"
+    assert result[4].entity_id == "example_manga-01j76xz09nhvbhpczrq0ytw7gs"
+    assert result[4].get_chapter_url() == "https://site.com/chapters/01J76XZ09NHVBHPCZRQ0YTW7GS"
 
 
 def test_parse_info_feed(chapter_entity):
@@ -77,42 +77,68 @@ def test_parse_info_feed(chapter_entity):
 
     assert result == [
         {
-            "id": "example_manga-01jcvm87vk3jfdwj3hmk08y6sp",
+            "id": "example_manga-01j76xz09nwpn7pmb237qvjyp2",
+            "type": "wbc",
+            "attributes": {
+                "title": "Chapter 3.1",
+                "url": "https://site.com/chapters/01J76XZ09NWPN7PMB237QVJYP2",
+                "chapter": "3.1",
+                "translatedLanguage": "en",
+                "pages": -1,
+                "volume": -1,
+                "updatedAt": "2024-09-07T17:04:15.717343Z",
+            },
+        },
+        {
+            "id": "example_manga-01j76xz09ndfnrrgap5tb15jea",
+            "type": "wbc",
+            "attributes": {
+                "title": "Chapter 3",
+                "url": "https://site.com/chapters/01J76XZ09NDFNRRGAP5TB15JEA",
+                "chapter": "3",
+                "translatedLanguage": "en",
+                "pages": -1,
+                "volume": -1,
+                "updatedAt": "2024-09-07T17:04:15.717343Z",
+            },
+        },
+        {
+            "id": "example_manga-01j76xz09ng81kb3c8x2v3p74y",
+            "type": "wbc",
+            "attributes": {
+                "title": "Chapter 2.5",
+                "url": "https://site.com/chapters/01J76XZ09NG81KB3C8X2V3P74Y",
+                "chapter": "2.5",
+                "translatedLanguage": "en",
+                "pages": -1,
+                "volume": -1,
+                "updatedAt": "2024-09-07T17:04:15.717343Z",
+            },
+        },
+        {
+            "id": "example_manga-01j76xz09n6jydfdpwr4r85y03",
             "type": "wbc",
             "attributes": {
                 "title": "Chapter 2",
-                "url": "https://site.com/chapters/01JCVM87VK3JFDWJ3HMK08Y6SP",
+                "url": "https://site.com/chapters/01J76XZ09N6JYDFDPWR4R85Y03",
                 "chapter": "2",
                 "translatedLanguage": "en",
                 "pages": -1,
                 "volume": -1,
-                "updatedAt": "2024-11-16T23:17:11.672863Z",
+                "updatedAt": "2024-09-07T17:04:15.717343Z",
             },
         },
         {
-            "id": "example_manga-01jbq5xgy6vgm1557epndzmv8j",
-            "type": "wbc",
-            "attributes": {
-                "title": "Chapter 1.5",
-                "url": "https://site.com/chapters/01JBQ5XGY6VGM1557EPNDZMV8J",
-                "chapter": "1.5",
-                "translatedLanguage": "en",
-                "pages": -1,
-                "volume": -1,
-                "updatedAt": "2024-11-02T19:34:00.903012Z",
-            },
-        },
-        {
-            "id": "example_manga-01jam51v6hr5jra3c2ketzbb7g",
+            "id": "example_manga-01j76xz09nhvbhpczrq0ytw7gs",
             "type": "wbc",
             "attributes": {
                 "title": "Chapter 1",
-                "url": "https://site.com/chapters/01JAM51V6HR5JRA3C2KETZBB7G",
+                "url": "https://site.com/chapters/01J76XZ09NHVBHPCZRQ0YTW7GS",
                 "chapter": "1",
                 "translatedLanguage": "en",
                 "pages": -1,
                 "volume": -1,
-                "updatedAt": "2024-10-20T05:05:28.784849Z",
+                "updatedAt": "2024-09-07T17:04:15.717343Z",
             },
         },
     ]
