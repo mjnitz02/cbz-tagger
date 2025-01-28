@@ -6,18 +6,15 @@
 </head>
 
 <body class="flex flex-col min-h-screen" x-data="{ simple_top_nav: $persist(false), sticky_top_nav: $persist(false) }">
-<main class="flex-1 flex flex-col items-center" :class="dark_background ? 'bg-black' : 'bg-base-100'" x-data="singlePageNavigation" @keydown.window.left="reading_direction === 'left_right' ? prevPage() : nextPage()" @keydown.window.right="reading_direction === 'left_right' ? nextPage() : prevPage()" @keydown.window="if ($event.key.toLowerCase() === 'g') gap = !gap" @page_loaded="$nextTick(() => { load_page(); });" hx-include="[name='current_page']">
+<main class="flex-1 flex flex-col items-center" :class="dark_background ? 'bg-black' : 'bg-base-100'" x-data="singlePageNavigation">
     <section>
         <dialog id="page_select_modal" class="modal">
             <div class="modal-box">
                 <h3 class="text-lg font-bold">Select Page</h3>
                 <div class="modal-body mt-4">
                     <div class="grid grid-cols-3 lg:grid-cols-5 gap-3 justify-items-center">
-
                         <button class="w-full btn " :class="page === 1 ? 'bg-base-300' : 'bg-base-200'" @click="page = 1; page_select_modal.close()">1</button>
-
                         <button class="w-full btn " :class="page === 2 ? 'bg-base-300' : 'bg-base-200'" @click="page = 2; page_select_modal.close()">2</button>
-
                         <button class="w-full btn " :class="page === 3 ? 'bg-base-300' : 'bg-base-200'" @click="page = 3; page_select_modal.close()">3</button>
                     </div>
                 </div>
