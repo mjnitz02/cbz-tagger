@@ -18,24 +18,27 @@ class ChapterPluginWBC(ChapterPluginEntity):
         response = cls.request_with_retry(url)
 
         soup = BeautifulSoup(response.text, "html.parser")
-        items = soup.find_all("a", class_="flex")
+        items = soup.find_all("div", class_="flex")
 
         content = []
         # This constructs an api compatible response from the rss feed
         for item in items:
-            chapter_id = str(item.get("href").split("chapters/")[-1])
-            link = str(item.get("href"))
-            x_data = item.get("x-data")
-            updated = str(x_data[x_data.index("('") + 2 : x_data.index("')")])
-            title = item.findChildren("span", class_="")[0].contents[0]
+            item_content = item.findChildren("a", class_="flex-1")[0]
+            chapter_id = str(item_content.get("href").split("chapters/")[-1])
+            link = str(item_content.get("href"))
+
+            item_x_data = item.get("x-data")
+            updated = str(item_x_data[item_x_data.index("('") + 2 : item_x_data.index("')")])
+
+            item_title = item_content.findChildren("span", class_="")[0].contents[0]
             content.append(
                 {
                     "id": f"{entity_id}-{chapter_id}".lower(),
                     "type": Plugins.WBC,
                     "attributes": {
-                        "title": title,
+                        "title": item_title,
                         "url": link,
-                        "chapter": re.sub("[^\\d.]", "", title),
+                        "chapter": re.sub("[^\\d.]", "", item_title),
                         "translatedLanguage": "en",
                         "pages": -1,
                         "volume": -1,

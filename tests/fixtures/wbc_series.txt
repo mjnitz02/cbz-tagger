@@ -1,28 +1,53 @@
-<a href="https://site.com/chapters/01JCVM87VK3JFDWJ3HMK08Y6SP" class="hover:bg-base-300 flex items-center p-2" x-data="{ new_chapter: checkNewChapter('2024-11-16T23:17:11.672863Z') }">
-    <span class="grow flex items-center gap-2">
-        <span class="">Chapter 2</span>
-        <span class="flex gap-2 items-center text-primary" x-show="last_read_chapter === '01JCVM87VK3JFDWJ3HMK08Y6SP'">
-            <span class="hidden md:inline">Last Read</span>
+<div class="flex items-center" x-data="{ new_chapter: checkNewChapter('2024-09-07T17:04:15.717343Z') }" x-show="mark_chapters == 'null' || (mark_chapters == 'read' && 'False'.toLowerCase() === 'false') || (mark_chapters == 'unread' && 'False'.toLowerCase() === 'true')">
+    <a href="https://site.com/chapters/01J76XZ09NWPN7PMB237QVJYP2" class="hover:bg-base-300 flex-1 flex items-center p-2">
+        <span class="grow flex items-center gap-2">
+            <span class="">Chapter 5</span>
+            <span class="flex gap-1 items-center link-info" x-show="last_read_chapter === '01J76XZ09NWPN7PMB237QVJYP2'">
+            </span>
         </span>
-    </span>
-    <time class="text-datetime opacity-50" datetime="2024-11-16T23:17:11.672Z">2024-11-16T23:17:11.672863Z</time>
-</a>
+        <time class="text-datetime opacity-50" datetime="2024-09-07T17:04:15.717Z">2024-09-07T17:04:15.717343Z</time>
+    </a>
+</div>
 
-<a href="https://site.com/chapters/01JBQ5XGY6VGM1557EPNDZMV8J" class="hover:bg-base-300 flex items-center p-2" x-data="{ new_chapter: checkNewChapter('2024-11-02T19:34:00.903012Z') }">
-    <span class="grow flex items-center gap-2">
-        <span class="">Chapter 1.5</span>
-        <span class="flex gap-2 items-center text-primary" x-show="last_read_chapter === '01JBQ5XGY6VGM1557EPNDZMV8J'">
-            <span class="hidden md:inline">Last Read</span>
+<div class="flex items-center" x-data="{ new_chapter: checkNewChapter('2024-09-07T17:04:15.717343Z') }" x-show="mark_chapters == 'null' || (mark_chapters == 'read' && 'False'.toLowerCase() === 'false') || (mark_chapters == 'unread' && 'False'.toLowerCase() === 'true')">
+    <a href="https://site.com/chapters/01J76XZ09NDFNRRGAP5TB15JEA" class="hover:bg-base-300 flex-1 flex items-center p-2">
+        <span class="grow flex items-center gap-2">
+            <span class="">Chapter 4</span>
+            <span class="flex gap-1 items-center link-info" x-show="last_read_chapter === '01J76XZ09NDFNRRGAP5TB15JEA'">
+            </span>
         </span>
-    </span>
-    <time class="text-datetime opacity-50" datetime="2024-11-02T19:34:00.903Z">2024-11-02T19:34:00.903012Z</time>
-</a>
+        <time class="text-datetime opacity-50" datetime="2024-09-07T17:04:15.717Z">2024-09-07T17:04:15.717343Z</time>
+    </a>
+</div>
 
-<a href="https://site.com/chapters/01JAM51V6HR5JRA3C2KETZBB7G" class="hover:bg-base-300 flex items-center p-2" x-data="{ new_chapter: checkNewChapter('2024-10-20T05:05:28.784849Z') }">
-    <span class="grow flex items-center gap-2">
-        <span class="">Chapter 1</span>
-        <span class="flex gap-2 items-center text-primary" x-show="last_read_chapter === '01JAM51V6HR5JRA3C2KETZBB7G'">
+<div class="flex items-center" x-data="{ new_chapter: checkNewChapter('2024-09-07T17:04:15.717343Z') }" x-show="mark_chapters == 'null' || (mark_chapters == 'read' && 'False'.toLowerCase() === 'false') || (mark_chapters == 'unread' && 'False'.toLowerCase() === 'true')">
+    <a href="https://site.com/chapters/01J76XZ09NG81KB3C8X2V3P74Y" class="hover:bg-base-300 flex-1 flex items-center p-2">
+        <span class="grow flex items-center gap-2">
+            <span class="">Chapter 3</span>
+            <span class="flex gap-1 items-center link-info" x-show="last_read_chapter === '01J76XZ09NG81KB3C8X2V3P74Y'">
+            </span>
+        <time class="text-datetime opacity-50" datetime="2024-09-07T17:04:15.717Z">2024-09-07T17:04:15.717343Z</time>
+    </a>
+</div>
+
+<div class="flex items-center" x-data="{ new_chapter: checkNewChapter('2024-09-07T17:04:15.717343Z') }" x-show="mark_chapters == 'null' || (mark_chapters == 'read' && 'False'.toLowerCase() === 'false') || (mark_chapters == 'unread' && 'False'.toLowerCase() === 'true')">
+    <a href="https://site.com/chapters/01J76XZ09N6JYDFDPWR4R85Y03" class="hover:bg-base-300 flex-1 flex items-center p-2">
+        <span class="grow flex items-center gap-2">
+            <span class="">Chapter 2</span>
+            <span class="flex gap-1 items-center link-info" x-show="last_read_chapter === '01J76XZ09N6JYDFDPWR4R85Y03'">
+            </span>
         </span>
-    </span>
-    <time class="text-datetime opacity-50" datetime="2024-10-20T05:05:28.784Z">2024-10-20T05:05:28.784849Z</time>
-</a>
+        <time class="text-datetime opacity-50" datetime="2024-09-07T17:04:15.717Z">2024-09-07T17:04:15.717343Z</time>
+    </a>
+</div>
+
+<div class="flex items-center" x-data="{ new_chapter: checkNewChapter('2024-09-07T17:04:15.717343Z') }" x-show="mark_chapters == 'null' || (mark_chapters == 'read' && 'False'.toLowerCase() === 'false') || (mark_chapters == 'unread' && 'False'.toLowerCase() === 'true')">
+    <a href="https://site.com/chapters/01J76XZ09NHVBHPCZRQ0YTW7GS" class="hover:bg-base-300 flex-1 flex items-center p-2">
+        <span class="grow flex items-center gap-2">
+            <span class="">Chapter 1</span>
+            <span class="flex gap-1 items-center link-info" x-show="last_read_chapter === '01J76XZ09NHVBHPCZRQ0YTW7GS'">
+            </span>
+        </span>
+        <time class="text-datetime opacity-50" datetime="2024-09-07T17:04:15.717Z">2024-09-07T17:04:15.717343Z</time>
+    </a>
+</div>

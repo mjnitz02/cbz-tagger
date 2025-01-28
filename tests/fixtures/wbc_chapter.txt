@@ -1,34 +1,24 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
+
 <head>
 <link rel="preload" href="https://site.us/manga/example_manga/0001-001.png" as="image">
 </head>
-<body>
-<main class="bg-base-100 flex-1 flex flex-col items-center" x-data="singlePageNavigation" hx-include="[name='current_page']" @keydown.window.left="prevPage()" @keydown.window.right="nextPage()" @double_page_loaded="$nextTick(() => { load_double_page(); });">
+
+<body class="flex flex-col min-h-screen" x-data="{ simple_top_nav: $persist(false), sticky_top_nav: $persist(false) }">
+<main class="flex-1 flex flex-col items-center" :class="dark_background ? 'bg-black' : 'bg-base-100'" x-data="singlePageNavigation" @keydown.window.left="reading_direction === 'left_right' ? prevPage() : nextPage()" @keydown.window.right="reading_direction === 'left_right' ? nextPage() : prevPage()" @keydown.window="if ($event.key.toLowerCase() === 'g') gap = !gap" @page_loaded="$nextTick(() => { load_page(); });" hx-include="[name='current_page']">
     <section>
-        <input type="text" name="current_page" x-model="currentPage" hidden />
-        <dialog id="chapter_select_modal" class="modal">
-            <div class="modal-box">
-                <h3 class="text-lg font-bold">Select Chapter</h3>
-                <div class="modal-body mt-4" id="chapter-select-body"></div>
-                <div class="modal-action">
-                    <form method="dialog" class="w-full">
-                        <button class="btn btn-secondary w-full">Close</button>
-                    </form>
-                </div>
-            </div>
-            <form method="dialog" class="modal-backdrop">
-                <button>close</button>
-            </form>
-        </dialog>
         <dialog id="page_select_modal" class="modal">
             <div class="modal-box">
                 <h3 class="text-lg font-bold">Select Page</h3>
                 <div class="modal-body mt-4">
                     <div class="grid grid-cols-3 lg:grid-cols-5 gap-3 justify-items-center">
-                        <button class="w-full btn" :class="page === 1 ? 'bg-base-300' : 'bg-base-200'" @click="page = 1; page_select_modal.close()">1</button>
-                        <button class="w-full btn" :class="page === 2 ? 'bg-base-300' : 'bg-base-200'" @click="page = 2; page_select_modal.close()">2</button>
-                        <button class="w-full btn" :class="page === 3 ? 'bg-base-300' : 'bg-base-200'" @click="page = 3; page_select_modal.close()">3</button>
+
+                        <button class="w-full btn " :class="page === 1 ? 'bg-base-300' : 'bg-base-200'" @click="page = 1; page_select_modal.close()">1</button>
+
+                        <button class="w-full btn " :class="page === 2 ? 'bg-base-300' : 'bg-base-200'" @click="page = 2; page_select_modal.close()">2</button>
+
+                        <button class="w-full btn " :class="page === 3 ? 'bg-base-300' : 'bg-base-200'" @click="page = 3; page_select_modal.close()">3</button>
                     </div>
                 </div>
                 <div class="modal-action">
