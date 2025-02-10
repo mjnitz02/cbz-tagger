@@ -37,6 +37,7 @@ class SimpleGui:
         self.initialize()
 
     def initialize_gui(self):
+        ui.add_head_html('<link rel="apple-touch-icon" href="static/apple-touch-icon.png">')
         ui.page_title("CBZ Tagger")
         ui.colors(primary="#2F4F4F")
 
