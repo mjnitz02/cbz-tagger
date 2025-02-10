@@ -54,7 +54,7 @@ def test_get_chapter_url(chapter_entity):
 
 def test_from_server_url_no_plugin_id(chapter_entity):
     with pytest.raises(EnvironmentError, match="plugin_id not provided"):
-        chapter_entity.from_server_url({"ids[]": ["example_manga"]}, plugin_type=Plugins.MSE)
+        chapter_entity.from_server_url({"ids[]": ["example_manga"]}, plugin_type=Plugins.CMK)
 
 
 def test_from_server_url(chapter_entity):

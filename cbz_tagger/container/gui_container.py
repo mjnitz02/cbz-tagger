@@ -1,5 +1,7 @@
 import logging
+import os
 
+from nicegui import app
 from nicegui import ui
 
 from cbz_tagger.container.base_container import BaseContainer
@@ -23,4 +25,7 @@ class GuiContainer(BaseContainer):
 
     def _run(self):
         SimpleGui(self.scanner)
-        ui.run(reload=self.NICEGUI_DEBUG)
+        root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        static_path = os.path.join(root_path, "static")
+        app.add_static_files("/static", static_path)
+        ui.run(reload=self.NICEGUI_DEBUG, favicon=os.path.join(static_path, "favicon.ico"))
