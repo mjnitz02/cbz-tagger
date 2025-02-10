@@ -85,7 +85,7 @@ def test_volume_entity_db(volume_request_response, manga_request_id):
 
 
 def test_volume_entity_db_can_store_and_load(volume_request_response, manga_request_id):
-    with mock.patch.object(MetadataEntity, "from_server_url") as mock_from_server_url:
+    with mock.patch.object(VolumeEntity, "from_server_url") as mock_from_server_url:
         mock_from_server_url.return_value = [VolumeEntity(content=volume_request_response)]
         entity_db = VolumeEntityDB()
         entity_db.update(manga_request_id)
