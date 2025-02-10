@@ -19,7 +19,6 @@ def test_series_table(mock_ui_table):
             "field": "entity_name",
             "required": True,
             "align": "left",
-            "sortable": True,
         },
         {
             "name": "entity_id",
