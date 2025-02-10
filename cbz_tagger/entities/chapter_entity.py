@@ -11,7 +11,6 @@ from cbz_tagger.common.enums import Plugins
 from cbz_tagger.entities.base_entity import BaseEntity
 from cbz_tagger.entities.chapter_plugins.cmk import ChapterPluginCMK
 from cbz_tagger.entities.chapter_plugins.mdx import ChapterPluginMDX
-from cbz_tagger.entities.chapter_plugins.mse import ChapterPluginMSE
 from cbz_tagger.entities.chapter_plugins.wbc import ChapterPluginWBC
 
 logger = logging.getLogger()
@@ -23,7 +22,6 @@ class ChapterEntity(BaseEntity):
     quality = "data"
     plugins = {
         Plugins.MDX: ChapterPluginMDX,
-        Plugins.MSE: ChapterPluginMSE,
         Plugins.CMK: ChapterPluginCMK,
         Plugins.WBC: ChapterPluginWBC,
     }
