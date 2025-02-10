@@ -148,6 +148,7 @@ class EntityDB:
                     "tracked": Emoji.CIRCLE_GREEN if entity_id in self.entity_tracked else Emoji.CIRCLE_BROWN,
                 }
             )
+        state = sorted(state, key=lambda d: d["entity_name"]["name"].lower())
         return state
 
     def check_manga_missing(self, manga_name):

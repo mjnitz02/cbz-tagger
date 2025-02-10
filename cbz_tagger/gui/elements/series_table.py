@@ -9,7 +9,6 @@ def series_table():
             "field": "entity_name",
             "required": True,
             "align": "left",
-            "sortable": True,
         },
         {
             "name": "entity_id",

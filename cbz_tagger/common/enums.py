@@ -21,6 +21,7 @@ class Urls:
     MDX = base64.b64decode("bWFuZ2FkZXgub3Jn").decode("utf-8")
     MSE = base64.b64decode("bWFuZ2FzZWUxMjMuY29t").decode("utf-8")
     CMK = base64.b64decode("YXBpLmNvbWljay5mdW4=").decode("utf-8")
+    CMK_TITLE = base64.b64decode("Y29taWNrLmlv").decode("utf-8")
     WBC = base64.b64decode("d2VlYmNlbnRyYWwuY29t").decode("utf-8")
 
 
@@ -33,7 +34,7 @@ class Plugins:
     TITLE_URLS = {
         MDX: f"https://{Urls.MDX}/title/",
         MSE: f"https://{Urls.MSE}/manga/",
-        CMK: f"https://{Urls.CMK}/comic/",
+        CMK: f"https://{Urls.CMK_TITLE}/comic/",
         WBC: f"https://{Urls.WBC}/series/",
     }
 
