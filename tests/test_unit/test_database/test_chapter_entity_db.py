@@ -1,4 +1,7 @@
 from unittest import mock
+from unittest.mock import MagicMock
+
+import pytest
 
 from cbz_tagger.database.chapter_entity_db import ChapterEntityDB
 from cbz_tagger.entities.chapter_entity import ChapterEntity
@@ -44,3 +47,34 @@ def test_chapter_entity_db_can_store_and_load(chapter_request_response, manga_re
 
         new_json_str = new_entity_db.to_json()
         assert json_str == new_json_str
+
+
+def test_group_chapters():
+    chapter_a = ChapterEntity(
+        content={
+            "attributes": {
+                "chapter": "1",
+                "translatedLanguage": "en",
+            },
+            "relationships": [{"type": "scanlation_group", "id": "group1"}],
+        }
+    )
+    chapter_b = ChapterEntity(
+        content={
+            "attributes": {"chapter": "2", "translatedLanguage": "en"},
+            "relationships": [{"type": "scanlation_group", "id": "group2"}],
+        }
+    )
+    chapter_c = ChapterEntity(
+        content={
+            "attributes": {"chapter": "3", "translatedLanguage": "en"},
+            "relationships": [{"type": "scanlation_group", "id": "group3"}],
+        }
+    )
+    grouped_chapters, scanlation_groups = ChapterEntityDB.group_chapters([chapter_a, chapter_b, chapter_c])
+    assert grouped_chapters == {
+        1.0: [chapter_a],
+        2.0: [chapter_b],
+        3.0: [chapter_c],
+    }
+    assert scanlation_groups == ["group1", "group2", "group3"]

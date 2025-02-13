@@ -12,7 +12,7 @@ class ChapterEntityDB(BaseEntityDB):
     entity_class = ChapterEntity
 
     @staticmethod
-    def remove_chapter_duplicate_entries(list_of_chapters) -> List[Optional[str]]:
+    def group_chapters(list_of_chapters):
         scanlation_groups = []
         grouped_chapters = defaultdict(list)
         for chapter in list_of_chapters:
@@ -23,7 +23,10 @@ class ChapterEntityDB(BaseEntityDB):
                 continue
             grouped_chapters[chapter.chapter_number].append(chapter)
             scanlation_groups.append(chapter.scanlation_group)
+        return grouped_chapters, scanlation_groups
 
+    @staticmethod
+    def get_priority_scanlation_groups(scanlation_groups):
         scanlation_group_frequency = {group: scanlation_groups.count(group) for group in scanlation_groups}
         priority_groups = [
             group
@@ -31,7 +34,10 @@ class ChapterEntityDB(BaseEntityDB):
                 [(value, group) for group, value in scanlation_group_frequency.items()], reverse=True
             )
         ]
+        return priority_groups
 
+    @staticmethod
+    def filter_chapters_by_priority_scanlation_groups(grouped_chapters, priority_groups):
         filtered_chapters = []
         for key in sorted(grouped_chapters.keys()):
             entries = grouped_chapters[key]
@@ -46,6 +52,16 @@ class ChapterEntityDB(BaseEntityDB):
 
         if len(filtered_chapters) != len(grouped_chapters.keys()):
             raise ValueError("Chapter entries are not being filtered correctly")
+
+        return filtered_chapters
+
+    @staticmethod
+    def remove_chapter_duplicate_entries(list_of_chapters) -> List[Optional[str]]:
+        grouped_chapters, scanlation_groups = ChapterEntityDB.group_chapters(list_of_chapters)
+        priority_groups = ChapterEntityDB.get_priority_scanlation_groups(scanlation_groups)
+        filtered_chapters = ChapterEntityDB.filter_chapters_by_priority_scanlation_groups(
+            grouped_chapters, priority_groups
+        )
 
         return filtered_chapters
 
