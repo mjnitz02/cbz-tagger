@@ -97,12 +97,12 @@ class ChapterEntity(BaseEntity):
         return self.attributes.get("pages")
 
     @property
-    def scanlation_group(self):
+    def scanlation_group(self) -> str:
         group = next(iter(rel for rel in self.relationships if rel["type"] == "scanlation_group"), {})
         scanlation_group = group.get("id", "none")
         if scanlation_group is None:
             return "none"
-        return scanlation_group
+        return scanlation_group.lower()
 
     @property
     def updated(self):
