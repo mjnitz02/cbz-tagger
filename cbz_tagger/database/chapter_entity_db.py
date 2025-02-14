@@ -27,6 +27,7 @@ class ChapterEntityDB(BaseEntityDB):
 
     @staticmethod
     def get_priority_scanlation_groups(scanlation_groups):
+        """For groups with same frequency they are sorted in descending alphabetic order"""
         scanlation_group_frequency = {group: scanlation_groups.count(group) for group in scanlation_groups}
         priority_groups = [
             group
@@ -34,6 +35,8 @@ class ChapterEntityDB(BaseEntityDB):
                 [(value, group) for group, value in scanlation_group_frequency.items()], reverse=True
             )
         ]
+        if "official" in priority_groups:
+            priority_groups.insert(0, priority_groups.pop(priority_groups.index("official")))
         return priority_groups
 
     @staticmethod
