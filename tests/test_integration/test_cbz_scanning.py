@@ -30,10 +30,10 @@ def test_process_cbz_files(mock_get_input, integration_scanner, build_test_cbz):
         for root, dirs, files in os.walk(integration_scanner.storage_path)
         for name in files
     ]
-    assert storage_results == [
+    assert set(storage_results) == {
         "Touto Sugite Yome na a a a a a a i 4P Short Stories/"
         "Touto Sugite Yome na a a a a a a i 4P Short Stories - Chapter 001.cbz"
-    ]
+    }
 
     # Create a test cbz file for chapter 2, use existing metadata and process it
     build_test_cbz(2)
