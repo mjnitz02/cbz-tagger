@@ -45,7 +45,7 @@ def test_volume_entity(volume_request_response):
         "2": ["19", "18", "17", "16", "15", "14", "13", "12", "11", "10", "9", "8", "7", "6", "5", "4", "3", "2"],
         "1": ["19", "18", "17", "16", "15", "14", "13", "12", "11", "10", "9", "8", "7", "6", "5", "4", "3", "2", "1"],
     }
-    assert entity.volume_map == [("1", 1.0, 2.0), ("2", 2.0, 3.0), ("3", 3.0, 13.0), ("4", 13.0, 22.0)]
+    assert entity.volume_map == [("1", 0.0, 2.0), ("2", 2.0, 3.0), ("3", 3.0, 13.0), ("4", 13.0, 22.0)]
 
 
 def test_volume_entity_with_broken_chapters(volume_request_response):
@@ -94,7 +94,8 @@ def test_volume_entity_with_broken_chapters(volume_request_response):
         ("40", "6"),
         ("50", "7"),
         ("100", "12"),
-        ("0", "-1"),
+        ("0", "1"),
+        ("-1", "-1"),
     ],
 )
 def test_volume_entity_get_volume_for_chapter(volume_request_response, chapter, expected_volume):
