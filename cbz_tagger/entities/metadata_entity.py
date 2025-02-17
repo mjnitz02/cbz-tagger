@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List
+from typing import List, Union
 from typing import Optional
 
 from cbz_tagger.common.enums import Emoji
@@ -90,4 +90,11 @@ class MetadataEntity(BaseEntity):
     @property
     def genres(self) -> List[str]:
         tags = list(attr.get("attributes", {}).get("name", {}).get("en") for attr in self.attributes["tags"])
-        return sorted(set(tag for tag in tags if tag))
+        genre_tags = sorted(set(tag for tag in tags if tag))
+        if self.demographic and self.demographic not in genre_tags:
+            genre_tags = [self.demographic] + genre_tags
+        return genre_tags
+
+    @property
+    def demographic(self) -> Union[str, None]:
+        return self.attributes.get("publicationDemographic").title()
