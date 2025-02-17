@@ -1,6 +1,7 @@
 from datetime import datetime
-from typing import List, Union
+from typing import List
 from typing import Optional
+from typing import Union
 
 from cbz_tagger.common.enums import Emoji
 from cbz_tagger.common.enums import Status
@@ -97,4 +98,7 @@ class MetadataEntity(BaseEntity):
 
     @property
     def demographic(self) -> Union[str, None]:
-        return self.attributes.get("publicationDemographic").title()
+        demo = self.attributes.get("publicationDemographic")
+        if demo:
+            return demo.title()
+        return None
