@@ -1,6 +1,6 @@
 import math
 from datetime import datetime
-from typing import List, Union
+from typing import List
 from typing import Optional
 from typing import Union
 
@@ -55,6 +55,12 @@ class MetadataEntity(BaseEntity):
     @property
     def status(self) -> str:
         return self.attributes["status"]
+
+    @property
+    def mylar_status(self) -> str:
+        if self.completed:
+            return "Ended"
+        return "Continuing"
 
     @property
     def status_indicator(self) -> str:

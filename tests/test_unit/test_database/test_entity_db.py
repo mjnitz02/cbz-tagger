@@ -218,6 +218,35 @@ def test_entity_db_to_xml_str_chapter_1_with_ended_and_last_chapter(
     assert mock_chapter_1_xml_with_count_3 == actual
 
 
+def test_entity_db_to_mylar_json_with_continuing(mock_entity_db, manga_name):
+    actual = mock_entity_db.to_mylar_series_json(manga_name)
+    assert actual == (
+        '{"metadata": {'
+        '"type": "comicSeries", '
+        '"name": "Oshimai", '
+        '"year": 2020, '
+        '"description_text": "A collection of twitter published manga by Kawasaki Tadataka...", '
+        '"booktype": "Print", '
+        '"status": "Continuing"'
+        "}}"
+    )
+
+
+def test_entity_db_to_mylar_json_with_ended(mock_entity_db, manga_request_id, manga_name):
+    mock_entity_db.metadata.database[manga_request_id].content["attributes"]["status"] = "completed"
+    actual = mock_entity_db.to_mylar_series_json(manga_name)
+    assert actual == (
+        '{"metadata": {'
+        '"type": "comicSeries", '
+        '"name": "Oshimai", '
+        '"year": 2020, '
+        '"description_text": "A collection of twitter published manga by Kawasaki Tadataka...", '
+        '"booktype": "Print", '
+        '"status": "Ended"'
+        "}}"
+    )
+
+
 @mock.patch("cbz_tagger.common.input.get_input")
 def test_entity_db_search(mock_get_input, simple_mock_entity_db, manga_name, manga_request_id, manga_request_response):
     _ = simple_mock_entity_db

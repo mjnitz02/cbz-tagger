@@ -460,6 +460,25 @@ class EntityDB:
         xmlstr = minidom.parseString(ElementTree.tostring(root)).toprettyxml()
         return xmlstr
 
+    def to_mylar_series_json(self, manga_name) -> ElementTree:
+        entity_id = self.entity_map.get(manga_name)
+        if entity_id is None:
+            raise ValueError(f"Could not find an entity for {manga_name}")
+
+        mylar_metadata = {
+            "metadata": {
+                "type": "comicSeries",
+                "name": self.metadata[entity_id].title,
+                "year": self.metadata[entity_id].created_at.year,
+                "description_text": self.metadata[entity_id].description,
+                "booktype": "Print",
+                "status": self.metadata[entity_id].mylar_status,
+            }
+        }
+
+        mylar_json = json.dumps(mylar_metadata)
+        return mylar_json
+
     def get_comicinfo_and_image(self, manga_name, chapter_number, chapter_is_volume=False):
         entity_name = self.to_entity_name(manga_name)
         if entity_name is None:
