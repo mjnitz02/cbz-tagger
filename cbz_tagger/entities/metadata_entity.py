@@ -1,5 +1,6 @@
+import math
 from datetime import datetime
-from typing import List
+from typing import List, Union
 from typing import Optional
 from typing import Union
 
@@ -35,6 +36,17 @@ class MetadataEntity(BaseEntity):
     @property
     def latest_chapter(self) -> str:
         return self.attributes.get("latestUploadedChapter")
+
+    @property
+    def last_chapter(self) -> Union[str, None]:
+        last_chapter_value = self.attributes.get("lastChapter")
+        if last_chapter_value is None or len(last_chapter_value) == 0:
+            return None
+        return str(int(math.floor(float(last_chapter_value))))
+
+    @property
+    def last_volume(self) -> str:
+        return self.attributes.get("lastVolume")
 
     @property
     def completed(self) -> bool:
