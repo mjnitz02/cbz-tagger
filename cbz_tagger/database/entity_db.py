@@ -322,6 +322,7 @@ class EntityDB:
         manga_name = next(iter(name for name, id in self.entity_map.items() if id == entity_id))
         chapter_name = f"{manga_name} - Chapter {chapter_item.padded_chapter_string}"
 
+        series_filepath = os.path.join(storage_path, manga_name)
         chapter_filepath = os.path.join(storage_path, manga_name, chapter_name)
         logger.info("Downloading %s...", chapter_name)
         try:
@@ -341,6 +342,12 @@ class EntityDB:
 
             # Set the ownership of the file
             set_file_ownership(f"{chapter_filepath}.cbz")
+
+            # Update the mylar series.json file
+            mylar_series_json = self.to_mylar_series_json(manga_name)
+            with open(os.path.join(series_filepath, "series.json"), "w", encoding="UTF-8") as write_file:
+                write_file.write(mylar_series_json)
+
         except EnvironmentError as err:
             logger.error("Could not download chapter: %s, %s, %s", entity_id, chapter_item.entity_id, err)
             if os.path.exists(f"{chapter_filepath}.cbz"):

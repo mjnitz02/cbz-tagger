@@ -1,3 +1,4 @@
+import json
 import os
 from unittest import mock
 
@@ -81,7 +82,17 @@ def test_download_cbz_files_without_mark_all_tracked(
         for root, dirs, files in os.walk(integration_scanner.storage_path)
         for name in files
     ]
-    assert len(storage_results) == missing_chapters
+    assert len(storage_results) == missing_chapters + 1  # +1 for the series.json file
+    # Verify the series.json file is correct
+    with open(
+        os.path.join(
+            integration_scanner.storage_path, "Touto Sugite Yome na a a a a a a i 4P Short Stories", "series.json"
+        ),
+        encoding="utf-8",
+    ) as json_file:
+        result = json.load(json_file)
+    assert result["type"] == "comicSeries"
+    assert result["status"] == "Ended"
 
     # Test tracking removal
     integration_scanner.remove_tracked_entity()
