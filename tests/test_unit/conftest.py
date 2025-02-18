@@ -302,6 +302,11 @@ def volume_request_response():
                     },
                 },
             },
+            "0": {
+                "volume": "none",
+                "count": 0,
+                "chapters": {},
+            },
             "4": {
                 "volume": "4",
                 "count": 11,

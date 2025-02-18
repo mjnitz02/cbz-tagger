@@ -38,9 +38,13 @@ class VolumeEntity(BaseEntity):
     def volume_map(self) -> List[Tuple[str, float, float]]:
         volume_list = []
         for volume_key, volume in self.volumes.items():
+            # Volume may be defined with no keys
             if volume_key == "none":
                 continue
             volume = [float(chapter) for chapter in volume]
+            # Volume may be defined with no chapters
+            if len(volume) == 0:
+                continue
             volume_list.append((volume_key, min(volume), max(volume)))
 
         volume_list = sorted(volume_list, key=lambda x: float(x[0]))
