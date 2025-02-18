@@ -426,12 +426,9 @@ class EntityDB:
         else:
             volume = self.volumes[entity_id].get_volume(chapter_number)
             latest_chapter = self.chapters.get_latest_chapter(entity_id)
-            if latest_chapter is None:
-                count = -1
-            else:
-                count = str(
-                    int(math.floor(latest_chapter.chapter_number)) if self.metadata[entity_id].completed else -1
-                )
+            count = str(
+                int(math.floor(latest_chapter.chapter_number)) if self.metadata[entity_id].completed else -1
+            )
 
         assign("Series", self.metadata[entity_id].title)
         assign("LocalizedSeries", self.metadata[entity_id].alt_title)
