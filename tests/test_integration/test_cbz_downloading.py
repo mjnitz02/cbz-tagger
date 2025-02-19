@@ -91,8 +91,8 @@ def test_download_cbz_files_without_mark_all_tracked(
         encoding="utf-8",
     ) as json_file:
         result = json.load(json_file)
-    assert result["type"] == "comicSeries"
-    assert result["status"] == "Ended"
+    assert result["metadata"]["type"] == "comicSeries"
+    assert result["metadata"]["status"] == "Ended"
 
     # Test tracking removal
     integration_scanner.remove_tracked_entity()

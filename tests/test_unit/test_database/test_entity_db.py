@@ -221,14 +221,15 @@ def test_entity_db_to_xml_str_chapter_1_with_ended_and_last_chapter(
 def test_entity_db_to_mylar_json_with_continuing(mock_entity_db, manga_name):
     actual = mock_entity_db.to_mylar_series_json(manga_name)
     assert actual == (
-        '{"metadata": {'
-        '"type": "comicSeries", '
-        '"name": "Oshimai", '
-        '"year": 2020, '
-        '"description_text": "A collection of twitter published manga by Kawasaki Tadataka...", '
-        '"booktype": "Print", '
-        '"status": "Continuing"'
-        "}}"
+        '{\n'
+        '    "metadata": {\n'
+        '        "type": "comicSeries",\n'
+        '        "booktype": "Print",\n'
+        '        "name": "Oshimai",\n'
+        '        "description_text": "A collection of twitter published manga by Kawasaki Tadataka...",\n'
+        '        "status": "Continuing"\n'
+        "    }\n"
+        "}"
     )
 
 
@@ -236,14 +237,15 @@ def test_entity_db_to_mylar_json_with_ended(mock_entity_db, manga_request_id, ma
     mock_entity_db.metadata.database[manga_request_id].content["attributes"]["status"] = "completed"
     actual = mock_entity_db.to_mylar_series_json(manga_name)
     assert actual == (
-        '{"metadata": {'
-        '"type": "comicSeries", '
-        '"name": "Oshimai", '
-        '"year": 2020, '
-        '"description_text": "A collection of twitter published manga by Kawasaki Tadataka...", '
-        '"booktype": "Print", '
-        '"status": "Ended"'
-        "}}"
+        '{\n'
+        '    "metadata": {\n'
+        '        "type": "comicSeries",\n'
+        '        "booktype": "Print",\n'
+        '        "name": "Oshimai",\n'
+        '        "description_text": "A collection of twitter published manga by Kawasaki Tadataka...",\n'
+        '        "status": "Ended"\n'
+        "    }\n"
+        "}"
     )
 
 
