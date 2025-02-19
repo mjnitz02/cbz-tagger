@@ -1,6 +1,5 @@
 import json
 import logging
-import math
 import os
 import re
 import shutil
@@ -436,10 +435,6 @@ class EntityDB:
             count = -1
             if self.metadata[entity_id].completed:
                 count = self.metadata[entity_id].last_chapter
-                if count is None:
-                    latest_chapter = self.chapters.get_latest_chapter(entity_id)
-                    if latest_chapter is not None:
-                        count = int(math.floor(latest_chapter.chapter_number))
 
         assign("Series", self.metadata[entity_id].title)
         assign("LocalizedSeries", self.metadata[entity_id].alt_title)
@@ -473,6 +468,10 @@ class EntityDB:
         if entity_id is None:
             raise ValueError(f"Could not find an entity for {manga_name}")
 
+        total_issues = "-1"
+        if self.metadata[entity_id].completed:
+            total_issues = self.metadata[entity_id].last_chapter
+
         mylar_metadata = {
             "metadata": {
                 "type": "comicSeries",
@@ -480,6 +479,7 @@ class EntityDB:
                 "name": self.metadata[entity_id].title,
                 "description_text": self.metadata[entity_id].description,
                 "status": self.metadata[entity_id].mylar_status,
+                "total_issues": int(total_issues),
             }
         }
 

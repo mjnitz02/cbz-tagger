@@ -38,10 +38,10 @@ class MetadataEntity(BaseEntity):
         return self.attributes.get("latestUploadedChapter")
 
     @property
-    def last_chapter(self) -> Union[str, None]:
+    def last_chapter(self) -> str:
         last_chapter_value = self.attributes.get("lastChapter")
         if last_chapter_value is None or len(last_chapter_value) == 0:
-            return None
+            return "-1"
         return str(int(math.floor(float(last_chapter_value))))
 
     @property
