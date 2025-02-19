@@ -85,9 +85,11 @@ class FileScanner:
 
     def process(self, filepath):
         cbz_entity = CbzEntity(filepath, self.config_path, self.scan_path, self.storage_path)
-        entity_name, entity_xml, entity_image_path = self.get_cbz_comicinfo_and_image(cbz_entity)
+        entity_name, entity_xml, entity_image_path, mylar_series_json = self.get_cbz_comicinfo_and_image(cbz_entity)
         if entity_name:
-            cbz_entity.build(entity_name, entity_xml, entity_image_path, environment=self.environment)
+            cbz_entity.build(
+                entity_name, entity_xml, entity_image_path, mylar_series_json, environment=self.environment
+            )
 
     def get_cbz_comicinfo_and_image(self, cbz_entity: CbzEntity):
         manga_name, chapter_number = cbz_entity.get_name_and_chapter()
@@ -107,13 +109,14 @@ class FileScanner:
             entity_name, entity_xml, entity_image_path = self.entity_database.get_comicinfo_and_image(
                 manga_name, chapter_number, chapter_is_volume=cbz_entity.chapter_is_volume
             )
+            mylar_series_json = self.entity_database.to_mylar_series_json(manga_name)
             if entity_name is None:
                 raise RuntimeError(f"ERROR >> {manga_name} not in database. Run manual mode to add new series.")
-            return entity_name, entity_xml, entity_image_path
+            return entity_name, entity_xml, entity_image_path, mylar_series_json
 
         except (RuntimeError, EnvironmentError) as err:
             logger.error("ERROR >> %s not in database. Run manual mode to add new series. %s", manga_name, err)
-            return None, None, None
+            return None, None, None, None
 
     def add_tracked_entity(self):
         self.entity_database.add(None, track=True)

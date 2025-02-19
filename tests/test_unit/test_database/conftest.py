@@ -157,6 +157,24 @@ def mock_chapter_1_xml(tests_fixtures_path):
 
 
 @pytest.fixture
+def mock_chapter_1_xml_with_count_3(tests_fixtures_path):
+    fixture_name = os.path.join(tests_fixtures_path, "expected_chapter_1_with_count_3.xml")
+    with open(fixture_name, "r", encoding="UTF-8") as read_file:
+        content = read_file.read()
+    content = content.replace("example.com", Urls.MDX)
+    return content
+
+
+@pytest.fixture
+def mock_chapter_1_xml_with_count_11(tests_fixtures_path):
+    fixture_name = os.path.join(tests_fixtures_path, "expected_chapter_1_with_count_11.xml")
+    with open(fixture_name, "r", encoding="UTF-8") as read_file:
+        content = read_file.read()
+    content = content.replace("example.com", Urls.MDX)
+    return content
+
+
+@pytest.fixture
 def mock_chapter_10_xml(tests_fixtures_path):
     fixture_name = os.path.join(tests_fixtures_path, "expected_chapter_10.xml")
     with open(fixture_name, "r", encoding="UTF-8") as read_file:

@@ -1,6 +1,5 @@
 import json
 import logging
-import math
 import os
 import re
 import shutil
@@ -341,6 +340,14 @@ class EntityDB:
 
             # Set the ownership of the file
             set_file_ownership(f"{chapter_filepath}.cbz")
+
+            # Update the mylar series.json file
+            mylar_series_json = self.to_mylar_series_json(manga_name)
+            mylar_series_json_path = os.path.join(storage_path, manga_name, "series.json")
+            with open(mylar_series_json_path, "w", encoding="utf-8") as json_file:
+                json_file.write(mylar_series_json)
+            set_file_ownership(mylar_series_json_path)
+
         except EnvironmentError as err:
             logger.error("Could not download chapter: %s, %s, %s", entity_id, chapter_item.entity_id, err)
             if os.path.exists(f"{chapter_filepath}.cbz"):
@@ -425,8 +432,9 @@ class EntityDB:
             count = self.volumes[entity_id].last_volume
         else:
             volume = self.volumes[entity_id].get_volume(chapter_number)
-            latest_chapter = self.chapters.get_latest_chapter(entity_id)
-            count = str(int(math.floor(latest_chapter.chapter_number)) if self.metadata[entity_id].completed else -1)
+            count = -1
+            if self.metadata[entity_id].completed:
+                count = self.metadata[entity_id].last_chapter
 
         assign("Series", self.metadata[entity_id].title)
         assign("LocalizedSeries", self.metadata[entity_id].alt_title)
@@ -454,6 +462,40 @@ class EntityDB:
         root = self.to_xml_tree(manga_name, chapter_number, chapter_is_volume)
         xmlstr = minidom.parseString(ElementTree.tostring(root)).toprettyxml()
         return xmlstr
+
+    def to_mylar_series_json(self, manga_name) -> str:
+        """Construct a Komga compatible series.json file"""
+        entity_id = self.entity_map.get(manga_name)
+        if entity_id is None:
+            raise ValueError(f"Could not find an entity for {manga_name}")
+
+        total_issues = "-1"
+        if self.metadata[entity_id].completed:
+            total_issues = self.metadata[entity_id].last_chapter
+
+        mylar_metadata = {
+            "version": "1.0.2",
+            "metadata": {
+                "type": "comicSeries",
+                "publisher": "",
+                "imprint": None,
+                "name": self.metadata[entity_id].title,
+                "comicid": 0,
+                "year": self.metadata[entity_id].created_at.year,
+                "description_text": self.metadata[entity_id].description,
+                "description_formatted": None,
+                "volume": None,
+                "booktype": "Print",
+                "collects": None,
+                "comic_image": "",
+                "total_issues": int(total_issues),
+                "publication_run": "",
+                "status": self.metadata[entity_id].mylar_status,
+            },
+        }
+
+        mylar_json = json.dumps(mylar_metadata, indent=4)
+        return mylar_json
 
     def get_comicinfo_and_image(self, manga_name, chapter_number, chapter_is_volume=False):
         entity_name = self.to_entity_name(manga_name)

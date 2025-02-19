@@ -1,3 +1,4 @@
+import math
 from datetime import datetime
 from typing import List
 from typing import Optional
@@ -37,12 +38,29 @@ class MetadataEntity(BaseEntity):
         return self.attributes.get("latestUploadedChapter")
 
     @property
+    def last_chapter(self) -> str:
+        last_chapter_value = self.attributes.get("lastChapter")
+        if last_chapter_value is None or len(last_chapter_value) == 0:
+            return "-1"
+        return str(int(math.floor(float(last_chapter_value))))
+
+    @property
+    def last_volume(self) -> str:
+        return self.attributes.get("lastVolume")
+
+    @property
     def completed(self) -> bool:
         return self.attributes["status"] == "completed"
 
     @property
     def status(self) -> str:
         return self.attributes["status"]
+
+    @property
+    def mylar_status(self) -> str:
+        if self.completed:
+            return "Ended"
+        return "Continuing"
 
     @property
     def status_indicator(self) -> str:

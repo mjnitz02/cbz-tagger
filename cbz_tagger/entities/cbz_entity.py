@@ -125,7 +125,12 @@ class CbzEntity:
             return os.path.join(self.storage_path, entity_name, f"{entity_name} - Volume {chapter_number_string}.cbz")
         return os.path.join(self.storage_path, entity_name, f"{entity_name} - Chapter {chapter_number_string}.cbz")
 
-    def build(self, entity_name, entity_xml, entity_image_path, remove_on_write=True, environment=None):
+    def get_mylar_series_json_path(self, entity_name):
+        return os.path.join(self.storage_path, entity_name, "series.json")
+
+    def build(
+        self, entity_name, entity_xml, entity_image_path, mylar_series_json, remove_on_write=True, environment=None
+    ):
         _ = environment
         read_path = self.get_entity_read_path()
         write_path = self.get_entity_write_path(entity_name, self.chapter_number)
@@ -148,3 +153,8 @@ class CbzEntity:
 
         # Set the ownership of the file
         set_file_ownership(write_path)
+
+        mylar_series_json_path = self.get_mylar_series_json_path(entity_name)
+        with open(mylar_series_json_path, "w", encoding="utf-8") as json_file:
+            json_file.write(mylar_series_json)
+        set_file_ownership(mylar_series_json_path)
