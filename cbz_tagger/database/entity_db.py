@@ -475,15 +475,14 @@ class EntityDB:
         mylar_metadata = {
             "metadata": {
                 "type": "comicSeries",
-                "name": self.metadata[entity_id].title,
-                "year": self.metadata[entity_id].created_at.year,
-                "description_text": self.metadata[entity_id].description,
                 "booktype": "Print",
+                "name": self.metadata[entity_id].title,
+                "description_text": self.metadata[entity_id].description,
                 "status": self.metadata[entity_id].mylar_status,
             }
         }
 
-        mylar_json = json.dumps(mylar_metadata)
+        mylar_json = json.dumps(mylar_metadata, indent=4)
         return mylar_json
 
     def get_comicinfo_and_image(self, manga_name, chapter_number, chapter_is_volume=False):
