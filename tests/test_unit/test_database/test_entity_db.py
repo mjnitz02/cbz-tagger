@@ -222,13 +222,24 @@ def test_entity_db_to_mylar_json_with_continuing(mock_entity_db, manga_name):
     actual = mock_entity_db.to_mylar_series_json(manga_name)
     assert actual == (
         "{\n"
+        '    "version": "1.0.2",\n'
         '    "metadata": {\n'
         '        "type": "comicSeries",\n'
-        '        "booktype": "Print",\n'
+        '        "publisher": "",\n'
+        '        "imprint": null,\n'
         '        "name": "Oshimai",\n'
-        '        "description_text": "A collection of twitter published manga by Kawasaki Tadataka...",\n'
-        '        "status": "Continuing",\n'
-        '        "total_issues": -1\n'
+        '        "comicid": 0,\n'
+        '        "year": 2020,\n'
+        '        "description_text": "A collection of twitter published manga by '
+        'Kawasaki Tadataka...",\n'
+        '        "description_formatted": null,\n'
+        '        "volume": null,\n'
+        '        "booktype": "Print",\n'
+        '        "collects": null,\n'
+        '        "comic_image": "",\n'
+        '        "total_issues": -1,\n'
+        '        "publication_run": "",\n'
+        '        "status": "Continuing"\n'
         "    }\n"
         "}"
     )
@@ -240,13 +251,24 @@ def test_entity_db_to_mylar_json_with_ended(mock_entity_db, manga_request_id, ma
     actual = mock_entity_db.to_mylar_series_json(manga_name)
     assert actual == (
         "{\n"
+        '    "version": "1.0.2",\n'
         '    "metadata": {\n'
         '        "type": "comicSeries",\n'
-        '        "booktype": "Print",\n'
+        '        "publisher": "",\n'
+        '        "imprint": null,\n'
         '        "name": "Oshimai",\n'
-        '        "description_text": "A collection of twitter published manga by Kawasaki Tadataka...",\n'
-        '        "status": "Ended",\n'
-        '        "total_issues": 3\n'
+        '        "comicid": 0,\n'
+        '        "year": 2020,\n'
+        '        "description_text": "A collection of twitter published manga by '
+        'Kawasaki Tadataka...",\n'
+        '        "description_formatted": null,\n'
+        '        "volume": null,\n'
+        '        "booktype": "Print",\n'
+        '        "collects": null,\n'
+        '        "comic_image": "",\n'
+        '        "total_issues": 3,\n'
+        '        "publication_run": "",\n'
+        '        "status": "Ended"\n'
         "    }\n"
         "}"
     )

@@ -105,12 +105,23 @@ def test_file_scanner_can_get_metadata_for_present_series(scanner, mock_chapter_
     assert entity_xml == mock_chapter_1_xml
     assert mylar_series_json == (
         "{\n"
+        '    "version": "1.0.2",\n'
         '    "metadata": {\n'
         '        "type": "comicSeries",\n'
-        '        "booktype": "Print",\n'
+        '        "publisher": "",\n'
+        '        "imprint": null,\n'
         '        "name": "Oshimai",\n'
+        '        "comicid": 0,\n'
+        '        "year": 2020,\n'
         '        "description_text": "A collection of twitter published manga by '
         'Kawasaki Tadataka...",\n'
+        '        "description_formatted": null,\n'
+        '        "volume": null,\n'
+        '        "booktype": "Print",\n'
+        '        "collects": null,\n'
+        '        "comic_image": "",\n'
+        '        "total_issues": -1,\n'
+        '        "publication_run": "",\n'
         '        "status": "Continuing"\n'
         "    }\n"
         "}"

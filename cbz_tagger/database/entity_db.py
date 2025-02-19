@@ -463,7 +463,8 @@ class EntityDB:
         xmlstr = minidom.parseString(ElementTree.tostring(root)).toprettyxml()
         return xmlstr
 
-    def to_mylar_series_json(self, manga_name) -> ElementTree:
+    def to_mylar_series_json(self, manga_name) -> str:
+        """Construct a Komga compatible series.json file"""
         entity_id = self.entity_map.get(manga_name)
         if entity_id is None:
             raise ValueError(f"Could not find an entity for {manga_name}")
@@ -473,14 +474,24 @@ class EntityDB:
             total_issues = self.metadata[entity_id].last_chapter
 
         mylar_metadata = {
+            "version": "1.0.2",
             "metadata": {
                 "type": "comicSeries",
-                "booktype": "Print",
+                "publisher": "",
+                "imprint": None,
                 "name": self.metadata[entity_id].title,
+                "comicid": 0,
+                "year": self.metadata[entity_id].created_at.year,
                 "description_text": self.metadata[entity_id].description,
-                "status": self.metadata[entity_id].mylar_status,
+                "description_formatted": None,
+                "volume": None,
+                "booktype": "Print",
+                "collects": None,
+                "comic_image": "",
                 "total_issues": int(total_issues),
-            }
+                "publication_run": "",
+                "status": self.metadata[entity_id].mylar_status,
+            },
         }
 
         mylar_json = json.dumps(mylar_metadata, indent=4)

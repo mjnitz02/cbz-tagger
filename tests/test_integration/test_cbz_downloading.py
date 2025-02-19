@@ -91,6 +91,7 @@ def test_download_cbz_files_without_mark_all_tracked(
         encoding="utf-8",
     ) as json_file:
         result = json.load(json_file)
+    assert result["version"] == "1.0.2"
     assert result["metadata"]["type"] == "comicSeries"
     assert result["metadata"]["status"] == "Ended"
 
