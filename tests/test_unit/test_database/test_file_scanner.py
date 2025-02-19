@@ -98,11 +98,23 @@ def test_file_scanner_can_get_metadata_for_present_series(scanner, mock_chapter_
         scanner.scan_path,
         scanner.storage_path,
     )
-    entity_name, entity_xml, entity_image_path = scanner.get_cbz_comicinfo_and_image(cbz_entity)
+    entity_name, entity_xml, entity_image_path, mylar_series_json = scanner.get_cbz_comicinfo_and_image(cbz_entity)
 
     assert entity_name == "Oshimai"
     assert entity_image_path == "1d387431-eb38-40e9-bc6e-97e4ea4092dc.jpg"
     assert entity_xml == mock_chapter_1_xml
+    assert mylar_series_json == (
+        "{\n"
+        '    "metadata": {\n'
+        '        "type": "comicSeries",\n'
+        '        "booktype": "Print",\n'
+        '        "name": "Oshimai",\n'
+        '        "description_text": "A collection of twitter published manga by '
+        'Kawasaki Tadataka...",\n'
+        '        "status": "Continuing"\n'
+        "    }\n"
+        "}"
+    )
     scanner.entity_database.add.assert_not_called()
     scanner.entity_database.update_manga_entity_name.assert_called_once()
 
@@ -110,12 +122,14 @@ def test_file_scanner_can_get_metadata_for_present_series(scanner, mock_chapter_
 def test_file_scanner_can_add_missing_on_get_metadata_not_found(scanner):
     scanner.entity_database.add = mock.MagicMock()
     scanner.entity_database.get_comicinfo_and_image = mock.MagicMock(return_value=(None, None, None))
+    scanner.entity_database.to_mylar_series_json = mock.MagicMock(return_value="")
     cbz_entity = CbzEntity("Unknown/Unknown - 1.cbz", scanner.config_path, scanner.scan_path, scanner.storage_path)
     scanner.get_cbz_comicinfo_and_image(cbz_entity)
 
     scanner.entity_database.add.assert_called_once()
     scanner.entity_database.update_manga_entity_name.assert_called_once()
     scanner.entity_database.get_comicinfo_and_image.assert_called_once()
+    scanner.entity_database.to_mylar_series_json.assert_called_once()
 
 
 def test_file_scanner_can_raises_error_on_missing_if_add_new_disabled(scanner):
