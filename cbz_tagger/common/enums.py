@@ -58,3 +58,9 @@ class Emoji:
     SQUARE_GREEN = "🟩"
     SQUARE_RED = "🟥"
     SQUARE_ORANGE = "🟧"
+
+
+IgnoredTags = {
+    "ddefd648-5140-4e5f-ba18-4eca4071d19b",
+    "2d1f5d56-a1e5-4d0d-a961-2193588b08ec",
+}

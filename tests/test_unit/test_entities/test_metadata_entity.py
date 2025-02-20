@@ -34,6 +34,11 @@ def test_metadata_entity(manga_request_content):
     assert entity.demographic == "Seinen"
 
 
+def test_metadata_entity_does_not_store_extra_descriptions(manga_request_content):
+    entity = MetadataEntity(content=manga_request_content)
+    assert len(entity.attributes["description"]) == 1
+
+
 def test_metadata_entity_from_url(manga_request_response):
     with mock.patch("cbz_tagger.entities.base_entity.BaseEntity.unpaginate_request") as mock_request:
         mock_request.return_value = manga_request_response["data"]

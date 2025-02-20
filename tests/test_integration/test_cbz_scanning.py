@@ -33,7 +33,7 @@ def test_process_cbz_files(mock_get_input, integration_scanner, build_test_cbz):
     assert set(storage_results) == {
         "Touto Sugite Yome na a a a a a a i 4P Short Stories/"
         "Touto Sugite Yome na a a a a a a i 4P Short Stories - Chapter 001.cbz",
-        "Touto Sugite Yome na a a a a a a i 4P Short Stories/series.json"
+        "Touto Sugite Yome na a a a a a a i 4P Short Stories/series.json",
     }
 
     # Create a test cbz file for chapter 2, use existing metadata and process it

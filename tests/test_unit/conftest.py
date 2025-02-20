@@ -26,7 +26,10 @@ def manga_request_response():
                         {"ja": "お四枚"},
                         {"en": "Oshi-Mai: Four Page Storys"},
                     ],
-                    "description": {"en": "A collection of twitter published manga by Kawasaki Tadataka..."},
+                    "description": {
+                        "en": "A collection of twitter published manga by Kawasaki Tadataka...",
+                        "ja": "川崎忠高によるツイッター連載漫画の収録本です。",
+                    },
                     "isLocked": False,
                     "links": {
                         "al": "119448",
@@ -88,6 +91,28 @@ def manga_request_response():
                                 "name": {"en": "Slice of Life"},
                                 "description": {},
                                 "group": "genre",
+                                "version": 1,
+                            },
+                            "relationships": [],
+                        },
+                        {
+                            "id": "2d1f5d56-a1e5-4d0d-a961-2193588b08ec",
+                            "type": "tag",
+                            "attributes": {
+                                "name": {"en": "drop me 1"},
+                                "description": {},
+                                "group": "theme",
+                                "version": 1,
+                            },
+                            "relationships": [],
+                        },
+                        {
+                            "id": "ddefd648-5140-4e5f-ba18-4eca4071d19b",
+                            "type": "tag",
+                            "attributes": {
+                                "name": {"en": "drop me 2"},
+                                "description": {},
+                                "group": "theme",
                                 "version": 1,
                             },
                             "relationships": [],
