@@ -33,7 +33,7 @@ class ChapterPluginWBC(ChapterPluginEntity):
             item_chapter_spans = item_content.select("span:not(.flex)")
             if len(item_chapter_spans) == 0:
                 raise EnvironmentError("Could not find page_select_modal dialog")
-            item_title = item_chapter_spans[0].contents[0]
+            item_title = str(item_chapter_spans[0].contents[0])
             content.append(
                 {
                     "id": f"{entity_id}-{chapter_id}".lower(),
@@ -67,7 +67,7 @@ class ChapterPluginWBC(ChapterPluginEntity):
             raise EnvironmentError("Could not find page_select_modal dialog")
         page_select_modal = page_select_element[0]
         page_tags = list(x for x in page_select_modal.find_all("button", {"class": "w-full btn"}))
-        pages = [int(p.contents[0]) for p in page_tags]
+        pages = [int(str(p.contents[0])) for p in page_tags]
 
         links = []
         for page in pages:
