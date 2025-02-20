@@ -16,7 +16,7 @@ test-lint:
 	isort --sl --line-length 120 cbz_tagger tests
 	pylint cbz_tagger tests
 
-test:
+test-unit:
 	python -m pytest tests/
 
 build:

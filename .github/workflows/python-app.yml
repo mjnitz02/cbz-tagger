@@ -32,12 +32,7 @@ jobs:
         make req
     - name: Lint
       run: |
-        # stop the build if there are black formatting errors
-        black --line-length 120 cbz_tagger tests
-        # stop the build if there are isort formatting errors
-        isort --sl --line-length 120 cbz_tagger tests
-        # stop the build if there are linting errors in the main package
-        pylint cbz_tagger tests
+        make test-lint
     - name: Test with pytest
       run: |
-        pytest tests
+        make test-unit
