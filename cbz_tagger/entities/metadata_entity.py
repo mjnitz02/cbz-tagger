@@ -5,6 +5,7 @@ from typing import Optional
 from typing import Union
 
 from cbz_tagger.common.enums import Emoji
+from cbz_tagger.common.enums import IgnoredTags
 from cbz_tagger.common.enums import Status
 from cbz_tagger.entities.base_entity import BaseEntity
 
@@ -12,6 +13,11 @@ from cbz_tagger.entities.base_entity import BaseEntity
 class MetadataEntity(BaseEntity):
     entity_url: str = f"{BaseEntity.base_url}/manga"
     paginated: bool = True
+
+    def __init__(self, content):
+        super().__init__(content)
+        if "description" in self.content.get("attributes", {}):
+            self.content["attributes"]["description"] = {"en": self.content["attributes"]["description"].get("en", "")}
 
     @property
     def title(self) -> Optional[str]:
@@ -108,7 +114,11 @@ class MetadataEntity(BaseEntity):
 
     @property
     def genres(self) -> List[str]:
-        tags = list(attr.get("attributes", {}).get("name", {}).get("en") for attr in self.attributes["tags"])
+        tags = list(
+            attr.get("attributes", {}).get("name", {}).get("en")
+            for attr in self.attributes["tags"]
+            if attr.get("id") not in IgnoredTags
+        )
         genre_tags = sorted(set(tag for tag in tags if tag))
         if self.demographic and self.demographic not in genre_tags:
             genre_tags = [self.demographic] + genre_tags
