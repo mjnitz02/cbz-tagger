@@ -23,14 +23,17 @@ class ChapterPluginWBC(ChapterPluginEntity):
         content = []
         # This constructs an api compatible response from the rss feed
         for item in items:
-            item_content = item.findChildren("a", class_="flex-1")[0]
+            item_content = item.find_all("a", href=True, class_="flex-1")[0]
             chapter_id = str(item_content.get("href").split("chapters/")[-1])
             link = str(item_content.get("href"))
 
             item_x_data = item.get("x-data")
             updated = str(item_x_data[item_x_data.index("('") + 2 : item_x_data.index("')")])
 
-            item_title = item_content.findChildren("span", class_="")[0].contents[0]
+            item_chapter_spans = item_content.select("span:not(.flex)")
+            if len(item_chapter_spans) == 0:
+                raise EnvironmentError("Could not find page_select_modal dialog")
+            item_title = item_chapter_spans[0].contents[0]
             content.append(
                 {
                     "id": f"{entity_id}-{chapter_id}".lower(),
@@ -63,7 +66,7 @@ class ChapterPluginWBC(ChapterPluginEntity):
         if len(page_select_element) == 0:
             raise EnvironmentError("Could not find page_select_modal dialog")
         page_select_modal = page_select_element[0]
-        page_tags = list(x for x in page_select_modal.findChildren("button", {"class": "w-full btn"}))
+        page_tags = list(x for x in page_select_modal.find_all("button", {"class": "w-full btn"}))
         pages = [int(p.contents[0]) for p in page_tags]
 
         links = []
