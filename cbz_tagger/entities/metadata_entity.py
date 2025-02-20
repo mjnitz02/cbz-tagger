@@ -16,6 +16,8 @@ class MetadataEntity(BaseEntity):
 
     def __init__(self, content):
         super().__init__(content)
+        # Descriptions are the largest metadata and can use a lot of unnecessary space
+        # We only need the English description, so drop the rest
         if "description" in self.content.get("attributes", {}):
             self.content["attributes"]["description"] = {"en": self.content["attributes"]["description"].get("en", "")}
 
