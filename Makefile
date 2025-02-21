@@ -3,7 +3,7 @@ ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 .PHONY : restart fresh stop clean build run
 
 req:
-	pip install --upgrade pip
+	python -m pip install --upgrade pip
 	pip install -r requirements.txt --upgrade
 
 lint:
