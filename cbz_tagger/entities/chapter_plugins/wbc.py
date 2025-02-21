@@ -30,7 +30,7 @@ class ChapterPluginWBC(ChapterPluginEntity):
             item_x_data = item.get("x-data")
             updated = str(item_x_data[item_x_data.index("('") + 2 : item_x_data.index("')")])
 
-            item_chapter_spans = item_content.select("span:not(.flex)")
+            item_chapter_spans = item_content.find_all("span", class_="")
             if len(item_chapter_spans) == 0:
                 raise EnvironmentError("Could not find page_select_modal dialog")
             item_title = str(item_chapter_spans[0].contents[0])
