@@ -5,12 +5,12 @@ import pytest
 
 @pytest.fixture
 def end_to_end_manga_name():
-    return None
+    return "Gachiakuta"
 
 
 @pytest.fixture
 def end_to_end_chapter_name():
-    return None
+    return "01J76XYFD97DRQQKK75FZB7PQH"
 
 
 def test_end_to_end_disabled_on_commits(end_to_end_manga_name):
@@ -66,7 +66,7 @@ def test_end_to_end_live_cmk(
     assert True
 
 
-@pytest.mark.skip("Debugging only")
+# @pytest.mark.skip("Debugging only")
 @mock.patch("cbz_tagger.common.input.get_input")
 @mock.patch("cbz_tagger.common.input.get_raw_input")
 def test_end_to_end_live_wbc(
@@ -82,10 +82,10 @@ def test_end_to_end_live_wbc(
         return
 
     mock_get_input.side_effect = capture_input_fixture(
-        end_to_end_manga_name, backend=4, backend_id=end_to_end_chapter_name
+        end_to_end_manga_name, backend=3, backend_id=end_to_end_chapter_name
     )
     mock_get_raw_input.side_effect = capture_input_fixture(
-        end_to_end_manga_name, backend=4, backend_id=end_to_end_chapter_name
+        end_to_end_manga_name, backend=3, backend_id=end_to_end_chapter_name
     )
 
     integration_scanner.add_tracked_entity()
