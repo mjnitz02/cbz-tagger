@@ -15,5 +15,6 @@ disable=line-too-long,
     too-many-instance-attributes,
     too-many-locals,
     too-many-statements,
+    too-many-positional-arguments,
     redefined-outer-name,
     duplicate-code

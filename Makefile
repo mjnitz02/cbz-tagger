@@ -2,16 +2,21 @@ ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 .PHONY : restart fresh stop clean build run
 
-black:
-	python -m isort --sl --line-length 120 cbz_tagger tests
-	python -m black --line-length 120 cbz_tagger tests
+req:
+	python -m pip install --upgrade pip
+	pip install -r requirements.txt --upgrade
 
 lint:
 	python -m isort --sl --line-length 120 cbz_tagger tests
 	python -m black --line-length 120 cbz_tagger tests
 	python -m pylint cbz_tagger tests
 
-test:
+test-lint:
+	black --line-length 120 cbz_tagger tests
+	isort --sl --line-length 120 cbz_tagger tests
+	pylint cbz_tagger tests
+
+test-unit:
 	python -m pytest tests/
 
 build:
@@ -47,8 +52,8 @@ clean:
 	docker image prune -af
 
 clean-git:
-	git fetch -p
-	# for branch in $(git for-each-ref --format '%(refname) %(upstream:track)' refs/heads | awk '$2 == "[gone]" {sub("refs/heads/", "", $1); print $1}'); do git branch -D $branch; done
+	chmod +x ./scripts/clean_git.sh
+	./scripts/clean_git.sh
 
 shell:
 	docker exec -it manga-tag bash
