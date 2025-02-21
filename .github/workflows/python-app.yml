@@ -5,9 +5,12 @@ name: Python
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - "main"
+      - "upgrade-packages"
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - "main"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
