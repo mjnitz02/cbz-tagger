@@ -66,10 +66,10 @@ class CoverEntityDB(BaseEntityDB):
         # Filter only english and japanese covers
         if len(_filter_content(content, "ja")) > 0:
             return _filter_content(content, "ja")
-        if len(_filter_content(content, "en")) > 0:
-            return _filter_content(content, "en")
         if len(_filter_content(content, "ko")) > 0:
             return _filter_content(content, "ko")
+        if len(_filter_content(content, "en")) > 0:
+            return _filter_content(content, "en")
         if len(_filter_content(content, "zh")) > 0:
             return _filter_content(content, "zh")
         return content
