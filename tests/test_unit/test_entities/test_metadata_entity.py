@@ -111,13 +111,9 @@ def test_demographic_none():
         ({"originalLanguage": "zh"}, "zh"),
         ({"originalLanguage": "ko"}, "ko"),
         ({"originalLanguage": "japanese"}, "en"),  # Invalid ISO code, should default to "en"
+        ({}, "en"),  # Missing field, should default to "en"
     ],
 )
 def test_language_with_different_attributes(attributes, expected_language):
     entity = MetadataEntity(content={"attributes": attributes})
     assert entity.language == expected_language
-
-
-def test_language_with_missing_field():
-    entity = MetadataEntity(content={"attributes": {}})
-    assert entity.language == "en"
