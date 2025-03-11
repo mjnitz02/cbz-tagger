@@ -115,6 +115,14 @@ class MetadataEntity(BaseEntity):
         return datetime.strptime(self.attributes["createdAt"].split("+")[0], "%Y-%m-%dT%H:%M:%S")
 
     @property
+    def language(self) -> str:
+        language_iso = self.attributes.get("originalLanguage", "en")
+        if language_iso is None or len(language_iso) > 2:
+            return "en"
+        language_iso = language_iso.lower()
+        return language_iso
+
+    @property
     def genres(self) -> List[str]:
         tags = list(
             attr.get("attributes", {}).get("name", {}).get("en")
