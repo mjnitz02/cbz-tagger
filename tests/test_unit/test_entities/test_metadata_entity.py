@@ -1,6 +1,8 @@
 from datetime import datetime
 from unittest import mock
 
+import pytest
+
 from cbz_tagger.entities.base_entity import BaseEntity
 from cbz_tagger.entities.metadata_entity import MetadataEntity
 
@@ -32,6 +34,7 @@ def test_metadata_entity(manga_request_content):
     assert entity.created_at == datetime.strptime("2020-07-23 14:50:37", "%Y-%m-%d %H:%M:%S")
     assert entity.genres == ["Seinen", "Anthology", "Comedy", "Romance", "School Life", "Slice of Life"]
     assert entity.demographic == "Seinen"
+    assert entity.language == "ja"
 
 
 def test_metadata_entity_does_not_store_extra_descriptions(manga_request_content):
@@ -97,3 +100,20 @@ def test_demographic_none():
     attributes = {"publicationDemographic": None}
     entity = MetadataEntity(content={"attributes": attributes})
     assert entity.demographic is None
+
+
+@pytest.mark.parametrize(
+    "attributes, expected_language",
+    [
+        ({"originalLanguage": None}, "en"),
+        ({"originalLanguage": "en"}, "en"),
+        ({"originalLanguage": "ja"}, "ja"),
+        ({"originalLanguage": "zh"}, "zh"),
+        ({"originalLanguage": "ko"}, "ko"),
+        ({"originalLanguage": "japanese"}, "en"),  # Invalid ISO code, should default to "en"
+        ({}, "en"),  # Missing field, should default to "en"
+    ],
+)
+def test_language_with_different_attributes(attributes, expected_language):
+    entity = MetadataEntity(content={"attributes": attributes})
+    assert entity.language == expected_language

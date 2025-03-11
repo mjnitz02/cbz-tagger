@@ -451,7 +451,7 @@ class EntityDB:
         assign("Colorist", artist_name)
         assign("Letterer", artist_name)
         assign("CoverArtist", artist_name)
-        assign("LanguageISO", "en")
+        assign("LanguageISO", self.metadata[entity_id].language)
         assign("Manga", "Yes")
         assign("Genre", ",".join(self.metadata[entity_id].genres))
         assign("AgeRating", self.metadata[entity_id].age_rating)
