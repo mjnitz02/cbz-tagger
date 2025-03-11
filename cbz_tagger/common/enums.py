@@ -22,22 +22,25 @@ class Urls:
     CMK = base64.b64decode("YXBpLmNvbWljay5mdW4=").decode("utf-8")
     CMK_TITLE = base64.b64decode("Y29taWNrLmlv").decode("utf-8")
     WBC = base64.b64decode("d2VlYmNlbnRyYWwuY29t").decode("utf-8")
+    MGO = base64.b64decode("d3d3Lm1hbmdhZ28ubWU=").decode("utf-8")
 
 
 class Plugins:
     MDX = "mdx"
     CMK = "cmk"
     WBC = "wbc"
+    MGO = "mgo"
 
     TITLE_URLS = {
         MDX: f"https://{Urls.MDX}/title/",
         CMK: f"https://{Urls.CMK_TITLE}/comic/",
         WBC: f"https://{Urls.WBC}/series/",
+        MGO: f"https://{Urls.MGO}/series/",
     }
 
     @classmethod
     def all(cls):
-        return [cls.MDX, cls.CMK, cls.WBC]
+        return [cls.MDX, cls.CMK, cls.WBC, cls.BTO]
 
 
 class Status:

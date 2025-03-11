@@ -4,6 +4,7 @@ import re
 from zipfile import ZIP_DEFLATED
 from zipfile import ZipFile
 
+from cbz_tagger.common.converter import convert_chapter_to_number
 from cbz_tagger.common.helpers import make_directory_with_ownership
 from cbz_tagger.common.helpers import set_file_ownership
 
@@ -51,52 +52,9 @@ class CbzEntity:
         self.check_path()
         return os.path.split(self.filepath)[1]
 
-    @staticmethod
-    def convert_to_number(value):
-        try:
-            float(value)
-            return value
-        except ValueError:
-            # If the chapter number starts with a "." we should skip this first period
-            if value[0] == ".":
-                try:
-                    float(value[1:])
-                    return value[1:]
-                except ValueError:
-                    return None
-            return None
-
     @property
     def chapter_number(self) -> str:
-        filename = self.chapter_name.replace(".cbz", "")
-        filename = str.lower(filename)
-
-        # Check if formatting with chapter title, if so remove the word title
-        if filename.find("-") != filename.rfind("-") and filename.find("-") != -1 and filename.rfind("-") != -1:
-            chapter_pos = filename.find("ch")
-            if filename.find("-") < chapter_pos < filename.rfind("-"):
-                filename = filename[: filename.rfind("-")]
-
-        filename = re.sub(r"\.\.+", "", filename)
-        filename = re.sub(r"\(.*\)", "", filename)
-        filename = re.sub(r"volume \d+ ", "", filename)
-        filename = re.sub(r"part \d+", "", filename)
-        filename_numeric_only = re.sub(r"[^0-9.]", " ", filename)
-        valid_parts = [p for p in filename_numeric_only.split(" ") if len(p) > 0]
-        valid_parts = [self.convert_to_number(p) for p in valid_parts if self.convert_to_number(p) is not None]
-        valid_number = valid_parts[-1]
-        # If the chapter number starts with a "." we should skip this first period
-        if valid_number[0] == ".":
-            valid_number = valid_number[1:]
-
-        try:
-            chapter_number = float(valid_number)
-            if chapter_number.is_integer():
-                chapter_number = int(chapter_number)
-        except ValueError:
-            chapter_number = valid_number
-
-        return str(chapter_number)
+        return convert_chapter_to_number(self.chapter_name)
 
     def get_name_and_chapter(self):
         return self.manga_name, self.chapter_number
