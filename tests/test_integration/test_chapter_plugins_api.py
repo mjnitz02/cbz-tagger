@@ -12,6 +12,7 @@ def check_entity_download_links(entity, entity_link_count):
     assert response.status_code == 200
 
 
+# These are random selections of cancelled free web comics for testing the API connections
 @pytest.mark.parametrize(
     "entity_id,plugin_type,plugin_id,entity_count,first_entity_count,second_entity_count",
     [
