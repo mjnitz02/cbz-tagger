@@ -1,4 +1,3 @@
-import re
 from typing import Any
 from typing import List
 
@@ -62,7 +61,7 @@ class ChapterPluginKAL(ChapterPluginEntity):
         if chapter_images is None:
             raise EnvironmentError("Could not find chapter images")
 
-        chapter_images = chapter_images.strip().replace("var chapImages = \"", "")
+        chapter_images = chapter_images.strip().replace('var chapImages = "', "")
         pages = chapter_images.split(",")
 
         links = []

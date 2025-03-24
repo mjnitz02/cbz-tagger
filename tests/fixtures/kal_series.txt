@@ -1,0 +1,29 @@
+<div class="section box mt-1">
+<div class="section-header">
+<div class="title"><span>CHAPTERS (3)</span></div><span onclick="return changeChaptersOrder()" class="filter"><i class="fas fa-arrows-alt-v"></i></span></div>
+<div class="section-body" id="chapters" data-sort="desc">
+<div id="chapter-list-inner">
+<ul class="chapter-list" id="chapter-list">
+<li id="c-5">
+<a href="/manga/example/chapter-5" title="Umbella - Chapter 5">
+<div><strong class="chapter-title">Chapter 5</strong><time class="chapter-update">4 years ago </time></div>
+</a>
+
+</li>
+<li id="c-3.1">
+<a href="/manga/example/chapter-3.1" title="Umbella - Chapter 3.1">
+<div><strong class="chapter-title">Chapter 3.1</strong><time class="chapter-update">4 years ago </time></div>
+</a>
+
+</li>
+<li id="c-1">
+<a href="/manga/example/chapter-1" title="Umbella - Chapter 1">
+<div><strong class="chapter-title">Chapter 1</strong><time class="chapter-update">4 years ago </time></div>
+</a>
+
+</li>
+</ul>
+</div>
+
+</div>
+<div class="section box mt-1">
