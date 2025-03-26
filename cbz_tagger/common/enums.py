@@ -22,17 +22,20 @@ class Urls:
     CMK = base64.b64decode("YXBpLmNvbWljay5mdW4=").decode("utf-8")
     CMK_TITLE = base64.b64decode("Y29taWNrLmlv").decode("utf-8")
     WBC = base64.b64decode("d2VlYmNlbnRyYWwuY29t").decode("utf-8")
+    KAL = base64.b64decode("a2FsaXNjYW4uaW8=").decode("utf-8")
 
 
 class Plugins:
     MDX = "mdx"
     CMK = "cmk"
     WBC = "wbc"
+    KAL = "kal"
 
     TITLE_URLS = {
         MDX: f"https://{Urls.MDX}/title/",
         CMK: f"https://{Urls.CMK_TITLE}/comic/",
         WBC: f"https://{Urls.WBC}/series/",
+        KAL: f"https://{Urls.WBC}/manga/",
     }
 
     @classmethod
