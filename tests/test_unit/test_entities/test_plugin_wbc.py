@@ -3,7 +3,8 @@ import os
 import pytest
 import requests_mock
 
-from cbz_tagger.common.enums import Plugins, Urls
+from cbz_tagger.common.enums import Plugins
+from cbz_tagger.common.enums import Urls
 from cbz_tagger.entities.chapter_entity import ChapterEntity
 from cbz_tagger.entities.chapter_plugins.wbc import ChapterPluginWBC
 

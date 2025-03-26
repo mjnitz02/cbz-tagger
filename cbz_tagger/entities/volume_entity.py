@@ -1,5 +1,7 @@
 import math
-from typing import List, Set, Tuple
+from typing import List
+from typing import Set
+from typing import Tuple
 
 from cbz_tagger.entities.base_entity import BaseEntity
 

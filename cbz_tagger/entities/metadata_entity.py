@@ -1,8 +1,12 @@
 import math
 from datetime import datetime
-from typing import List, Optional, Union
+from typing import List
+from typing import Optional
+from typing import Union
 
-from cbz_tagger.common.enums import Emoji, IgnoredTags, Status
+from cbz_tagger.common.enums import Emoji
+from cbz_tagger.common.enums import IgnoredTags
+from cbz_tagger.common.enums import Status
 from cbz_tagger.entities.base_entity import BaseEntity
 
 

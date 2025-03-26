@@ -2,7 +2,10 @@ import logging
 import os
 from io import BytesIO
 from os import path
-from typing import Dict, List, Set, Tuple
+from typing import Dict
+from typing import List
+from typing import Set
+from typing import Tuple
 
 from PIL import Image
 

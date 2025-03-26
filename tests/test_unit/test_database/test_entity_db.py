@@ -1,6 +1,7 @@
 import json
 import os
-from datetime import datetime, timezone
+from datetime import datetime
+from datetime import timezone
 from unittest import mock
 
 import pytest

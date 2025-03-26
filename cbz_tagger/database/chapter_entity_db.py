@@ -1,5 +1,7 @@
 from collections import defaultdict
-from typing import Dict, List, Optional
+from typing import Dict
+from typing import List
+from typing import Optional
 
 from cbz_tagger.database.base_db import BaseEntityDB
 from cbz_tagger.entities.chapter_entity import ChapterEntity

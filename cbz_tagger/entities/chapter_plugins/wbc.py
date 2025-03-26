@@ -1,9 +1,11 @@
 import re
-from typing import Any, List
+from typing import Any
+from typing import List
 
 from bs4 import BeautifulSoup
 
-from cbz_tagger.common.enums import Plugins, Urls
+from cbz_tagger.common.enums import Plugins
+from cbz_tagger.common.enums import Urls
 from cbz_tagger.entities.chapter_plugins.plugin import ChapterPluginEntity
 
 

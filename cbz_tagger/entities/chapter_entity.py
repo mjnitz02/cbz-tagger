@@ -4,7 +4,8 @@ from datetime import datetime
 from io import BytesIO
 from typing import List
 
-from PIL import Image, ImageFile
+from PIL import Image
+from PIL import ImageFile
 
 from cbz_tagger.common.enums import Plugins
 from cbz_tagger.entities.base_entity import BaseEntity

@@ -1,4 +1,5 @@
-from cbz_tagger.common.input import get_input, get_raw_input
+from cbz_tagger.common.input import get_input
+from cbz_tagger.common.input import get_raw_input
 
 
 def test_valid_input(monkeypatch):

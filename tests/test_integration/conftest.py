@@ -1,5 +1,6 @@
 import os
-from zipfile import ZIP_DEFLATED, ZipFile
+from zipfile import ZIP_DEFLATED
+from zipfile import ZipFile
 
 import pytest
 

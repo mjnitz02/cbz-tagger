@@ -3,14 +3,21 @@ import logging
 import os
 import re
 import shutil
-from typing import Dict, Optional, Self
+from typing import Dict
+from typing import Optional
+from typing import Self
 from xml.dom import minidom
 from xml.etree import ElementTree
-from zipfile import ZIP_DEFLATED, ZipFile
+from zipfile import ZIP_DEFLATED
+from zipfile import ZipFile
 
-from cbz_tagger.common.enums import Emoji, Plugins, Urls
-from cbz_tagger.common.helpers import make_directory_with_ownership, set_file_ownership
-from cbz_tagger.common.input import InputEntity, console_selector
+from cbz_tagger.common.enums import Emoji
+from cbz_tagger.common.enums import Plugins
+from cbz_tagger.common.enums import Urls
+from cbz_tagger.common.helpers import make_directory_with_ownership
+from cbz_tagger.common.helpers import set_file_ownership
+from cbz_tagger.common.input import InputEntity
+from cbz_tagger.common.input import console_selector
 from cbz_tagger.database.author_entity_db import AuthorEntityDB
 from cbz_tagger.database.chapter_entity_db import ChapterEntityDB
 from cbz_tagger.database.cover_entity_db import CoverEntityDB
