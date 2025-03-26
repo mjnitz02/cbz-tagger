@@ -1,7 +1,6 @@
 import os
 
 import pytest
-import requests_mock  # pylint: disable=unused-import
 
 from cbz_tagger.common.enums import Plugins
 from cbz_tagger.common.enums import Urls

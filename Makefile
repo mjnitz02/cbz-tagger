@@ -7,14 +7,12 @@ req:
 	pip install -r requirements.txt --upgrade
 
 lint:
-	python -m isort --sl --line-length 120 cbz_tagger tests
-	python -m black --line-length 120 cbz_tagger tests
-	python -m pylint cbz_tagger tests
+	python -m ruff check . --fix
+	python -m ruff format .
 
 test-lint:
-	black --line-length 120 cbz_tagger tests
-	isort --sl --line-length 120 cbz_tagger tests
-	pylint cbz_tagger tests
+	python -m ruff check .
+	python -m ruff format . --check
 
 test-unit:
 	python -m pytest tests/

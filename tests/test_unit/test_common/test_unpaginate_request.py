@@ -1,6 +1,5 @@
 import pytest
 import requests
-import requests_mock  # pylint: disable=unused-import
 
 from cbz_tagger.entities.base_entity import BaseEntity
 
