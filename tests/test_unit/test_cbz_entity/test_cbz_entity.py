@@ -212,13 +212,19 @@ def test_chapter_number_parsing(
     chapter_prefix, chapter_delimiter, chapter_number_prefix, chapter_suffix, chapter_number, expected
 ):
     # Test / pathing
-    filename = f"{chapter_prefix}/{chapter_prefix}{chapter_delimiter}{chapter_number_prefix}{chapter_number}{chapter_suffix}.cbz"
+    filename = (
+        f"{chapter_prefix}/{chapter_prefix}{chapter_delimiter}{chapter_number_prefix}"
+        f"{chapter_number}{chapter_suffix}.cbz"
+    )
     entity = CbzEntity(filename)
     assert entity.chapter_number == expected
     assert not entity.chapter_is_volume
 
     # Test \\ pathing
-    filename = f"{chapter_prefix}\\{chapter_prefix}{chapter_delimiter}{chapter_number_prefix}{chapter_number}{chapter_suffix}.cbz"
+    filename = (
+        f"{chapter_prefix}\\{chapter_prefix}{chapter_delimiter}{chapter_number_prefix}"
+        f"{chapter_number}{chapter_suffix}.cbz"
+    )
     entity = CbzEntity(filename)
     assert entity.chapter_number == expected
     assert not entity.chapter_is_volume
