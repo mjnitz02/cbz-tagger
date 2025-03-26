@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 import requests
-import requests_mock  # noqa: F401
+import requests_mock
 
 from cbz_tagger.entities.base_entity import BaseEntity
 
