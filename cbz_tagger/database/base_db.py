@@ -1,7 +1,5 @@
 import json
-from typing import Dict
-from typing import List
-from typing import Union
+from typing import Dict, List, Union
 
 from cbz_tagger.entities.base_entity import BaseEntityObject
 

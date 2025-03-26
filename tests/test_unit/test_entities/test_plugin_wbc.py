@@ -1,10 +1,9 @@
 import os
 
 import pytest
-import requests_mock  # pylint: disable=unused-import
+import requests_mock
 
-from cbz_tagger.common.enums import Plugins
-from cbz_tagger.common.enums import Urls
+from cbz_tagger.common.enums import Plugins, Urls
 from cbz_tagger.entities.chapter_entity import ChapterEntity
 from cbz_tagger.entities.chapter_plugins.wbc import ChapterPluginWBC
 
@@ -22,29 +21,30 @@ def wbc_chapter_response(tests_fixtures_path):
 
 
 @pytest.fixture
-def chapter_entity(requests_mock, wbc_series_response, wbc_chapter_response):
-    requests_mock.get(
-        f"https://{Urls.WBC}/series/example_manga/full-chapter-list",
-        text=wbc_series_response,
-    )
-    requests_mock.get(
-        "http://wbc.example.com/chapter",
-        text=wbc_chapter_response,
-    )
+def chapter_entity(wbc_series_response, wbc_chapter_response):
+    with requests_mock.Mocker() as rm:
+        rm.get(
+            f"https://{Urls.WBC}/series/example_manga/full-chapter-list",
+            text=wbc_series_response,
+        )
+        rm.get(
+            "http://wbc.example.com/chapter",
+            text=wbc_chapter_response,
+        )
 
-    return ChapterEntity(
-        {
-            "id": "chapter_id",
-            "attributes": {
-                "chapter": "1",
-                "translatedLanguage": "en",
-                "pages": 3,
-                "url": "http://wbc.example.com/chapter",
+        yield ChapterEntity(
+            {
+                "id": "chapter_id",
+                "attributes": {
+                    "chapter": "1",
+                    "translatedLanguage": "en",
+                    "pages": 3,
+                    "url": "http://wbc.example.com/chapter",
+                },
+                "relationships": [{"type": "scanlation_group", "id": "group_id"}],
+                "type": Plugins.WBC,
             },
-            "relationships": [{"type": "scanlation_group", "id": "group_id"}],
-            "type": Plugins.WBC,
-        },
-    )
+        )
 
 
 def test_get_chapter_url(chapter_entity):

@@ -1,8 +1,7 @@
 import logging
 import os
 
-from nicegui import app
-from nicegui import ui
+from nicegui import app, ui
 
 from cbz_tagger.container.base_container import BaseContainer
 from cbz_tagger.gui.simple_gui import SimpleGui

@@ -2,15 +2,12 @@ import json
 import logging
 from json import JSONDecodeError
 from time import sleep
-from typing import Any
-from typing import Dict
-from typing import List
+from typing import Any, Dict, List
 
 import cloudscraper
 import requests
 
-from cbz_tagger.common.enums import DELAY_PER_REQUEST
-from cbz_tagger.common.enums import Urls
+from cbz_tagger.common.enums import DELAY_PER_REQUEST, Urls
 from cbz_tagger.common.env import AppEnv
 
 logger = logging.getLogger()

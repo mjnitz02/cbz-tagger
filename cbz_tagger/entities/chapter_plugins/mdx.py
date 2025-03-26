@@ -1,7 +1,6 @@
 import logging
 from time import sleep
-from typing import Any
-from typing import List
+from typing import Any, List
 
 from cbz_tagger.common.enums import Urls
 from cbz_tagger.entities.chapter_plugins.plugin import ChapterPluginEntity

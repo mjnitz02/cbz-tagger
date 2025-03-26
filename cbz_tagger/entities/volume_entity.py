@@ -1,7 +1,5 @@
 import math
-from typing import List
-from typing import Set
-from typing import Tuple
+from typing import List, Set, Tuple
 
 from cbz_tagger.entities.base_entity import BaseEntity
 
@@ -55,7 +53,7 @@ class VolumeEntity(BaseEntity):
         volume_ends = [item[1] for item in volume_list][1:] + [final_volume_chapter]
 
         volume_map = []
-        for idx, ((volume_key, volume_start, _), volume_end) in enumerate(zip(volume_list, volume_ends)):
+        for idx, ((volume_key, volume_start, _), volume_end) in enumerate(zip(volume_list, volume_ends, strict=False)):
             if idx == 0:
                 volume_start = 0.0
             volume_map.append((volume_key, volume_start, volume_end))

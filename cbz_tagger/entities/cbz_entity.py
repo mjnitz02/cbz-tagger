@@ -1,11 +1,9 @@
 import logging
 import os
 import re
-from zipfile import ZIP_DEFLATED
-from zipfile import ZipFile
+from zipfile import ZIP_DEFLATED, ZipFile
 
-from cbz_tagger.common.helpers import make_directory_with_ownership
-from cbz_tagger.common.helpers import set_file_ownership
+from cbz_tagger.common.helpers import make_directory_with_ownership, set_file_ownership
 
 logger = logging.getLogger()
 

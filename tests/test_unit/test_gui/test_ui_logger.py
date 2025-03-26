@@ -1,7 +1,6 @@
 import logging
 from unittest import mock
-from unittest.mock import MagicMock
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from cbz_tagger.gui.elements.ui_logger import ui_logger
 

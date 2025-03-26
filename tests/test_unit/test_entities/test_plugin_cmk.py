@@ -1,86 +1,86 @@
 import json
 
 import pytest
-import requests_mock  # pylint: disable=unused-import
+import requests_mock
 
-from cbz_tagger.common.enums import Plugins
-from cbz_tagger.common.enums import Urls
+from cbz_tagger.common.enums import Plugins, Urls
 from cbz_tagger.entities.chapter_entity import ChapterEntity
 from cbz_tagger.entities.chapter_plugins.cmk import ChapterPluginCMK
 
 
 @pytest.fixture
-def chapter_entity(requests_mock):
-    requests_mock.get(
-        f"https://{Urls.CMK}/comic/example_manga",
-        text=json.dumps(
-            {
-                "comic": {
-                    "hid": "ACprvUWn",
-                },
-            }
-        ),
-    )
-    requests_mock.get(
-        f"https://{Urls.CMK}/comic/ACprvUWn/chapters?lang=en&page=1",
-        text=json.dumps(
-            {
-                "chapters": [
-                    {
-                        "id": 3562092,
-                        "chap": "2",
-                        "title": "Chapter 2",
-                        "vol": None,
-                        "lang": "en",
-                        "group_name": None,
-                        "hid": "Ce82S7St",
-                        "created_at": "2024-10-15T20:55:38+02:00",
-                        "updated_at": "2024-10-22T11:05:35+02:00",
+def chapter_entity():
+    with requests_mock.Mocker() as rm:
+        rm.get(
+            f"https://{Urls.CMK}/comic/example_manga",
+            text=json.dumps(
+                {
+                    "comic": {
+                        "hid": "ACprvUWn",
                     },
-                    {
-                        "id": 2562092,
-                        "chap": "1.5",
-                        "title": "Chapter 1.5",
-                        "vol": None,
-                        "lang": "en",
-                        "group_name": [],
-                        "hid": "Be82S7St",
-                        "created_at": "2024-10-14T20:55:38+02:00",
-                        "updated_at": "2024-10-21T11:05:35+02:00",
-                    },
-                    {
-                        "id": 1562092,
-                        "chap": "1",
-                        "title": "Chapter 1",
-                        "vol": None,
-                        "lang": "en",
-                        "group_name": ["Official"],
-                        "hid": "Ae82S7St",
-                        "created_at": "2024-10-13T20:55:38+02:00",
-                        "updated_at": "2024-10-20T11:05:35+02:00",
-                    },
-                ],
-                "total": 3,
-                "limit": 50,
-            }
-        ),
-    )
-    requests_mock.get(
-        "http://cmk.example.com/chapter",
-        text=json.dumps(
-            {
-                "chapter": {
-                    "hid": "A7OdAIOC",
-                    "images": [
-                        {"url": "https://scans.filelocation.pictures/0-Axe_rj3bWy3Dt.jpg", "w": 1081, "h": 1538},
-                        {"url": "https://scans.filelocation.pictures/1-ANdtdpkSY9VXV.jpg", "w": 1080, "h": 1538},
-                        {"url": "https://scans.filelocation.pictures/2-AXHawoARnAdAQ.jpg", "w": 2160, "h": 1538},
-                        {"url": "https://scans.filelocation.pictures/3-AWqMYpy8Nkxsp.jpg", "w": 1080, "h": 1538},
+                }
+            ),
+        )
+        rm.get(
+            f"https://{Urls.CMK}/comic/ACprvUWn/chapters?lang=en&page=1",
+            text=json.dumps(
+                {
+                    "chapters": [
+                        {
+                            "id": 3562092,
+                            "chap": "2",
+                            "title": "Chapter 2",
+                            "vol": None,
+                            "lang": "en",
+                            "group_name": None,
+                            "hid": "Ce82S7St",
+                            "created_at": "2024-10-15T20:55:38+02:00",
+                            "updated_at": "2024-10-22T11:05:35+02:00",
+                        },
+                        {
+                            "id": 2562092,
+                            "chap": "1.5",
+                            "title": "Chapter 1.5",
+                            "vol": None,
+                            "lang": "en",
+                            "group_name": [],
+                            "hid": "Be82S7St",
+                            "created_at": "2024-10-14T20:55:38+02:00",
+                            "updated_at": "2024-10-21T11:05:35+02:00",
+                        },
+                        {
+                            "id": 1562092,
+                            "chap": "1",
+                            "title": "Chapter 1",
+                            "vol": None,
+                            "lang": "en",
+                            "group_name": ["Official"],
+                            "hid": "Ae82S7St",
+                            "created_at": "2024-10-13T20:55:38+02:00",
+                            "updated_at": "2024-10-20T11:05:35+02:00",
+                        },
                     ],
-                },
-            }
-        ),
-    )
+                    "total": 3,
+                    "limit": 50,
+                }
+            ),
+        )
+        rm.get(
+            "http://cmk.example.com/chapter",
+            text=json.dumps(
+                {
+                    "chapter": {
+                        "hid": "A7OdAIOC",
+                        "images": [
+                            {"url": "https://scans.filelocation.pictures/0-Axe_rj3bWy3Dt.jpg", "w": 1081, "h": 1538},
+                            {"url": "https://scans.filelocation.pictures/1-ANdtdpkSY9VXV.jpg", "w": 1080, "h": 1538},
+                            {"url": "https://scans.filelocation.pictures/2-AXHawoARnAdAQ.jpg", "w": 2160, "h": 1538},
+                            {"url": "https://scans.filelocation.pictures/3-AWqMYpy8Nkxsp.jpg", "w": 1080, "h": 1538},
+                        ],
+                    },
+                }
+            ),
+        )
 
     return ChapterEntity(
         {

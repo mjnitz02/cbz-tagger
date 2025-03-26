@@ -4,18 +4,14 @@ from datetime import datetime
 
 from nicegui import ui
 
-from cbz_tagger.common.enums import APPLICATION_MAJOR_VERSION
-from cbz_tagger.common.enums import Emoji
-from cbz_tagger.common.enums import Plugins
+from cbz_tagger.common.enums import APPLICATION_MAJOR_VERSION, Emoji, Plugins
 from cbz_tagger.common.env import AppEnv
 from cbz_tagger.database.file_scanner import FileScanner
 from cbz_tagger.entities.metadata_entity import MetadataEntity
 from cbz_tagger.gui.elements.config_table import config_table
 from cbz_tagger.gui.elements.series_table import series_table
 from cbz_tagger.gui.elements.ui_logger import ui_logger
-from cbz_tagger.gui.functions import add_new_to_scanner
-from cbz_tagger.gui.functions import notify_and_log
-from cbz_tagger.gui.functions import refresh_scanner
+from cbz_tagger.gui.functions import add_new_to_scanner, notify_and_log, refresh_scanner
 
 logger = logging.getLogger()
 

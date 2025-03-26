@@ -1,7 +1,6 @@
 import copy
 import os
-from typing import List
-from typing import Union
+from typing import List, Union
 from unittest import mock
 
 import pytest
