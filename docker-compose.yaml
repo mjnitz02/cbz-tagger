@@ -1,4 +1,3 @@
-version: '3'
 services:
   cbz_tagger:
     build: .
@@ -6,6 +5,7 @@ services:
     environment:
       - TIMER_MODE=true
       - TIMER_DELAY=30
+      - GUI_MODE=true
     volumes:
       - ~/Downloads/cbz_tagger/config:/config
       - ~/Downloads/cbz_tagger/scan:/scan

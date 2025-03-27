@@ -1,4 +1,4 @@
-FROM python:3.11-alpine
+FROM python:3.12-alpine3.21
 
 LABEL maintainer="mjnitz02@gmail.com"
 
@@ -13,17 +13,21 @@ ENV TIMER_MODE_DELAY "600"
 ### Upgrade ###
 RUN apk update && apk upgrade
 
-### Manga Tagger ###
-COPY cbz_tagger /app/cbz_tagger
-COPY run.py /app/run.py
-COPY requirements.txt /app/requirements.txt
+### CBZ Tagger ###
+COPY . /app
 
 ### Dependencies ###
-RUN   echo "Install dependencies"
-RUN   apk add -u zlib-dev jpeg-dev gcc musl-dev
-RUN   python3 -m pip install --upgrade pip
-# RUN   apk add --no-cache --update python3 py3-pip
-RUN   pip3 install --no-cache-dir -r /app/requirements.txt
+RUN echo "Install dependencies"
+RUN apk add --no-cache gcc libffi-dev musl-dev postgresql-dev zlib-dev jpeg-dev
+RUN python3 -m pip install --upgrade pip
+
+
+### Python Environment ###
+COPY pyproject.toml poetry.lock ./
+RUN pip install "poetry==2.1.1"
+RUN pip install poetry-plugin-export
+RUN poetry export -f requirements.txt --output requirements.txt
+RUN pip install -r requirements.txt
 
 ### Container Aliases ###
 RUN echo "Adding aliases to container"
@@ -45,4 +49,5 @@ VOLUME /config
 VOLUME /scan
 VOLUME /storage
 
-ENTRYPOINT ["python3", "-u", "/app/run.py", "--entrymode"]
+ENTRYPOINT ["python", "-u", "/app/run.py", "--entrymode"]
+
