@@ -110,3 +110,24 @@ testing the API and ensuring that the code is functioning as expected.
 
 All code contributions should contain sufficient test additions to the codebase. This is to ensure that the code is
 maintainable and that new features do not break existing functionality.
+
+### Requirements
+- Docker (https://www.docker.com/)
+- pyenv (https://github.com/pyenv/pyenv)
+
+### Environment setup
+```shell
+pyenv virtualenv 3.12 cbz-tagger
+pyenv local cbz-tagger
+make req
+```
+
+### Running tests
+```shell
+# Test unit tests
+make test
+
+# Test docker containers
+make build-docker
+make test-docker
+```
