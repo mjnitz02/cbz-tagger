@@ -21,7 +21,6 @@ RUN echo "Install dependencies"
 RUN apk add --no-cache gcc libffi-dev musl-dev postgresql-dev zlib-dev jpeg-dev
 RUN python3 -m pip install --upgrade pip
 
-
 ### Python Environment ###
 COPY pyproject.toml poetry.lock ./
 RUN pip install "poetry==2.1.1"
