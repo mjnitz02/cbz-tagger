@@ -1,7 +1,8 @@
 services:
   cbz_tagger:
     build: .
-    # Mount volume
+    ports:
+      - "8080:8080"
     environment:
       - TIMER_MODE=true
       - TIMER_DELAY=30
