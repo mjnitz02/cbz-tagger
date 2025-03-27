@@ -19,22 +19,61 @@ permissions:
   contents: read
 
 jobs:
-  linter_and_unit_tests:
-
+  linter_and_formatting_checks:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v4
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
       with:
-        python-version: "3.11"
+        python-version: "3.12"
+        cache: 'pip'
     - name: Install dependencies
       run: |
         make req
     - name: Lint
       run: |
         make test-lint
+
+  pytest_unit_tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+        cache: 'pip'
+    - name: Install dependencies
+      run: |
+        make req
     - name: Test with pytest
       run: |
         make test-unit
+
+  pytest_integration_tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+        cache: 'pip'
+    - name: Install dependencies
+      run: |
+        make req
+    - name: Test with pytest
+      run: |
+        make test-integration
+
+  docker_image_build_and_tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build docker image
+      run: |
+        make build-docker
+    - name: Test docker image
+      run: |
+        make test-docker

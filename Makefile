@@ -4,67 +4,35 @@ ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 req:
 	python -m pip install --upgrade pip
-	pip install -r requirements.txt --upgrade
+	python -m pip install poetry
+	python -m poetry update
 
 lint:
-	python -m ruff check . --fix
-	python -m ruff format .
+	poetry run ruff check . --fix
+	poetry run ruff format .
 
 test-lint:
-	python -m ruff check .
-	python -m ruff format . --check
+	poetry run ruff check .
+	poetry run ruff format . --check
+
+test:
+	poetry run pytest tests/ -W ignore::DeprecationWarning
 
 test-unit:
-	python -m pytest tests/
+	poetry run pytest tests/test_unit/ -W ignore::DeprecationWarning
 
-build:
-	docker build -t manga-tag .
+test-integration:
+	poetry run pytest tests/test_integration/ -W ignore::DeprecationWarning
 
-run:
-	docker run \
-		-d \
-		-v $(ROOT_DIR)/debug_image/config:/config \
-		-v $(ROOT_DIR)/debug_image/downloads:/downloads \
-		-v $(ROOT_DIR)/debug_image/storage:/storage \
-		--name "manga-tag" \
-		manga-tag
+test-docker:
+	docker run --entrypoint "/bin/sh" cbz-tagger -c "python3 -m pytest /app/tests/test_unit/ -W ignore::DeprecationWarning"
 
-test-dirs:
-	mkdir -p debug_image/config
-	mkdir -p debug_image/downloads
-	mkdir -p debug_image/storage
+build-docker:
+	docker build -t cbz-tagger .
 
-test-seed:
-	rm -rf debug_image/downloads
-	cp -r test/downloads debug_image
-
-remove-test-dirs:
-	rm -rf debug_image
-
-stop:
-	docker stop "manga-tag"
-	docker rm "manga-tag"
-
-clean:
-	docker container prune -f
-	docker image prune -af
+run-docker:
+	docker-compose up --build
 
 clean-git:
 	chmod +x ./scripts/clean_git.sh
 	./scripts/clean_git.sh
-
-shell:
-	docker exec -it manga-tag bash
-
-logs:
-	docker logs manga-tag
-
-fresh: clean build run
-
-restart: stop fresh
-
-python-fresh:
-	export CONFIG_PATH=debug_image/config & \
-	export DOWNLOADS_PATH=debug_image/downloads & \
-	export STORAGE_PATH=debug_image/storage & \
-	python3 start.py
