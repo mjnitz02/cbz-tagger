@@ -20,7 +20,7 @@ test-unit:
 
 test-docker:
 	docker build -t cbz-tagger .
-	docker run --entrypoint "/bin/sh" cbz-tagger -c "python3 -m pytest /app/tests -W ignore::DeprecationWarning"
+	docker run --entrypoint "/bin/sh" cbz-tagger -c "python3 -m pytest /app/tests/test_unit/ -W ignore::DeprecationWarning"
 
 build-docker:
 	docker build -t cbz-tagger .
