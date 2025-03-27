@@ -51,5 +51,5 @@ VOLUME /config
 VOLUME /scan
 VOLUME /storage
 
-ENTRYPOINT ["python", "-u", "/app/run.py", "--entrymode"]
+ENTRYPOINT ["python3", "-u", "/app/run.py", "--entrymode"]
 
