@@ -26,6 +26,9 @@ RUN python3 -m pip install --upgrade pip
 COPY pyproject.toml poetry.lock ./
 RUN pip install "poetry==2.1.1"
 RUN pip install poetry-plugin-export
+# Poetry is a pain in docker, so export and use basic requirements.txt
+# when building the image. This could be revised in the future, but it
+# messes with the entrypoint commands really badly if using pure poetry.
 RUN poetry export -f requirements.txt --output requirements.txt
 RUN pip install -r requirements.txt
 
