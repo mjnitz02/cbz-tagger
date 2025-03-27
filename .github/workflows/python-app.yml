@@ -38,3 +38,6 @@ jobs:
     - name: Test with pytest
       run: |
         make test-unit
+    - name: Test docker image
+      run: |
+        make test-docker
