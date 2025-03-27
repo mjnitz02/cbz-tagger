@@ -8,19 +8,19 @@ req:
 	python -m poetry update
 
 lint:
-	python -m ruff check . --fix
-	python -m ruff format .
+	poetry run ruff check . --fix
+	poetry run ruff format .
 
 test-lint:
-	python -m ruff check .
-	python -m ruff format . --check
+	poetry run ruff check .
+	poetry run ruff format . --check
 
 test-unit:
-	python -m pytest tests/
+	poetry run pytest tests/ -W ignore::DeprecationWarning
 
 test-docker:
 	docker build -t cbz-tagger .
-	docker run --entrypoint "/bin/sh" cbz-tagger -c "python3 -m pytest /app/tests"
+	docker run --entrypoint "/bin/sh" cbz-tagger -c "python3 -m pytest /app/tests -W ignore::DeprecationWarning"
 
 build-docker:
 	docker build -t cbz-tagger .
