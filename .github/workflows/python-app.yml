@@ -53,6 +53,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+    - name: Build docker image
+      run: |
+        make build-docker
     - name: Test docker image
       run: |
         make test-docker
