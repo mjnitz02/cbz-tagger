@@ -15,8 +15,14 @@ test-lint:
 	poetry run ruff check .
 	poetry run ruff format . --check
 
-test-unit:
+test:
 	poetry run pytest tests/ -W ignore::DeprecationWarning
+
+test-unit:
+	poetry run pytest tests/test_unit/ -W ignore::DeprecationWarning
+
+test-integration:
+	poetry run pytest tests/test_integration/ -W ignore::DeprecationWarning
 
 test-docker:
 	docker run --entrypoint "/bin/sh" cbz-tagger -c "python3 -m pytest /app/tests/test_unit/ -W ignore::DeprecationWarning"
