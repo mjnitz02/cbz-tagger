@@ -136,8 +136,8 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "beautifulsoup4", specifier = ">=4.12.3,<4.13.0" },
-    { name = "cloudscraper", specifier = ">=1.2.71,<2.0.0" },
-    { name = "nicegui", specifier = ">=2.13.0,<3.0.0" },
+    { name = "cloudscraper", specifier = ">=1.2.71" },
+    { name = "nicegui", specifier = ">=2.20.0" },
     { name = "pillow", specifier = ">=11.1.0,<12.0.0" },
     { name = "pytest", specifier = ">=8.4.1" },
     { name = "requests", specifier = ">=2.32.3,<3.0.0" },
