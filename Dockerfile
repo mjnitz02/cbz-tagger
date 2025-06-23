@@ -19,16 +19,12 @@ COPY pyproject.toml poetry.lock ./
 
 ### Dependencies ###
 RUN echo "Install dependencies"
-RUN apk add --no-cache gcc libffi-dev musl-dev postgresql-dev zlib-dev jpeg-dev
+RUN apk add --no-cache gcc libffi-dev musl-dev postgresql-dev zlib-dev jpeg-dev uv
 RUN python3 -m pip install --upgrade pip
 
 ### Python Environment ###
-RUN pip install "poetry==2.1.1"
-RUN pip install poetry-plugin-export
-# Poetry is a pain in docker, so export and use basic requirements.txt
-# when building the image. This could be revised in the future, but it
-# messes with the entrypoint commands really badly if using pure poetry.
-RUN poetry export -f requirements.txt --output requirements.txt
+# This is a partial environment conversion to a requirements.txt file using uv
+RUN uv pip compile pyproject.toml -o requirements.txt
 RUN pip install -r requirements.txt
 
 ### Container Aliases ###
