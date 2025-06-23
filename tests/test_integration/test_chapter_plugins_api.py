@@ -19,8 +19,7 @@ def check_entity_download_links(entity, entity_link_count):
         ("11afa5c2-41dc-4cf3-8451-f306a3caf1ab", Plugins.MDX, "", 132, 7, 7),
         ("example_manga", Plugins.CMK, "itadaki", 5, 21, 20),
         ("example_manga", Plugins.KAL, "23032-umbella", 3, 3, 3),
-        # ("example_manga", Plugins.WBC, "01J76XY9B20J1KHJ1FWVZ8N1PK", 5, 21, 20),
-        # Disabled because the plugin is not working in tests consistently
+        ("example_manga", Plugins.WBC, "01J76XY9B20J1KHJ1FWVZ8N1PK", 5, 21, 20),
     ],
 )
 def test_chapter_plugins_api_connection_test(

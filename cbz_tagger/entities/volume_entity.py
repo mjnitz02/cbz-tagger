@@ -20,7 +20,10 @@ class VolumeEntity(BaseEntity):
 
     @property
     def aggregate(self):
-        return self.content.get("volumes", {})
+        volumes = self.content.get("volumes", {})
+        if isinstance(volumes, list):
+            return {}
+        return volumes
 
     @property
     def volumes(self):
