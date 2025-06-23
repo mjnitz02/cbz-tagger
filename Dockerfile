@@ -15,7 +15,7 @@ RUN apk update && apk upgrade
 
 ### CBZ Tagger ###
 COPY . /app
-COPY pyproject.toml poetry.lock ./
+COPY pyproject.toml ./
 
 ### Dependencies ###
 RUN echo "Install dependencies"
