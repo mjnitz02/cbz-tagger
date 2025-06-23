@@ -48,6 +48,21 @@ def test_volume_entity(volume_request_response):
     assert entity.volume_map == [("1", 0.0, 2.0), ("2", 2.0, 3.0), ("3", 3.0, 13.0), ("4", 13.0, 22.0)]
 
 
+def test_volume_entity_with_no_data_available(volume_request_response_none_available):
+    entity = VolumeEntity(content=volume_request_response_none_available)
+
+    # Volume entities are very simple and have little metadata
+    assert entity.entity_id is None
+    assert entity.entity_type is None
+    assert entity.attributes == {}
+    assert entity.relationships == {}
+
+    assert entity.chapter_count == 0
+    assert sorted(entity.chapters) == []
+    assert entity.volumes == {}
+    assert entity.volume_map == [('-1', 0.0, 0.0)]
+
+
 def test_volume_entity_with_broken_chapters(volume_request_response):
     entity = VolumeEntity(content=volume_request_response)
 

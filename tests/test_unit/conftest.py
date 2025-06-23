@@ -659,6 +659,14 @@ def volume_request_response():
 
 
 @pytest.fixture
+def volume_request_response_none_available():
+    return {
+        "result": "ok",
+        "volumes": [],
+    }
+
+
+@pytest.fixture
 def cover_request_response():
     return {
         "result": "ok",
