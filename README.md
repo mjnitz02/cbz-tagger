@@ -1,4 +1,8 @@
 # CBZ-Tagger
+![](https://img.shields.io/badge/python-3670A0?logo=python&logoColor=ffdd54)
+![Docker Image Version](https://img.shields.io/docker/v/mjnitz02/cbz_tagger)
+![GitHub License](https://img.shields.io/github/license/mjnitz02/cbz-tagger)
+
 
 CBZ Tagger is a tool to tag comic book files in CBZ format. Many cbz based files are incorrectly formatted
 in ways that are not compatible with the ComicInfo.xml format. This tool utilizes public metadata sources to tag
@@ -112,13 +116,12 @@ All code contributions should contain sufficient test additions to the codebase.
 maintainable and that new features do not break existing functionality.
 
 ### Requirements
-- Docker (https://www.docker.com/)
-- pyenv (https://github.com/pyenv/pyenv)
+- Docker (https://docs.docker.com/engine/install/)
+- uv (https://docs.astral.sh/uv/getting-started/installation/)
+- Python 3.13 (https://www.python.org/downloads/)
 
 ### Environment setup
 ```shell
-pyenv virtualenv 3.12 cbz-tagger
-pyenv local cbz-tagger
 make req
 ```
 
@@ -130,4 +133,10 @@ make test
 # Test docker containers
 make build-docker
 make test-docker
+```
+
+### Run CBZ Tagger docker locally
+```shell
+# Test unit tests
+make run-docker
 ```

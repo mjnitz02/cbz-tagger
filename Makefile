@@ -3,29 +3,27 @@ ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 .PHONY : restart fresh stop clean build run
 
 req:
-	python -m pip install --upgrade pip
-	python -m pip install poetry
-	python -m poetry update
+	uv sync
 
 lint:
-	poetry run ruff check . --fix
-	poetry run ruff format .
+	uv run ruff check . --fix
+	uv run ruff format .
 
 test-lint:
-	poetry run ruff check .
-	poetry run ruff format . --check
+	uv run ruff check .
+	uv run ruff format . --check
 
 test:
-	poetry run pytest tests/ -W ignore::DeprecationWarning
+	uv run pytest tests/ -W ignore::DeprecationWarning
 
 test-unit:
-	poetry run pytest tests/test_unit/ -W ignore::DeprecationWarning
+	uv run pytest tests/test_unit/ -W ignore::DeprecationWarning
 
 test-integration:
-	poetry run pytest tests/test_integration/ -W ignore::DeprecationWarning
+	uv run pytest tests/test_integration/ -W ignore::DeprecationWarning
 
 test-docker:
-	docker run --entrypoint "/bin/sh" cbz-tagger -c "python3 -m pytest /app/tests/test_unit/ -W ignore::DeprecationWarning"
+	docker run --entrypoint "/bin/sh" cbz-tagger -c "uv run pytest /app/tests/test_unit/ -W ignore::DeprecationWarning"
 
 build-docker:
 	docker build -t cbz-tagger .
