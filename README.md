@@ -1,4 +1,8 @@
 # CBZ-Tagger
+![](https://img.shields.io/badge/python-3670A0?logo=python&logoColor=ffdd54)
+![Docker Image Version](https://img.shields.io/docker/v/mjnitz02/cbz_tagger)
+![GitHub License](https://img.shields.io/github/license/mjnitz02/cbz-tagger)
+
 
 CBZ Tagger is a tool to tag comic book files in CBZ format. Many cbz based files are incorrectly formatted
 in ways that are not compatible with the ComicInfo.xml format. This tool utilizes public metadata sources to tag
