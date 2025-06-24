@@ -20,26 +20,21 @@ COPY pyproject.toml ./
 ### Dependencies ###
 RUN echo "Install dependencies"
 RUN apk add --no-cache gcc libffi-dev musl-dev postgresql-dev zlib-dev jpeg-dev uv
-RUN python3 -m pip install --upgrade pip
-
-### Python Environment ###
-# This is a partial environment conversion to a requirements.txt file using uv
-RUN uv pip compile pyproject.toml -o requirements.txt
-RUN pip install -r requirements.txt
+RUN uv sync --no-cache
 
 ### Container Aliases ###
 RUN echo "Adding aliases to container"
-RUN echo -e '#!/bin/sh\npython3 /app/run.py --auto' > /usr/bin/auto
+RUN echo -e '#!/bin/sh\nuv run /app/run.py --auto' > /usr/bin/auto
 RUN chmod +x /usr/bin/auto
-RUN echo -e '#!/bin/sh\npython3 /app/run.py --manual' > /usr/bin/manual
+RUN echo -e '#!/bin/sh\nuv run /app/run.py --manual' > /usr/bin/manual
 RUN chmod +x /usr/bin/manual
-RUN echo -e '#!/bin/sh\npython3 /app/run.py --refresh' > /usr/bin/refresh
+RUN echo -e '#!/bin/sh\nuv run /app/run.py --refresh' > /usr/bin/refresh
 RUN chmod +x /usr/bin/refresh
-RUN echo -e '#!/bin/sh\npython3 /app/run.py --add' > /usr/bin/add
+RUN echo -e '#!/bin/sh\nuv run /app/run.py --add' > /usr/bin/add
 RUN chmod +x /usr/bin/add
-RUN echo -e '#!/bin/sh\npython3 /app/run.py --remove' > /usr/bin/remove
+RUN echo -e '#!/bin/sh\nuv run /app/run.py --remove' > /usr/bin/remove
 RUN chmod +x /usr/bin/remove
-RUN echo -e '#!/bin/sh\npython3 /app/run.py --delete' > /usr/bin/delete
+RUN echo -e '#!/bin/sh\nuv run /app/run.py --delete' > /usr/bin/delete
 RUN chmod +x /usr/bin/delete
 
 ### Volume Mappings ###
@@ -47,4 +42,4 @@ VOLUME /config
 VOLUME /scan
 VOLUME /storage
 
-ENTRYPOINT ["python3", "-u", "/app/run.py", "--entrymode"]
+ENTRYPOINT ["uv", "run", "/app/run.py", "--entrymode"]
