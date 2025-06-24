@@ -2,13 +2,13 @@ FROM python:3.13-alpine
 
 LABEL maintainer="mjnitz02@gmail.com"
 
-# set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-ENV CONFIG_PATH "/config"
-ENV SCAN_PATH "/scan"
-ENV STORAGE_PATH "/storage"
-ENV TIMER_MODE_DELAY "600"
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    CONFIG_PATH="/config" \
+    SCAN_PATH="/scan" \
+    STORAGE_PATH="/storage" \
+    TIMER_MODE_DELAY="600"
 
 ### Upgrade ###
 RUN apk update && apk upgrade
@@ -18,28 +18,18 @@ COPY . /app
 COPY pyproject.toml ./
 
 ### Dependencies ###
-RUN echo "Install dependencies"
-RUN apk add --no-cache gcc libffi-dev musl-dev postgresql-dev zlib-dev jpeg-dev uv
-RUN uv sync --no-cache
+RUN echo "Install dependencies" && \
+    apk add --no-cache gcc libffi-dev musl-dev postgresql-dev zlib-dev jpeg-dev uv && \
+    uv sync --no-cache
 
 ### Container Aliases ###
-RUN echo "Adding aliases to container"
-RUN echo -e '#!/bin/sh\nuv run /app/run.py --auto' > /usr/bin/auto
-RUN chmod +x /usr/bin/auto
-RUN echo -e '#!/bin/sh\nuv run /app/run.py --manual' > /usr/bin/manual
-RUN chmod +x /usr/bin/manual
-RUN echo -e '#!/bin/sh\nuv run /app/run.py --refresh' > /usr/bin/refresh
-RUN chmod +x /usr/bin/refresh
-RUN echo -e '#!/bin/sh\nuv run /app/run.py --add' > /usr/bin/add
-RUN chmod +x /usr/bin/add
-RUN echo -e '#!/bin/sh\nuv run /app/run.py --remove' > /usr/bin/remove
-RUN chmod +x /usr/bin/remove
-RUN echo -e '#!/bin/sh\nuv run /app/run.py --delete' > /usr/bin/delete
-RUN chmod +x /usr/bin/delete
+RUN echo "Adding aliases to container" && \
+    for cmd in auto manual refresh add remove delete; do \
+        echo -e '#!/bin/sh\nuv run /app/run.py --'$cmd > /usr/bin/$cmd && \
+        chmod +x /usr/bin/$cmd; \
+    done
 
-### Volume Mappings ###
-VOLUME /config
-VOLUME /scan
-VOLUME /storage
+# Define volume mappings
+VOLUME /config /scan /storage
 
 ENTRYPOINT ["uv", "run", "/app/run.py", "--entrymode"]
