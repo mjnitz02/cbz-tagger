@@ -2,10 +2,6 @@ import logging
 import os
 from io import BytesIO
 from os import path
-from typing import Dict
-from typing import List
-from typing import Set
-from typing import Tuple
 
 from PIL import Image
 
@@ -17,10 +13,10 @@ logger = logging.getLogger()
 
 class CoverEntityDB(BaseEntityDB):
     entity_class = CoverEntity
-    database: Dict[str, List[CoverEntity]]
+    database: dict[str, list[CoverEntity]]
     query_param_field: str = "manga[]"
 
-    def get_indexed_covers(self) -> List[Tuple[str, str]]:
+    def get_indexed_covers(self) -> list[tuple[str, str]]:
         covers = []
         for entity_id, cover_list in self.database.items():
             for cover_entity in cover_list:
@@ -28,10 +24,10 @@ class CoverEntityDB(BaseEntityDB):
         return covers
 
     @staticmethod
-    def get_local_covers(image_db_path) -> List[str]:
+    def get_local_covers(image_db_path) -> list[str]:
         return sorted(os.listdir(image_db_path))
 
-    def get_orphaned_covers(self, image_db_path) -> List[str]:
+    def get_orphaned_covers(self, image_db_path) -> list[str]:
         indexed_covers = self.get_indexed_covers()
         indexed_cover_ids = [cover[1] for cover in indexed_covers]
         local_covers = self.get_local_covers(image_db_path)
@@ -42,7 +38,7 @@ class CoverEntityDB(BaseEntityDB):
         for cover in orphaned_covers:
             os.remove(path.join(image_db_path, cover))
 
-    def get_missing_covers(self, image_db_path) -> Set[str]:
+    def get_missing_covers(self, image_db_path) -> set[str]:
         indexed_covers = self.get_indexed_covers()
         local_covers = self.get_local_covers(image_db_path)
         missing_covers = [item for item in indexed_covers if item[1] not in local_covers]

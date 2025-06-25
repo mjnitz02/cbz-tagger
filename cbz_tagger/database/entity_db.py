@@ -3,7 +3,6 @@ import logging
 import os
 import re
 import shutil
-from typing import Dict
 from typing import Optional
 from typing import Self
 from xml.dom import minidom
@@ -44,11 +43,11 @@ class EntityDB:
     ):
         self.root_path = root_path
 
-        self.entity_map: Dict[str, str] = {} if entity_map is None else entity_map
-        self.entity_names: Dict[str, str] = {} if entity_names is None else entity_names
+        self.entity_map: dict[str, str] = {} if entity_map is None else entity_map
+        self.entity_names: dict[str, str] = {} if entity_names is None else entity_names
         self.entity_downloads = set() if entity_downloads is None else entity_downloads
         self.entity_tracked = set() if entity_tracked is None else entity_tracked
-        self.entity_chapter_plugin: Dict[str, str] = {} if entity_chapter_plugin is None else entity_chapter_plugin
+        self.entity_chapter_plugin: dict[str, str] = {} if entity_chapter_plugin is None else entity_chapter_plugin
 
         self.metadata: MetadataEntityDB = MetadataEntityDB() if metadata is None else metadata
         self.covers: CoverEntityDB = CoverEntityDB() if covers is None else covers
@@ -261,27 +260,54 @@ class EntityDB:
         entity_id = self.entity_map.get(manga_name)
         self.update_manga_entity_id(entity_id)
 
-    def update_manga_entity_id(self, entity_id):
+    def update_manga_entity_id_metadata_and_find_updated_ids(
+        self, entity_ids: list[str], batch_size: int = 50
+    ) -> list[str]:
+        """Find the first entity ID that has metadata and chapters."""
+        previous_metadata = {}
+        previous_chapters = {}
+        for entity_id in entity_ids:
+            previous_metadata[entity_id] = self.metadata.to_hash(entity_id)
+            previous_chapters[entity_id] = self.chapters.to_hash(entity_id)
+
+        logger.info("Checking for metadata updates...")
+        for i in range(0, len(entity_ids), batch_size):
+            batch = entity_ids[i : i + batch_size]
+            self.metadata.update(batch, batch_response=True)
+
+        for idx, entity_id in enumerate(entity_ids):
+            if idx % 10 == 0:
+                logger.info("Checking for chapter updates... [Remaining: %d]", len(entity_ids) - (idx + 1))
+            chapter_plugin = self.entity_chapter_plugin.get(entity_id, {})
+            if chapter_plugin:
+                self.chapters.update(entity_id, **chapter_plugin)
+
+        # There are extra verbose checks here, but this makes debugging easier if breakpoints are set
+        updated_entity_ids = []
+        for entity_id in entity_ids:
+            updated_metadata = self.metadata.to_hash(entity_id)
+            updated_chapters = self.chapters.to_hash(entity_id)
+            if (updated_metadata != previous_metadata.get(entity_id, "0")) or (
+                updated_chapters != previous_chapters.get(entity_id, "0")
+            ):
+                updated_entity_ids.append(entity_id)
+                logger.debug("Updated metadata for %s: %s", self.entity_names.get(entity_id, "Unknown"), entity_id)
+
+        return updated_entity_ids
+
+    def update_manga_entity_id(self, entity_id, update_metadata=True):
         manga_name = self.entity_names.get(entity_id)
         if entity_id is not None:
             try:
                 chapter_plugin = self.entity_chapter_plugin.get(entity_id, {})
                 logger.debug("Checking for updates %s: %s", manga_name, entity_id)
 
-                previous_content = None
-                if self.metadata[entity_id] is not None:
-                    previous_content = self.metadata[entity_id].content
-
-                self.metadata.update(entity_id)
-                if previous_content == self.metadata[entity_id].content:
-                    if chapter_plugin:
-                        self.chapters.update(entity_id, **chapter_plugin)
-                        self.save()
-                    return
+                if update_metadata:
+                    self.metadata.update(entity_id)
+                    self.chapters.update(entity_id, **chapter_plugin)
 
                 # Update the collections
                 logger.info("Updating %s: %s", manga_name, entity_id)
-                self.chapters.update(entity_id, **chapter_plugin)
                 self.volumes.update(entity_id)
                 self.covers.update(entity_id)
                 self.authors.update(self.metadata[entity_id].author_entities)
@@ -298,8 +324,10 @@ class EntityDB:
 
     def refresh(self, storage_path):
         logger.info("Refreshing database...")
-        for entity_id in sorted(self.metadata.keys()):
-            self.update_manga_entity_id(entity_id)
+        entity_ids = sorted(self.metadata.keys())
+        updated_entity_ids = self.update_manga_entity_id_metadata_and_find_updated_ids(entity_ids)
+        for entity_id in updated_entity_ids:
+            self.update_manga_entity_id(entity_id, update_metadata=False)
         self.download_missing_covers()
         self.remove_orphaned_covers()
         logger.debug("Downloading missing chapters...")

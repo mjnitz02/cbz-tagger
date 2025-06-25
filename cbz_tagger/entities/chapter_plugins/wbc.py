@@ -1,6 +1,5 @@
 import re
 from typing import Any
-from typing import List
 
 from bs4 import BeautifulSoup
 
@@ -13,7 +12,7 @@ class ChapterPluginWBC(ChapterPluginEntity):
     entity_url = f"https://{Urls.WBC}/"
 
     @classmethod
-    def parse_info_feed(cls, entity_id: str) -> List[Any]:
+    def parse_info_feed(cls, entity_id: str) -> list[Any]:
         url = f"{cls.entity_url}series/{entity_id}/full-chapter-list"
         response = cls.request_with_retry(url)
 
@@ -51,7 +50,7 @@ class ChapterPluginWBC(ChapterPluginEntity):
             )
         return content
 
-    def parse_chapter_download_links(self, url: str) -> List[str]:
+    def parse_chapter_download_links(self, url: str) -> list[str]:
         response = self.request_with_retry(url)
         soup = BeautifulSoup(response.text, "html.parser")
 

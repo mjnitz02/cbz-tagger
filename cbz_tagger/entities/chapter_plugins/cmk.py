@@ -1,5 +1,4 @@
 from typing import Any
-from typing import List
 
 from cbz_tagger.common.enums import Plugins
 from cbz_tagger.common.enums import Urls
@@ -10,7 +9,7 @@ class ChapterPluginCMK(ChapterPluginEntity):
     entity_url = f"https://{Urls.CMK}/"
 
     @classmethod
-    def parse_info_feed(cls, entity_id: str) -> List[Any]:
+    def parse_info_feed(cls, entity_id: str) -> list[Any]:
         url = f"{cls.entity_url}comic/{entity_id}?tachiyomi=true"
         response = cls.request_with_retry(url)
         info = response.json()
@@ -61,7 +60,7 @@ class ChapterPluginCMK(ChapterPluginEntity):
             )
         return content
 
-    def parse_chapter_download_links(self, url: str) -> List[str]:
+    def parse_chapter_download_links(self, url: str) -> list[str]:
         response = self.request_with_retry(url)
         response_json = response.json()
         chapter_content = response_json["chapter"]

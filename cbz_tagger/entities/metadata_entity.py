@@ -1,6 +1,5 @@
 import math
 from datetime import datetime
-from typing import List
 from typing import Optional
 from typing import Union
 
@@ -30,7 +29,7 @@ class MetadataEntity(BaseEntity):
         return next((item["en"] for item in self.attributes["altTitles"] if "en" in item), None)
 
     @property
-    def all_titles(self) -> List[str]:
+    def all_titles(self) -> list[str]:
         return [self.title] + list(list(item.values())[0] for item in self.attributes["altTitles"])
 
     @property
@@ -91,7 +90,7 @@ class MetadataEntity(BaseEntity):
         return "Everyone"
 
     @property
-    def author_entities(self) -> List[str]:
+    def author_entities(self) -> list[str]:
         return list(set(item for item in (self.author_id, self.artist_id, self.creator_id) if item))
 
     @property
@@ -123,7 +122,7 @@ class MetadataEntity(BaseEntity):
         return language_iso
 
     @property
-    def genres(self) -> List[str]:
+    def genres(self) -> list[str]:
         tags = list(
             attr.get("attributes", {}).get("name", {}).get("en")
             for attr in self.attributes["tags"]

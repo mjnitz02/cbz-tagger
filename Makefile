@@ -2,16 +2,16 @@ ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 .PHONY : restart fresh stop clean build run
 
-req:
+install:
 	uv sync
 
 lint:
-	uv run ruff check . --fix
 	uv run ruff format .
+	uv run ruff check . --fix
 
 test-lint:
-	uv run ruff check .
 	uv run ruff format . --check
+	uv run ruff check .
 
 test:
 	uv run pytest tests/ -W ignore::DeprecationWarning

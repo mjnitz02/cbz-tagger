@@ -122,7 +122,7 @@ maintainable and that new features do not break existing functionality.
 
 ### Environment setup
 ```shell
-make req
+make install
 ```
 
 ### Running tests

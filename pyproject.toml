@@ -6,9 +6,8 @@ authors = [
     {name = "Matt Nitzken",email = "mjnitz02@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.13,<4.0"
+requires-python = ">=3.13,<3.14"
 dependencies = [
-    "beautifulsoup4 (>=4.12.3,<4.13.0)",
     "pytest>=8.4.1",
     "requests-mock>=1.12.1",
     "ruff>=0.12.0",
@@ -16,6 +15,7 @@ dependencies = [
     "cloudscraper>=1.2.71",
     "pillow>=11.2.1",
     "requests>=2.32.4",
+    "beautifulsoup4==4.12.3",
 ]
 
 

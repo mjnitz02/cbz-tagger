@@ -2,7 +2,6 @@ import logging
 import os
 from datetime import datetime
 from io import BytesIO
-from typing import List
 
 from PIL import Image
 from PIL import ImageFile
@@ -122,10 +121,10 @@ class ChapterEntity(BaseEntity):
     def get_chapter_url(self):
         return self.entity_plugin.get_chapter_url()
 
-    def parse_chapter_download_links(self, url: str) -> List[str]:
+    def parse_chapter_download_links(self, url: str) -> list[str]:
         return self.entity_plugin.parse_chapter_download_links(url)
 
-    def download_chapter(self, filepath) -> List[str]:
+    def download_chapter(self, filepath) -> list[str]:
         # Get chapter image urls
         url = self.get_chapter_url()
         download_links = self.parse_chapter_download_links(url)

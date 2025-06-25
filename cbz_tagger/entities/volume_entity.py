@@ -1,7 +1,4 @@
 import math
-from typing import List
-from typing import Set
-from typing import Tuple
 
 from cbz_tagger.entities.base_entity import BaseEntity
 
@@ -38,7 +35,7 @@ class VolumeEntity(BaseEntity):
         return volumes
 
     @property
-    def volume_map(self) -> List[Tuple[str, float, float]]:
+    def volume_map(self) -> list[tuple[str, float, float]]:
         volume_list = []
         for volume_key, volume in self.volumes.items():
             # Volume may be defined with no keys
@@ -71,7 +68,7 @@ class VolumeEntity(BaseEntity):
         return int(math.floor(max_volume))
 
     @property
-    def chapters(self) -> Set[str]:
+    def chapters(self) -> set[str]:
         chapters = set()
         for volume_chapters in self.volumes.values():
             chapters.update(set(volume_chapters))

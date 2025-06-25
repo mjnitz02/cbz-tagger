@@ -1,5 +1,4 @@
 from typing import Any
-from typing import List
 
 from cbz_tagger.entities.base_entity import BaseEntity
 
@@ -17,8 +16,8 @@ class ChapterPluginEntity(BaseEntity):
         return self.attributes.get("url", "")
 
     @classmethod
-    def parse_info_feed(cls, entity_id: str) -> List[Any]:
+    def parse_info_feed(cls, entity_id: str) -> list[Any]:
         raise NotImplementedError
 
-    def parse_chapter_download_links(self, url: str) -> List[str]:
+    def parse_chapter_download_links(self, url: str) -> list[str]:
         raise NotImplementedError
