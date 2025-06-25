@@ -12,6 +12,6 @@ repos:
 -   repo: local
     hooks:
     -   id: lint
-        name: Check lint (ruff and ty)
+        name: Check Linters [ruff] and Typing [ty]
         entry: make lint
         language: system
