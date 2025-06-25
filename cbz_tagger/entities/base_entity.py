@@ -1,3 +1,4 @@
+import hashlib
 import json
 import logging
 from json import JSONDecodeError
@@ -28,12 +29,14 @@ class BaseEntity(BaseEntityObject):
     def to_json(self):
         return json.dumps(self.content)
 
-    def to_hash(self):
+    def to_hash(self) -> str:
         """
         Returns a hash of the entity content.
         This is useful for comparing entities or checking if they have changed.
         """
-        return hash(json.dumps(self.content, sort_keys=True))
+        sha_1 = hashlib.sha1()
+        sha_1.update(json.dumps(self.content, sort_keys=True).encode('utf-8'))
+        return sha_1.hexdigest()
 
     @classmethod
     def from_json(cls, json_str: str):

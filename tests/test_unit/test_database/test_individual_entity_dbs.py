@@ -22,16 +22,21 @@ def test_metadata_entity_db(manga_request_content, manga_request_id):
     with mock.patch.object(MetadataEntity, "from_server_url") as mock_from_server_url:
         mock_from_server_url.return_value = [MetadataEntity(content=manga_request_content)]
         entity_db = MetadataEntityDB()
+
+        assert entity_db.to_hash(manga_request_id) == "0"  # Initially, the entity should not exist
+
         entity_db.update(manga_request_id)
         mock_from_server_url.assert_called_once_with(query_params={"ids[]": [manga_request_id]})
 
         assert len(entity_db) == 1
         assert entity_db[manga_request_id].content == manga_request_content
+        assert entity_db.to_hash(manga_request_id) == "ef16c069d3edb809e80412fd584294576c169cb1"
 
         # Assert that a second call does not re-add
         entity_db.update(manga_request_id, skip_on_exist=True)
         mock_from_server_url.assert_called_once()
         assert len(entity_db) == 1
+        assert entity_db.to_hash(manga_request_id) == "ef16c069d3edb809e80412fd584294576c169cb1"
 
 
 def test_metadata_entity_db_can_store_and_load(manga_request_content, manga_request_id):

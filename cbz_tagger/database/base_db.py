@@ -1,3 +1,4 @@
+import hashlib
 import json
 from typing import Union
 
@@ -40,18 +41,20 @@ class BaseEntityDB(BaseEntityObject):
             database[key] = cls.entity_class.from_json(value)
         return cls(database=database)
 
-    def to_hash(self, entity_id: str) -> int:
+    def to_hash(self, entity_id: str) -> str:
         """
         Returns a hash of the entity content.
         This is useful for comparing entities or checking if they have changed.
         """
         entity_content = self.database.get(entity_id)
         if entity_content is None:
-            return 0
+            return "0"
 
         if isinstance(entity_content, list):
-            hashes = "".join([str(item.to_hash()) for item in entity_content])
-            return hash(hashes)
+            sha_1 = hashlib.sha1()
+            for item in entity_content:
+                sha_1.update(item.to_hash().encode('utf-8'))
+            return sha_1.hexdigest()
         else:
             return entity_content.to_hash()
 
