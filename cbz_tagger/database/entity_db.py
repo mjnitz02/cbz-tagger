@@ -275,8 +275,9 @@ class EntityDB:
             batch = entity_ids[i : i + batch_size]
             self.metadata.update(batch, batch_response=True)
 
-        logger.info("Checking for chapter updates...")
-        for entity_id in entity_ids:
+        for idx, entity_id in enumerate(entity_ids):
+            if idx % 10 == 0:
+                logger.info("Checking for chapter updates... [Remaining: %d]", len(entity_ids) - (idx + 1))
             chapter_plugin = self.entity_chapter_plugin.get(entity_id, {})
             if chapter_plugin:
                 self.chapters.update(entity_id, **chapter_plugin)
