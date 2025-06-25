@@ -16,6 +16,7 @@ dependencies = [
     "pillow>=11.2.1",
     "requests>=2.32.4",
     "beautifulsoup4==4.12.3",
+    "pre-commit>=4.2.0",
 ]
 
 
