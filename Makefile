@@ -15,7 +15,12 @@ test-lint:
 	uvx ty check cbz_tagger
 
 test:
+	echo "Running tests locally"
 	uv run pytest tests/ -W ignore::DeprecationWarning
+	echo "Building Docker image for testing"
+	docker build -t cbz-tagger .
+	echo "Running tests in Docker"
+	docker run --entrypoint "/bin/sh" cbz-tagger -c "uv run pytest /app/tests/ -W ignore::DeprecationWarning"
 
 test-unit:
 	uv run pytest tests/test_unit/ -W ignore::DeprecationWarning
