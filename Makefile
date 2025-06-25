@@ -1,7 +1,5 @@
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
-.PHONY : restart fresh stop clean build run
-
 install:
 	uv sync
 	pre-commit install
