@@ -281,10 +281,17 @@ class EntityDB:
             if chapter_plugin:
                 self.chapters.update(entity_id, **chapter_plugin)
 
+        updated_metadata = {}
+        updated_chapters = {}
+        for entity_id in entity_ids:
+            updated_metadata[entity_id] = self.metadata.to_hash(entity_id)
+            updated_chapters[entity_id] = self.chapters.to_hash(entity_id)
+
         updated_entity_ids = []
         for entity_id in entity_ids:
-            chapter_plugin = self.entity_chapter_plugin.get(entity_id, {})
-            if chapter_plugin or self.metadata[entity_id].to_hash() != previous_metadata.get(entity_id, 0):
+            if (updated_metadata.get(entity_id, "0") != previous_metadata.get(entity_id, "0")) or (
+                updated_chapters.get(entity_id, "0") != previous_chapters.get(entity_id, "0")
+            ):
                 updated_entity_ids.append(entity_id)
                 logger.debug("Updated metadata for %s: %s", self.entity_names.get(entity_id, "Unknown"), entity_id)
 

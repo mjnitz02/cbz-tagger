@@ -653,3 +653,157 @@ def test_refresh(
     mock_download_missing_covers.assert_called_once()
     mock_remove_orphaned_covers.assert_called_once()
     mock_download_missing_chapters.assert_called_once_with(storage_path)
+
+
+def test_update_manga_entity_id_metadata_and_find_updated_ids_with_updated_metadata(
+    simple_mock_entity_db, manga_request_id
+):
+    """Test that entities with updated metadata are returned in the list of updated entity IDs."""
+    # Setup metadata with a mock that will return different hash values before and after update
+    mock_metadata = mock.MagicMock()
+
+    mock_metadata.to_hash = mock.MagicMock(side_effect=["initial_hash", "updated_hash"])
+    mock_metadata.update = mock.MagicMock()
+    mock_metadata.__getitem__ = mock.MagicMock(return_value=mock.MagicMock())
+
+    # Setup chapters with no changes
+    mock_chapters = mock.MagicMock()
+    mock_chapters.to_hash = mock.MagicMock(return_value="chapter_hash")
+    mock_chapters.update = mock.MagicMock()
+
+    simple_mock_entity_db.metadata = mock_metadata
+    simple_mock_entity_db.chapters = mock_chapters
+    simple_mock_entity_db.entity_chapter_plugin = {}
+
+    # Call the method being tested
+    updated_ids = simple_mock_entity_db.update_manga_entity_id_metadata_and_find_updated_ids([manga_request_id])
+
+    # Verify the metadata was updated and the entity ID was returned
+    mock_metadata.update.assert_called_once_with([manga_request_id], batch_response=True)
+    assert updated_ids == [manga_request_id]
+
+
+def test_update_manga_entity_id_metadata_and_find_updated_ids_with_updated_chapters(
+    simple_mock_entity_db, manga_request_id
+):
+    """Test that entities with chapter plugins are always returned in the list of updated entity IDs."""
+    # Setup metadata with no changes (same hash before and after update)
+    mock_metadata = mock.MagicMock()
+
+    mock_metadata.to_hash = mock.MagicMock(return_value="metadata_hash")
+    mock_metadata.__getitem__ = mock.MagicMock(return_value=mock.MagicMock())
+    mock_metadata.update = mock.MagicMock()
+
+    # Setup chapters
+    mock_chapters = mock.MagicMock()
+    mock_chapters.to_hash = mock.MagicMock(side_effect=["initial_hash", "updated_hash"])
+    mock_chapters.update = mock.MagicMock()
+
+    simple_mock_entity_db.metadata = mock_metadata
+    simple_mock_entity_db.chapters = mock_chapters
+    simple_mock_entity_db.entity_chapter_plugin = {
+        manga_request_id: {"plugin_type": "mdx", "plugin_id": manga_request_id}
+    }
+
+    # Call the method being tested
+    updated_ids = simple_mock_entity_db.update_manga_entity_id_metadata_and_find_updated_ids([manga_request_id])
+
+    # Verify the metadata and chapters were updated and the entity ID was returned
+    mock_metadata.update.assert_called_once_with([manga_request_id], batch_response=True)
+    mock_chapters.update.assert_called_once_with(manga_request_id, plugin_type="mdx", plugin_id=manga_request_id)
+    assert updated_ids == [manga_request_id]
+
+
+def test_update_manga_entity_id_metadata_and_find_updated_ids_with_no_updates(simple_mock_entity_db, manga_request_id):
+    """Test that entities with no changes in metadata and no chapter plugins are not returned."""
+    # Setup metadata with no changes (same hash before and after update)
+    mock_metadata = mock.MagicMock()
+
+    mock_metadata.to_hash = mock.MagicMock(return_value="metadata_hash")
+    mock_metadata.__getitem__ = mock.MagicMock(return_value=mock.MagicMock())
+    mock_metadata.update = mock.MagicMock()
+
+    # Setup chapters
+    mock_chapters = mock.MagicMock()
+    mock_chapters.to_hash = mock.MagicMock(return_value="chapter_hash")
+    mock_chapters.update = mock.MagicMock()
+
+    simple_mock_entity_db.metadata = mock_metadata
+    simple_mock_entity_db.chapters = mock_chapters
+    simple_mock_entity_db.entity_chapter_plugin = {}
+
+    # Call the method being tested
+    updated_ids = simple_mock_entity_db.update_manga_entity_id_metadata_and_find_updated_ids([manga_request_id])
+
+    # Verify the metadata was updated but the entity ID was not returned
+    mock_metadata.update.assert_called_once_with([manga_request_id], batch_response=True)
+    mock_chapters.update.assert_not_called()
+    assert updated_ids == []
+
+
+def test_update_manga_entity_id_metadata_and_find_updated_ids_with_multiple_entities(simple_mock_entity_db):
+    """Test handling multiple entity IDs with some having updates and others not."""
+    entity_id1 = "entity1"
+    entity_id2 = "entity2"
+    entity_id3 = "entity3"
+    entity_id4 = "entity4"
+
+    # Setup metadata with varying hash values
+    mock_metadata = mock.MagicMock()
+
+    mock_metadata.to_hash = mock.MagicMock(
+        side_effect=[
+            "initial_hash",
+            "initial_hash",
+            "initial_hash",
+            "initial_hash",
+            "initial_hash",
+            "updated_hash",
+            "initial_hash",
+            "initial_hash",
+        ]
+    )
+    mock_metadata.__getitem__ = mock.MagicMock(return_value=mock.MagicMock())
+    mock_metadata.update = mock.MagicMock()
+
+    # Setup chapters
+    mock_chapters = mock.MagicMock()
+    mock_chapters.to_hash = mock.MagicMock(
+        side_effect=[
+            "initial_hash",
+            "initial_hash",
+            "initial_hash",
+            "initial_hash",
+            "initial_hash",
+            "initial_hash",
+            "updated_hash",
+            "initial_hash",
+        ]
+    )
+    mock_chapters.update = mock.MagicMock()
+
+    simple_mock_entity_db.metadata = mock_metadata
+    simple_mock_entity_db.chapters = mock_chapters
+    # Entity3 has a chapter plugin
+    simple_mock_entity_db.entity_chapter_plugin = {
+        entity_id3: {"plugin_type": "cmk", "plugin_id": entity_id3},
+        entity_id4: {"plugin_type": "cmk", "plugin_id": entity_id4},
+    }
+    simple_mock_entity_db.entity_names = {
+        entity_id1: "Entity 1",
+        entity_id2: "Entity 2",
+        entity_id3: "Entity 3",
+        entity_id4: "Entity 4",
+    }
+
+    # Call the method being tested with batch_size=2 to test batch processing
+    updated_ids = simple_mock_entity_db.update_manga_entity_id_metadata_and_find_updated_ids(
+        [entity_id1, entity_id2, entity_id3, entity_id4], batch_size=2
+    )
+
+    # Verify the correct calls were made
+    assert mock_metadata.update.call_count == 2  # Two batches: [entity1, entity2] and [entity3]
+    assert mock_chapters.update.call_count == 2  # Two plugins: [entity3, entity4]
+
+    # Entity2 has metadata changes, Entity3 has a chapter plugin
+    assert sorted(updated_ids) == sorted([entity_id2, entity_id3])
