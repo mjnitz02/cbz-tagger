@@ -18,7 +18,7 @@ def test_author_entity_from_url(author_request_response):
         entities = AuthorEntity.from_server_url()
         assert len(entities) == 1
         assert entities[0].entity_id == "88259f42-5a70-4eff-b5f0-8687ab8844b9"
-        mock_request.assert_called_once_with(f"{BaseEntity.base_url}/author", None)
+        mock_request.assert_called_once_with(f"{BaseEntity.base_url}/author", {})
 
 
 def test_author_entity_can_store_and_load(author_request_content, check_entity_for_save_and_load):
