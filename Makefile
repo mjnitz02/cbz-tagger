@@ -2,7 +2,7 @@ ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 .PHONY : restart fresh stop clean build run
 
-req:
+install:
 	uv sync
 
 lint:

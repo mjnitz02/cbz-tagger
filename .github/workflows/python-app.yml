@@ -31,7 +31,7 @@ jobs:
         python-version: "3.13"
     - name: Install dependencies
       run: |
-        make req
+        make install
     - name: Lint
       run: |
         make test-lint
@@ -48,7 +48,7 @@ jobs:
         python-version: "3.13"
     - name: Install dependencies
       run: |
-        make req
+        make install
     - name: Test with pytest
       run: |
         make test-unit
@@ -65,7 +65,7 @@ jobs:
         python-version: "3.13"
     - name: Install dependencies
       run: |
-        make req
+        make install
     - name: Test with pytest
       run: |
         make test-integration
