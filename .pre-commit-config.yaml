@@ -9,3 +9,9 @@ repos:
     -   id: check-yaml
     -   id: check-added-large-files
     -   id: check-toml
+-   repo: local
+    hooks:
+    -   id: lint
+        name: Check lint (ruff and ty)
+        entry: make lint
+        language: system
