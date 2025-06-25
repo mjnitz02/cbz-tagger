@@ -18,8 +18,8 @@ def test_end_to_end_disabled_on_commits(end_to_end_manga_name):
 
 
 @pytest.mark.skip("Debugging only")
-@mock.patch("cbz_tagger.database.entity_db.get_input")
-@mock.patch("cbz_tagger.database.entity_db.get_raw_input")
+@mock.patch("cbz_tagger.common.input.get_input")
+@mock.patch("cbz_tagger.common.input.get_raw_input")
 def test_end_to_end_mdx(
     mock_get_raw_input, mock_get_input, integration_scanner, end_to_end_manga_name, capture_input_fixture
 ):
@@ -40,8 +40,8 @@ def test_end_to_end_mdx(
 
 
 @pytest.mark.skip("Debugging only")
-@mock.patch("cbz_tagger.database.entity_db.get_input")
-@mock.patch("cbz_tagger.database.entity_db.get_raw_input")
+@mock.patch("cbz_tagger.common.input.get_input")
+@mock.patch("cbz_tagger.common.input.get_raw_input")
 def test_end_to_end_live_cmk(
     mock_get_raw_input,
     mock_get_input,

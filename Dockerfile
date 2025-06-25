@@ -19,7 +19,7 @@ COPY pyproject.toml ./
 
 ### Dependencies ###
 RUN echo "Install dependencies" && \
-    apk add --no-cache gcc libffi-dev musl-dev postgresql-dev zlib-dev jpeg-dev uv && \
+    apk add --no-cache uv && \
     uv sync --no-cache
 
 ### Container Aliases ###
