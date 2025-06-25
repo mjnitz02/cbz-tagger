@@ -4,7 +4,6 @@ import os
 import re
 import shutil
 from typing import Optional
-from typing import Self
 from xml.dom import minidom
 from xml.etree import ElementTree
 from zipfile import ZIP_DEFLATED
@@ -99,7 +98,7 @@ class EntityDB:
         return json.dumps(content)
 
     @classmethod
-    def load(cls, root_path) -> Self:
+    def load(cls, root_path) -> "EntityDB":
         entity_db_path = os.path.join(root_path, "entity_db.json")
         if os.path.exists(entity_db_path):
             with open(entity_db_path, "r", encoding="UTF-8") as read_file:
@@ -434,7 +433,7 @@ class EntityDB:
         cover_entity = self.covers.get_cover_for_volume(entity_id, volume, self.metadata[entity_id].cover_art_id)
         return cover_entity.local_filename if cover_entity else None
 
-    def to_xml_tree(self, manga_name, chapter_number, chapter_is_volume=False) -> ElementTree:
+    def to_xml_tree(self, manga_name, chapter_number, chapter_is_volume=False) -> ElementTree.Element:
         entity_id = self.entity_map.get(manga_name)
         if entity_id is None:
             raise ValueError(f"Could not find an entity for {manga_name}")

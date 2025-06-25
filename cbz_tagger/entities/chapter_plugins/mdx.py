@@ -1,6 +1,7 @@
 import logging
 from time import sleep
 from typing import Any
+from typing import Optional
 
 from cbz_tagger.common.enums import Urls
 from cbz_tagger.entities.chapter_plugins.plugin import ChapterPluginEntity
@@ -14,7 +15,9 @@ class ChapterPluginMDX(ChapterPluginEntity):
     quality = "data"
 
     @classmethod
-    def from_server_url(cls, query_params=None, **kwargs):
+    def from_server_url(cls, query_params: Optional[dict] = None, **kwargs):
+        if query_params is None:
+            query_params = {}
         entity_id = query_params["ids[]"][0]
 
         order = {

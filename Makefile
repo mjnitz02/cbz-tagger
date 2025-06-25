@@ -8,10 +8,12 @@ install:
 lint:
 	uv run ruff format .
 	uv run ruff check . --fix
+	uvx ty check cbz_tagger
 
 test-lint:
 	uv run ruff format . --check
 	uv run ruff check .
+	uvx ty check cbz_tagger
 
 test:
 	uv run pytest tests/ -W ignore::DeprecationWarning

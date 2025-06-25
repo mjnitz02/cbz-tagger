@@ -67,14 +67,38 @@ def run_container(**kwargs):
     if kwargs.get("entrymode"):
         container_mode = AppEnv.CONTAINER_MODE
         if container_mode == ContainerMode.GUI:
-            container = GuiContainer(**env_vars)
+            container = GuiContainer(
+                config_path=env_vars["config_path"],
+                scan_path=env_vars["scan_path"],
+                storage_path=env_vars["storage_path"],
+                timer_delay=env_vars["timer_delay"],
+                environment=env_vars["environment"],
+            )
         elif container_mode == ContainerMode.TIMER:
-            container = TimerContainer(**env_vars)
+            container = TimerContainer(
+                config_path=env_vars["config_path"],
+                scan_path=env_vars["scan_path"],
+                storage_path=env_vars["storage_path"],
+                timer_delay=env_vars["timer_delay"],
+                environment=env_vars["environment"],
+            )
         else:
-            container = ManualContainer(**env_vars)
+            container = ManualContainer(
+                config_path=env_vars["config_path"],
+                scan_path=env_vars["scan_path"],
+                storage_path=env_vars["storage_path"],
+                timer_delay=env_vars["timer_delay"],
+                environment=env_vars["environment"],
+            )
         container.run()
     else:
-        container = ManualContainer(**env_vars)
+        container = ManualContainer(
+            config_path=env_vars["config_path"],
+            scan_path=env_vars["scan_path"],
+            storage_path=env_vars["storage_path"],
+            timer_delay=env_vars["timer_delay"],
+            environment=env_vars["environment"],
+        )
         if kwargs.get("add"):
             container.scanner.add_tracked_entity()
         elif kwargs.get("remove"):

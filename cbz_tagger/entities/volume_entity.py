@@ -1,4 +1,5 @@
 import math
+from typing import Optional
 
 from cbz_tagger.entities.base_entity import BaseEntity
 
@@ -8,7 +9,9 @@ class VolumeEntity(BaseEntity):
     paginated: bool = False
 
     @classmethod
-    def from_server_url(cls, query_params=None, **kwargs):
+    def from_server_url(cls, query_params: Optional[dict] = None, **kwargs):
+        if query_params is None:
+            query_params = {}
         entity_id = query_params["ids[]"][0]
 
         response = cls.request_with_retry(f"{cls.entity_url}/{entity_id}/aggregate")
