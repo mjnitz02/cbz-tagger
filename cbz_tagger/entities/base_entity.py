@@ -28,6 +28,13 @@ class BaseEntity(BaseEntityObject):
     def to_json(self):
         return json.dumps(self.content)
 
+    def to_hash(self):
+        """
+        Returns a hash of the entity content.
+        This is useful for comparing entities or checking if they have changed.
+        """
+        return hash(json.dumps(self.content, sort_keys=True))
+
     @classmethod
     def from_json(cls, json_str: str):
         if isinstance(json_str, list):
