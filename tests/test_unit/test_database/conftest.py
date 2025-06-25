@@ -1,6 +1,5 @@
 import copy
 import os
-from typing import List
 from typing import Union
 from unittest import mock
 
@@ -109,7 +108,7 @@ def mock_entity_db_with_mock_updates(mock_entity_db, manga_request_id, manga_req
 @pytest.fixture
 def mock_entity_db_with_metadata_update(mock_entity_db, manga_request_content):
     class MockMetadataEntityDB(MetadataEntityDB):
-        def update(self, entity_ids: Union[List[str], str], skip_on_exist=False, **kwargs):
+        def update(self, entity_ids: Union[list[str], str], skip_on_exist=False, **kwargs):
             if not isinstance(entity_ids, list):
                 entity_ids = [entity_ids]
 

@@ -1,6 +1,4 @@
 from collections import defaultdict
-from typing import Dict
-from typing import List
 from typing import Optional
 
 from cbz_tagger.database.base_db import BaseEntityDB
@@ -8,7 +6,7 @@ from cbz_tagger.entities.chapter_entity import ChapterEntity
 
 
 class ChapterEntityDB(BaseEntityDB):
-    database: Dict[str, List[ChapterEntity]]
+    database: dict[str, list[ChapterEntity]]
     entity_class = ChapterEntity
 
     @staticmethod
@@ -59,7 +57,7 @@ class ChapterEntityDB(BaseEntityDB):
         return filtered_chapters
 
     @staticmethod
-    def remove_chapter_duplicate_entries(list_of_chapters) -> List[Optional[str]]:
+    def remove_chapter_duplicate_entries(list_of_chapters) -> list[Optional[str]]:
         grouped_chapters, scanlation_groups = ChapterEntityDB.group_chapters(list_of_chapters)
         priority_groups = ChapterEntityDB.get_priority_scanlation_groups(scanlation_groups)
         filtered_chapters = ChapterEntityDB.filter_chapters_by_priority_scanlation_groups(

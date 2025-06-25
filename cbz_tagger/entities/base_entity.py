@@ -3,8 +3,6 @@ import logging
 from json import JSONDecodeError
 from time import sleep
 from typing import Any
-from typing import Dict
-from typing import List
 
 import cloudscraper
 import requests
@@ -51,11 +49,11 @@ class BaseEntity(BaseEntityObject):
         return self.content.get("type")
 
     @property
-    def attributes(self) -> Dict[str, Any]:
+    def attributes(self) -> dict[str, Any]:
         return self.content.get("attributes", {})
 
     @property
-    def relationships(self) -> List[Dict[str, str]]:
+    def relationships(self) -> list[dict[str, str]]:
         return self.content.get("relationships", {})
 
     @classmethod
@@ -90,7 +88,7 @@ class BaseEntity(BaseEntityObject):
         return cls.request_with_retry(url).content
 
     @classmethod
-    def unpaginate_request(cls, url, query_params=None, limit=100) -> List[Dict[str, Any]]:
+    def unpaginate_request(cls, url, query_params=None, limit=100) -> list[dict[str, Any]]:
         if query_params is None:
             query_params = {}
 

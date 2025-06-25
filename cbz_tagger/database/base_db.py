@@ -1,6 +1,4 @@
 import json
-from typing import Dict
-from typing import List
 from typing import Union
 
 from cbz_tagger.entities.base_entity import BaseEntityObject
@@ -8,7 +6,7 @@ from cbz_tagger.entities.base_entity import BaseEntityObject
 
 class BaseEntityDB(BaseEntityObject):
     entity_class = None
-    database: Dict[str, entity_class]
+    database: dict[str, entity_class]
     query_param_field = "ids[]"
 
     def __init__(self, database=None):
@@ -41,7 +39,7 @@ class BaseEntityDB(BaseEntityObject):
             database[key] = cls.entity_class.from_json(value)
         return cls(database=database)
 
-    def update(self, entity_ids: Union[List[str], str], skip_on_exist=False, **kwargs):
+    def update(self, entity_ids: Union[list[str], str], skip_on_exist=False, **kwargs):
         if not isinstance(entity_ids, list):
             entity_ids = [entity_ids]
 

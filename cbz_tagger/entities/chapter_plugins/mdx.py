@@ -1,7 +1,6 @@
 import logging
 from time import sleep
 from typing import Any
-from typing import List
 
 from cbz_tagger.common.enums import Urls
 from cbz_tagger.entities.chapter_plugins.plugin import ChapterPluginEntity
@@ -35,10 +34,10 @@ class ChapterPluginMDX(ChapterPluginEntity):
         return url
 
     @classmethod
-    def parse_info_feed(cls, entity_id: str) -> List[Any]:
+    def parse_info_feed(cls, entity_id: str) -> list[Any]:
         return []
 
-    def parse_chapter_download_links(self, url: str) -> List[str]:
+    def parse_chapter_download_links(self, url: str) -> list[str]:
         response = self.request_with_retry(url).json()
         pages = self.attributes.get("pages")
 
