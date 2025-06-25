@@ -53,7 +53,7 @@ class BaseEntityDB(BaseEntityObject):
         if isinstance(entity_content, list):
             sha_1 = hashlib.sha1()
             for item in entity_content:
-                sha_1.update(item.to_hash().encode('utf-8'))
+                sha_1.update(item.to_hash().encode("utf-8"))
             return sha_1.hexdigest()
         else:
             return entity_content.to_hash()

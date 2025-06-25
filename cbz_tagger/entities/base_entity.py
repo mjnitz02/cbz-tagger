@@ -35,7 +35,7 @@ class BaseEntity(BaseEntityObject):
         This is useful for comparing entities or checking if they have changed.
         """
         sha_1 = hashlib.sha1()
-        sha_1.update(json.dumps(self.content, sort_keys=True).encode('utf-8'))
+        sha_1.update(json.dumps(self.content, sort_keys=True).encode("utf-8"))
         return sha_1.hexdigest()
 
     @classmethod

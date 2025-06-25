@@ -39,6 +39,44 @@ def test_metadata_entity_db(manga_request_content, manga_request_id):
         assert entity_db.to_hash(manga_request_id) == "ef16c069d3edb809e80412fd584294576c169cb1"
 
 
+def test_metadata_entity_db_batch_response(manga_request_content, manga_request_id):
+    with mock.patch.object(MetadataEntity, "from_server_url") as mock_from_server_url:
+        # Create a second metadata content with different ID
+        second_manga_content = manga_request_content.copy()
+        second_manga_content["id"] = "different-manga-id-12345"
+
+        # Return two different MetadataEntity objects
+        mock_from_server_url.return_value = [
+            MetadataEntity(content=manga_request_content),
+            MetadataEntity(content=second_manga_content),
+        ]
+
+        entity_db = MetadataEntityDB()
+
+        # Initially, entities should not exist
+        assert entity_db.to_hash(manga_request_id) == "0"
+        assert entity_db.to_hash("different-manga-id-12345") == "0"
+
+        # Update with batch response
+        entity_db.update([manga_request_id, "different-manga-id-12345"], batch_response=True)
+        mock_from_server_url.assert_called_once_with(
+            query_params={"ids[]": [[manga_request_id, "different-manga-id-12345"]]}
+        )
+
+        # Verify both entities were added
+        assert len(entity_db) == 2
+        assert entity_db[manga_request_id].content == manga_request_content
+        assert entity_db["different-manga-id-12345"].content == second_manga_content
+
+        # Check hash values
+        assert entity_db.to_hash(manga_request_id) == "ef16c069d3edb809e80412fd584294576c169cb1"
+        assert entity_db.to_hash("different-manga-id-12345") == "b83c37e946d451bcd1c27b06e6d4bed1bfeed8e4"
+
+        # Assert that a second call does not re-add when skip_on_exist is True
+        entity_db.update([manga_request_id, "different-manga-id-12345"], skip_on_exist=True, batch_response=True)
+        assert len(entity_db) == 2
+
+
 def test_metadata_entity_db_can_store_and_load(manga_request_content, manga_request_id):
     with mock.patch.object(MetadataEntity, "from_server_url") as mock_from_server_url:
         mock_from_server_url.return_value = [MetadataEntity(content=manga_request_content)]
