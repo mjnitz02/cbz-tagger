@@ -1,20 +1,39 @@
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
-.PHONY : restart fresh stop clean build run
+.PHONY: install lint-format lint-check lint-typing
 
 install:
 	uv sync
 
-lint:
+pre-commit-install:
+	pre-commit install
+
+lint-format:
 	uv run ruff format .
+
+lint-check:
 	uv run ruff check . --fix
+
+lint-typing:
+	uvx ty check cbz_tagger
+
+lint:
+	$(MAKE) lint-format
+	$(MAKE) lint-check
+	$(MAKE) lint-typing
 
 test-lint:
 	uv run ruff format . --check
 	uv run ruff check .
+	uvx ty check cbz_tagger
 
 test:
+	echo "Running tests locally"
 	uv run pytest tests/ -W ignore::DeprecationWarning
+	echo "Building Docker image for testing"
+	docker build -t cbz-tagger .
+	echo "Running tests in Docker"
+	docker run --entrypoint "/bin/sh" cbz-tagger -c "uv run pytest /app/tests/ -W ignore::DeprecationWarning"
 
 test-unit:
 	uv run pytest tests/test_unit/ -W ignore::DeprecationWarning

@@ -4,6 +4,7 @@ import logging
 from json import JSONDecodeError
 from time import sleep
 from typing import Any
+from typing import Optional
 
 import cloudscraper
 import requests
@@ -45,8 +46,10 @@ class BaseEntity(BaseEntityObject):
         return cls(json.loads(json_str))
 
     @classmethod
-    def from_server_url(cls, query_params=None, **kwargs):
+    def from_server_url(cls, query_params: Optional[dict] = None, **kwargs):
         _ = kwargs
+        if query_params is None:
+            query_params = {}
         response = cls.unpaginate_request(cls.entity_url, query_params)
         return [cls(data) for data in response]
 
@@ -86,7 +89,7 @@ class BaseEntity(BaseEntityObject):
                     logger.error("Error downloading %s: %s. Attempt: %s", url, response.status_code, attempt)
                     sleep(5 * attempt)
                 # If the request times out, retry
-                except requests.exceptions.Timeout:
+                except requests.exceptions.Timeout:  # ty: ignore[unresolved-attribute]
                     attempt += 1
                     logger.error("Error downloading %s. Attempt: %s", url, attempt)
                     sleep(5 * attempt)

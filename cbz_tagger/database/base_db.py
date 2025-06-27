@@ -7,15 +7,15 @@ from cbz_tagger.entities.base_entity import BaseEntityObject
 
 
 class BaseEntityDB(BaseEntityObject):
-    entity_class: BaseEntity = None
-    database: dict[str, entity_class]
+    entity_class: BaseEntity
+    database: dict[str, "BaseEntity"]
     query_param_field = "ids[]"
 
     def __init__(self, database=None):
         self.version = 2
         self.database = {} if database is None else database
 
-    def __getitem__(self, entity_id) -> entity_class:
+    def __getitem__(self, entity_id) -> BaseEntity:
         return self.database.get(entity_id)
 
     def __len__(self):

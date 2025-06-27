@@ -28,7 +28,7 @@ class AppEnv:
         UMASK = "022"
 
     if os.getenv("CONFIG_PATH") is not None:
-        CONFIG_PATH = os.getenv("CONFIG_PATH")
+        CONFIG_PATH = str(os.getenv("CONFIG_PATH"))
     else:
         CONFIG_PATH = "\\config"
 

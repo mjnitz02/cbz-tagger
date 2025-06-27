@@ -3,6 +3,7 @@ import os
 import shutil
 import time
 from datetime import datetime
+from typing import Optional
 from zipfile import BadZipFile
 
 from cbz_tagger.database.entity_db import EntityDB
@@ -13,8 +14,11 @@ logger = logging.getLogger()
 
 class FileScanner:
     def __init__(
-        self, config_path, scan_path, storage_path, add_missing=True, environment: dict[str, str] = None
+        self, config_path, scan_path, storage_path, add_missing=True, environment: Optional[dict[str, str]] = None
     ) -> None:
+        if environment is None:
+            environment = {}
+
         self.config_path = config_path
         self.scan_path = scan_path
         self.storage_path = storage_path

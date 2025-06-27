@@ -45,7 +45,7 @@ def test_cover_entity_from_url(cover_request_response):
         assert entities[1].entity_id == "5d989a45-0946-4f22-9a79-53cc26e6e958"
         assert entities[2].entity_id == "7be23c33-7b1e-4f2a-a9fe-ad3d6263f30f"
         assert entities[3].entity_id == "9d64b6fb-0cac-4fa7-b3da-553fea602d2d"
-        mock_request.assert_called_once_with(f"{BaseEntity.base_url}/cover", None)
+        mock_request.assert_called_once_with(f"{BaseEntity.base_url}/cover", {})
 
 
 def test_cover_entity_can_store_and_load(cover_request_content, check_entity_for_save_and_load):

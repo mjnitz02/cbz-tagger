@@ -49,7 +49,7 @@ def test_metadata_entity_from_url(manga_request_response):
         assert len(entities) == 2
         assert entities[0].entity_id == "831b12b8-2d0e-4397-8719-1efee4c32f40"
         assert entities[1].entity_id == "f98660a1-d2e2-461c-960d-7bd13df8b76d"
-        mock_request.assert_called_once_with(f"{BaseEntity.base_url}/manga", None)
+        mock_request.assert_called_once_with(f"{BaseEntity.base_url}/manga", {})
 
 
 def test_metadata_entity_can_store_and_load(manga_request_content, check_entity_for_save_and_load):

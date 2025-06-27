@@ -1,0 +1,26 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.2.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: mixed-line-ending
+    -   id: check-yaml
+    -   id: check-added-large-files
+    -   id: check-toml
+-   repo: local
+    hooks:
+    -   id: lint-format
+        name: Check codestyle format wih ruff-format
+        entry: make lint-format
+        language: system
+    -   id: lint-check
+        name: Check code for pylint errors wih ruff-check
+        entry: make lint-format
+        language: system
+    -   id: lint-typing
+        name: Check typing errors wih ty
+        entry: make lint-typing
+        language: system
