@@ -4,6 +4,8 @@ ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 install:
 	uv sync
+
+precommit:
 	pre-commit install
 
 lint-format:
