@@ -13,7 +13,7 @@ repos:
 -   repo: local
     hooks:
     -   id: lint-format
-        name: Format codestyle wih ruff-format
+        name: Check codestyle format wih ruff-format
         entry: make lint-format
         language: system
     -   id: lint-check
