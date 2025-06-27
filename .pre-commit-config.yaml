@@ -12,7 +12,15 @@ repos:
     -   id: check-toml
 -   repo: local
     hooks:
-    -   id: lint
-        name: Check Linters [ruff] and Typing [ty]
-        entry: make lint
+    -   id: lint-format
+        name: Format codestyle wih ruff-format
+        entry: make lint-format
+        language: system
+    -   id: lint-check
+        name: Check code for pylint errors wih ruff-check
+        entry: make lint-format
+        language: system
+    -   id: lint-typing
+        name: Check typing errors wih ty
+        entry: make lint-typing
         language: system

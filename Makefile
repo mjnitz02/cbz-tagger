@@ -1,13 +1,24 @@
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
+.PHONY: install lint-format lint-check lint-typing
+
 install:
 	uv sync
 	pre-commit install
 
-lint:
+lint-format:
 	uv run ruff format .
+
+lint-check:
 	uv run ruff check . --fix
+
+lint-typing:
 	uvx ty check cbz_tagger
+
+lint:
+	$(MAKE) lint-format
+	$(MAKE) lint-check
+	$(MAKE) lint-typing
 
 test-lint:
 	uv run ruff format . --check
