@@ -6,14 +6,14 @@
 
 CBZ Tagger is a tool to tag comic book files in CBZ format. Many cbz based files are incorrectly formatted
 in ways that are not compatible with the ComicInfo.xml format. This tool utilizes public metadata sources to tag
-the files correctly. It populates the majority of fields specified by the 
+the files correctly. It populates the majority of fields specified by the
 [ComicRack metadata format](https://anansi-project.github.io/docs/category/schemas). Additionally, it is capable of
 retrieving the cover image from the metadata source and embedding it into the CBZ file along with correctly formatting
 the file structure to be compatible with readers such as [Komga](https://komga.org/).
 
 The GUI interface was implemented in version 2.x and is a work in progress. It is fully functional, but may experience
 occasional graphical glitches. The command line interface is more robust, but is also more difficult to use when large
-amounts of comics are being processed or tracked. CBZ Tagger does implement a tracking and refresh system to help 
+amounts of comics are being processed or tracked. CBZ Tagger does implement a tracking and refresh system to help
 keep your library up to date, but this is a newer addition and has been undergoing continuous revisions to try
 and make the API processing more robust.
 
@@ -75,8 +75,8 @@ docker run -d \
 
 ## Parameters
 
-Containers are configured using parameters passed at runtime (such as those above). These parameters are separated by 
-a colon and indicate `<external>:<internal>` respectively. For example, `-p 8080:80` would expose port `80` from 
+Containers are configured using parameters passed at runtime (such as those above). These parameters are separated by
+a colon and indicate `<external>:<internal>` respectively. For example, `-p 8080:80` would expose port `80` from
 inside the container to be accessible from the host's IP on port `8080` outside the container.
 
 |       Parameter       | Function                                                                                                    |
@@ -121,8 +121,16 @@ maintainable and that new features do not break existing functionality.
 - Python 3.13 (https://www.python.org/downloads/)
 
 ### Environment setup
+You can set up the environment using `uv` to create a virtual environment. This will allow you to install the
+required dependencies without affecting your system Python installation.
 ```shell
 make install
+```
+
+You can also install `pre-commit` hooks to ensure that code is formatted correctly and passes linting checks before
+committing.
+```shell
+make pre-commit-install
 ```
 
 ### Running tests
