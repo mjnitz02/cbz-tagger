@@ -15,7 +15,7 @@ dependencies = [
     "cloudscraper>=1.2.71",
     "pillow>=11.3.0",
     "requests>=2.32.4",
-    "beautifulsoup4>=4.13.4",
+    "beautifulsoup4==4.12.3",
     "pre-commit>=4.2.0",
 ]
 
