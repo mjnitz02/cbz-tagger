@@ -16,7 +16,7 @@ class ChapterPluginKAL(ChapterPluginEntity):
         response = cls.request_with_retry(url)
 
         soup = BeautifulSoup(response.text, "html.parser")
-        chapter_entity = soup.find_all("ul", class_="chapter-list")
+        chapter_entity = soup.find_all("ul", {"class": "chapter-list"})
         items = chapter_entity[0].find_all("li")
 
         content = []
@@ -26,7 +26,7 @@ class ChapterPluginKAL(ChapterPluginEntity):
             item_content = item.find_all("a", href=True)[0]
             chapter_id = str(item_content.get("href").split("manga/")[-1]).replace("/", "-")
             link = f"{cls.entity_url}{str(item_content.get('href'))}"
-            chapter_title = item_content.find_all("strong", class_="chapter-title")[0].text
+            chapter_title = item_content.find_all("strong", {"class": "chapter-title"})[0].text
             updated = None
             content.append(
                 {

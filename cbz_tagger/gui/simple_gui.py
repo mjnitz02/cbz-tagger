@@ -31,7 +31,10 @@ class SimpleGui:
 
         self.meta_entries = []
         self.meta_choices = []
-        self.delete_series_ids = []
+        self.manage_series_ids = []
+        self.manage_series_names = []
+        self.manage_chapter_names = []
+        self.manage_chapter_ids = []
 
         self.initialize_gui()
         self.initialize()
@@ -52,8 +55,7 @@ class SimpleGui:
             ui.space()
             with ui.tabs() as tabs:
                 ui.tab("Series")
-                ui.tab("Add")
-                ui.tab("Delete")
+                ui.tab("Manage")
                 ui.tab("Config")
                 ui.tab("Log")
             ui.space()
@@ -78,8 +80,10 @@ class SimpleGui:
                     ui.label(f"{Emoji.SQUARE_ORANGE} Updated 45 - 90d")
                     ui.label(f"{Emoji.SQUARE_RED} Updated > 90d")
                     ui.label(f"{Emoji.QUESTION_MARK} Unknown")
-            with ui.tab_panel("Add"):
-                ui.label("Add Series")
+            with ui.tab_panel("Manage"):
+                ui.separator()
+                ui.markdown("#### Add Series")
+                ui.separator()
                 self.gui_elements["add_search"] = ui.button(
                     "Search for New Series", on_click=self.refresh_series_search
                 )
@@ -88,16 +92,16 @@ class SimpleGui:
                 ).classes("w-2/3")
                 self.gui_elements["selector_add_series"] = ui.select(
                     label="Select a series (type to filter)",
-                    options=["Please refresh series list"],
+                    options=["Please search for a series"],
                     with_input=True,
-                    value="Please refresh series list",
+                    value="Please search for a series",
                     on_change=self.refresh_series_names,
                 ).classes("w-2/3")
                 self.gui_elements["selector_add_name"] = ui.select(
                     label="Select the name of the series (type to filter)",
-                    options=["Please refresh series list"],
+                    options=["Please search for a series"],
                     with_input=True,
-                    value="Please refresh series list",
+                    value="Please search for a series",
                 ).classes("w-2/3")
                 self.gui_elements["selector_add_backend"] = ui.select(
                     label="Select a series backend (Default: MDX)", options=Plugins.all(), value=Plugins.MDX
@@ -117,25 +121,40 @@ class SimpleGui:
                     self.gui_elements["spinner_add"].set_visibility(False)
                     self.gui_elements["spinner_add_label"] = ui.label("Adding new series...")
                     self.gui_elements["spinner_add_label"].set_visibility(False)
-            with ui.tab_panel("Delete"):
-                ui.label("Delete Series")
-                self.gui_elements["selector_delete_series"] = ui.select(
+
+                ui.separator()
+                ui.markdown("#### Manage Series")
+                ui.separator()
+                self.gui_elements["selector_manage_series"] = ui.select(
                     label="Select a series (type to filter)",
                     options=["Please refresh series list"],
                     with_input=True,
                     value="Please refresh series list",
+                    on_change=self.refresh_manage_series_chapters,
+                ).classes("w-2/3")
+                self.gui_elements["selector_manage_chapters"] = ui.select(
+                    label="Select a chapter (type to filter)",
+                    options=["Please select a series first"],
+                    with_input=True,
+                    value="Please select a series first",
                 ).classes("w-2/3")
                 with ui.row():
-                    self.gui_elements["delete_refresh"] = ui.button(
-                        "Refresh Series List", on_click=self.refresh_delete_series
+                    self.gui_elements["manage_chapter_delete"] = ui.button(
+                        "Refresh Series List", on_click=self.refresh_manage_series
                     )
-                    self.gui_elements["delete_remove"] = ui.button(
+                    self.gui_elements["manage_series_delete"] = ui.button(
                         "Delete Selected Series", on_click=self.delete_series
                     )
-                    self.gui_elements["delete_remove"].disable()
+                    self.gui_elements["manage_series_delete"].disable()
+                    self.gui_elements["manage_chapter_delete"] = ui.button(
+                        "Reset Tracked Chapter", on_click=self.delete_chapter_tracking
+                    )
+                    self.gui_elements["manage_chapter_delete"].disable()
+                with ui.row():
                     self.gui_elements["delete_clean"] = ui.button(
                         "Clean Orphaned Files", on_click=self.clean_orphaned_files
                     )
+
             with ui.tab_panel("Config"):
                 ui.label("Server Configuration")
                 self.gui_elements["table_config"] = config_table()
@@ -216,17 +235,38 @@ class SimpleGui:
         self.gui_elements["selector_add_name"].options = self.meta_entries[entity_index].all_titles
         self.gui_elements["selector_add_name"].value = self.meta_entries[entity_index].all_titles[0]
 
-    def refresh_delete_series(self):
+    def refresh_manage_series(self):
         self.scanner.reload_scanner()
-        self.delete_series_ids = list(self.scanner.entity_database.entity_map.items())
-        choices = [f"{name} ({entity_id})" for name, entity_id in self.delete_series_ids]
-        if len(choices) == 0:
-            self.gui_elements["selector_delete_series"].options = ["Please refresh series list"]
-            self.gui_elements["delete_remove"].disable()
+        self.manage_series_ids = list(self.scanner.entity_database.entity_map.items())
+        self.manage_series_names = [f"{name} ({entity_id})" for name, entity_id in self.manage_series_ids]
+        if len(self.manage_series_names) == 0:
+            self.gui_elements["selector_manage_series"].options = ["Please refresh series list"]
+            self.gui_elements["manage_series_delete"].disable()
+            self.gui_elements["selector_manage_chapters"].value = ["Please refresh series list"]
+            self.gui_elements["manage_chapter_delete"].disable()
         else:
-            self.gui_elements["selector_delete_series"].options = choices
-            self.gui_elements["delete_remove"].enable()
-        self.gui_elements["selector_delete_series"].value = self.gui_elements["selector_delete_series"].options[0]
+            self.gui_elements["selector_manage_series"].options = self.manage_series_names
+            self.gui_elements["manage_series_delete"].enable()
+            self.gui_elements["manage_chapter_delete"].enable()
+        self.gui_elements["selector_manage_series"].value = self.gui_elements["selector_manage_series"].options[0]
+
+    def refresh_manage_series_chapters(self):
+        if len(self.manage_series_ids) == 0:
+            return
+
+        entity_index = self.manage_series_names.index(self.gui_elements["selector_manage_series"].value)
+        selected_series_name, selected_series_id = self.manage_series_ids[entity_index]
+
+        self.manage_chapter_ids = [
+            (selected_series_id, selected_series_name, chapter.entity_id, f"Chapter {chapter.chapter_number}")
+            for chapter in self.scanner.entity_database.chapters[selected_series_id]
+        ]
+        self.manage_chapter_names = [chapter_name for _, _, _, chapter_name in self.manage_chapter_ids]
+        if len(self.manage_chapter_ids) == 0:
+            return
+
+        self.gui_elements["selector_manage_chapters"].options = self.manage_chapter_names
+        self.gui_elements["selector_manage_chapters"].value = self.manage_chapter_names[0]
 
     def refresh_table(self):
         logger.debug("Refreshing series table")
@@ -301,14 +341,26 @@ class SimpleGui:
 
     @database_operation
     def delete_series(self):
-        self.delete_series_ids = list(self.scanner.entity_database.entity_map.items())
-        choices = [f"{name} ({entity_id})" for name, entity_id in self.delete_series_ids]
-        entity_index = choices.index(self.gui_elements["selector_delete_series"].value)
-        entity_name_to_remove, entity_id_to_remove = self.delete_series_ids[entity_index]
+        entity_index = self.manage_series_names.index(self.gui_elements["selector_manage_series"].value)
+        entity_name_to_remove, entity_id_to_remove = self.manage_series_ids[entity_index]
         logger.info("Removing %s from the database...", entity_name_to_remove)
         self.scanner.entity_database.delete_entity_id(entity_id_to_remove, entity_name_to_remove)
         notify_and_log(f"Removed {entity_name_to_remove} from the database")
-        self.refresh_delete_series()
+        self.refresh_manage_series()
+
+    @database_operation
+    def delete_chapter_tracking(self):
+        entity_index = self.manage_chapter_names.index(self.gui_elements["selector_manage_chapters"].value)
+        entity_id, entity_name, chapter_id, chapter_name = self.manage_chapter_ids[entity_index]
+        logger.info(
+            "Removing tracking for %s (%s) from %s (%s) in the database...",
+            chapter_name,
+            chapter_id,
+            entity_name,
+            entity_id,
+        )
+        self.scanner.entity_database.delete_chapter_entity_id_from_downloaded_chapters(entity_id, chapter_id)
+        notify_and_log(f"Removed tracked status for {chapter_name} from {entity_name}")
 
     @database_operation_async
     async def refresh_database(self):

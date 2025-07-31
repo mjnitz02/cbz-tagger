@@ -7,7 +7,7 @@ import pytest
 
 @pytest.fixture
 def manga_name():
-    return "Precious. 4P Short Stories"
+    return "Yo-Kai Sangokushi: Bag of Wisdom"
 
 
 @pytest.fixture
