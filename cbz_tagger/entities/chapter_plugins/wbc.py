@@ -17,19 +17,27 @@ class ChapterPluginWBC(ChapterPluginEntity):
         response = cls.request_with_retry(url)
 
         soup = BeautifulSoup(response.text, "html.parser")
-        items = soup.find_all("div", class_="flex")
+        items = soup.find_all("div", {"class": "flex"})
 
         content = []
         # This constructs an api compatible response from the rss feed
         for item in items:
-            item_content = item.find_all("a", href=True, class_="flex-1")[0]
+            item_content = item.find_all(
+                "a",
+                {"class": "flex-1"},
+                href=True,
+            )[0]
             chapter_id = str(item_content.get("href").split("chapters/")[-1])
             link = str(item_content.get("href"))
 
             item_x_data = item.get("x-data")
             updated = str(item_x_data[item_x_data.index("('") + 2 : item_x_data.index("')")])
 
-            item_chapter_spans = item_content.find_all("span", class_="")
+            # Find spans with empty class attribute - compatible with BS4 4.13 where class="" is not
+            # findable with find_all and is now represented as an empty list
+            all_spans = item_content.find_all("span")
+            item_chapter_spans = [span for span in all_spans if span.get("class") == []]
+
             if len(item_chapter_spans) == 0:
                 raise EnvironmentError("Could not find page_select_modal dialog")
             item_title = str(item_chapter_spans[0].contents[0])
