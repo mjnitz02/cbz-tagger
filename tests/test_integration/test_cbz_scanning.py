@@ -23,7 +23,7 @@ def test_process_cbz_files(mock_get_input, integration_scanner, build_test_cbz):
     integration_scanner.run_scan()
 
     # Assert the scanned files are all processed
-    assert len(os.listdir(os.path.join(integration_scanner.config_path, "images"))) == 2
+    assert len(os.listdir(os.path.join(integration_scanner.config_path, "images"))) == 1
     assert os.listdir(integration_scanner.scan_path) == []
     storage_results = [
         os.path.relpath(str(os.path.join(root, name)), integration_scanner.storage_path)
@@ -31,9 +31,8 @@ def test_process_cbz_files(mock_get_input, integration_scanner, build_test_cbz):
         for name in files
     ]
     assert set(storage_results) == {
-        "Touto Sugite Yome na a a a a a a i 4P Short Stories/"
-        "Touto Sugite Yome na a a a a a a i 4P Short Stories - Chapter 001.cbz",
-        "Touto Sugite Yome na a a a a a a i 4P Short Stories/series.json",
+        "Yo Kai Sangokushi Bag of Wisdom/Yo Kai Sangokushi Bag of Wisdom - Chapter 001.cbz",
+        "Yo Kai Sangokushi Bag of Wisdom/series.json",
     }
 
     # Create a test cbz file for chapter 2, use existing metadata and process it
@@ -46,11 +45,9 @@ def test_process_cbz_files(mock_get_input, integration_scanner, build_test_cbz):
         for name in files
     ]
     assert set(storage_results) == {
-        "Touto Sugite Yome na a a a a a a i 4P Short Stories/"
-        "Touto Sugite Yome na a a a a a a i 4P Short Stories - Chapter 001.cbz",
-        "Touto Sugite Yome na a a a a a a i 4P Short Stories/"
-        "Touto Sugite Yome na a a a a a a i 4P Short Stories - Chapter 002.cbz",
-        "Touto Sugite Yome na a a a a a a i 4P Short Stories/series.json",
+        "Yo Kai Sangokushi Bag of Wisdom/Yo Kai Sangokushi Bag of Wisdom - Chapter 001.cbz",
+        "Yo Kai Sangokushi Bag of Wisdom/Yo Kai Sangokushi Bag of Wisdom - Chapter 002.cbz",
+        "Yo Kai Sangokushi Bag of Wisdom/series.json",
     }
 
 

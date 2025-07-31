@@ -22,11 +22,11 @@ def test_download_cbz_files_with_mark_all_tracked(
 
     # Assert we can add a "tracked" entity to the database, and we're marking everything as completed
     integration_scanner.add_tracked_entity()
-    assert len(integration_scanner.entity_database.entity_downloads) > 40  # API sometimes misfires
+    assert len(integration_scanner.entity_database.entity_downloads) == 3
     assert integration_scanner.entity_database.entity_map == {
-        "Touto Sugite Yome na a a a a a a i 4P Short Stories": "ab468776-27a5-456d-8f58-e058059531c9"
+        "Yo Kai Sangokushi Bag of Wisdom": "f2def508-4407-471c-bf2c-86bea3e4e592"
     }
-    assert integration_scanner.entity_database.entity_tracked == {"ab468776-27a5-456d-8f58-e058059531c9"}
+    assert integration_scanner.entity_database.entity_tracked == {"f2def508-4407-471c-bf2c-86bea3e4e592"}
     assert integration_scanner.entity_database.get_missing_chapters() == []
 
     # Mock download chapter to check it isn't doing anything
@@ -35,7 +35,7 @@ def test_download_cbz_files_with_mark_all_tracked(
     # Refresh the database to run all downloads, nothing should be downloaded
     integration_scanner.refresh()
     integration_scanner.entity_database.download_chapter.assert_not_called()
-    assert len(os.listdir(os.path.join(integration_scanner.config_path, "images"))) == 2
+    assert len(os.listdir(os.path.join(integration_scanner.config_path, "images"))) == 1
     assert len(os.listdir(integration_scanner.scan_path)) == 0
 
 
@@ -61,11 +61,11 @@ def test_download_cbz_files_without_mark_all_tracked(
     integration_scanner.add_tracked_entity()
     assert len(integration_scanner.entity_database.entity_downloads) == 0
     assert integration_scanner.entity_database.entity_map == {
-        "Touto Sugite Yome na a a a a a a i 4P Short Stories": "ab468776-27a5-456d-8f58-e058059531c9"
+        "Yo Kai Sangokushi Bag of Wisdom": "f2def508-4407-471c-bf2c-86bea3e4e592"
     }
-    assert integration_scanner.entity_database.entity_tracked == {"ab468776-27a5-456d-8f58-e058059531c9"}
+    assert integration_scanner.entity_database.entity_tracked == {"f2def508-4407-471c-bf2c-86bea3e4e592"}
     missing_chapters = len(integration_scanner.entity_database.get_missing_chapters())
-    assert missing_chapters > 40  # API sometimes misfires
+    assert missing_chapters == 3
 
     # Mock download chapter so we don't actually download files
     integration_scanner.entity_database.chapters.download = mock.MagicMock()
@@ -73,7 +73,7 @@ def test_download_cbz_files_without_mark_all_tracked(
     # Refresh the database to run all downloads, nothing should be downloaded since the actual request
     # to the server is mocked above. We will run everything else though against real APIs.
     integration_scanner.refresh()
-    assert len(os.listdir(os.path.join(integration_scanner.config_path, "images"))) == 2
+    assert len(os.listdir(os.path.join(integration_scanner.config_path, "images"))) == 1
     assert len(os.listdir(integration_scanner.scan_path)) == 0
     assert len(integration_scanner.entity_database.entity_downloads) == missing_chapters
     assert len(integration_scanner.entity_database.get_missing_chapters()) == 0
@@ -85,15 +85,13 @@ def test_download_cbz_files_without_mark_all_tracked(
     assert len(storage_results) == missing_chapters + 1  # +1 for the series.json file
     # Verify the series.json file is correct
     with open(
-        os.path.join(
-            integration_scanner.storage_path, "Touto Sugite Yome na a a a a a a i 4P Short Stories", "series.json"
-        ),
+        os.path.join(integration_scanner.storage_path, "Yo Kai Sangokushi Bag of Wisdom", "series.json"),
         encoding="utf-8",
     ) as json_file:
         result = json.load(json_file)
     assert result["version"] == "1.0.2"
     assert result["metadata"]["type"] == "comicSeries"
-    assert result["metadata"]["status"] == "Ended"
+    assert result["metadata"]["status"] == "Continuing"
 
     # Test tracking removal
     integration_scanner.remove_tracked_entity()

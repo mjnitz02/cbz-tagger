@@ -255,6 +255,15 @@ class EntityDB:
         logger.warning("Deleted entity from database %s (%s).", entity_name_to_remove, entity_id_to_remove)
         self.save()
 
+    def delete_chapter_entity_id_from_downloaded_chapters(self, entity_id, chapter_id):
+        """Remove a chapter entity ID from the downloaded chapters."""
+        if (entity_id, chapter_id) in self.entity_downloads:
+            self.entity_downloads.discard((entity_id, chapter_id))
+            logger.info("Removed chapter %s from downloaded chapters for %s.", chapter_id, entity_id)
+            self.save()
+        else:
+            logger.warning("Chapter %s not found in downloaded chapters for %s.", chapter_id, entity_id)
+
     def update_manga_entity_name(self, manga_name):
         entity_id = self.entity_map.get(manga_name)
         self.update_manga_entity_id(entity_id)
