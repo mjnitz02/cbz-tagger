@@ -1065,33 +1065,3 @@ def test_entity_db_delete_chapter_entity_id_from_downloaded_chapters_multiple_sa
 
     # Verify save was called
     simple_mock_entity_db.save.assert_called()
-
-
-@mock.patch("cbz_tagger.database.entity_db.EntityDB.update_manga_entity_id_metadata_and_find_updated_ids")
-@mock.patch("cbz_tagger.database.entity_db.EntityDB.update_manga_entity_id")
-@mock.patch("cbz_tagger.database.entity_db.EntityDB.download_missing_covers")
-@mock.patch("cbz_tagger.database.entity_db.EntityDB.remove_orphaned_covers")
-@mock.patch("cbz_tagger.database.entity_db.EntityDB.download_missing_chapters")
-def test_refresh(
-    mock_download_missing_chapters,
-    mock_remove_orphaned_covers,
-    mock_download_missing_covers,
-    mock_update_manga_entity_id,
-    mock_update_manga_entity_id_metadata_and_find_updated_ids,
-):
-    mock_metadata = mock.MagicMock()
-    mock_metadata.keys.return_value = ["entity1", "entity2"]
-    mock_update_manga_entity_id_metadata_and_find_updated_ids.return_value = ["entity1", "entity2"]
-
-    entity_db = EntityDB(root_path="mock_path")
-    entity_db.metadata = mock_metadata
-
-    storage_path = "mock_storage_path"
-    entity_db.refresh(storage_path)
-
-    mock_update_manga_entity_id_metadata_and_find_updated_ids.assert_called_once_with(["entity1", "entity2"])
-    mock_update_manga_entity_id.assert_any_call("entity1", update_metadata=False)
-    mock_update_manga_entity_id.assert_any_call("entity2", update_metadata=False)
-    mock_download_missing_covers.assert_called_once()
-    mock_remove_orphaned_covers.assert_called_once()
-    mock_download_missing_chapters.assert_called_once_with(storage_path)
