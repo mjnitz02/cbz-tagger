@@ -3,7 +3,7 @@ import logging
 import os
 import re
 import shutil
-from typing import Optional
+from typing import Optional, Any
 from xml.dom import minidom
 from xml.etree import ElementTree
 from zipfile import ZIP_DEFLATED
@@ -46,7 +46,7 @@ class EntityDB:
         self.entity_names: dict[str, str] = {} if entity_names is None else entity_names
         self.entity_downloads = set() if entity_downloads is None else entity_downloads
         self.entity_tracked = set() if entity_tracked is None else entity_tracked
-        self.entity_chapter_plugin: dict[str, str] = {} if entity_chapter_plugin is None else entity_chapter_plugin
+        self.entity_chapter_plugin: dict[str, Any] = {} if entity_chapter_plugin is None else entity_chapter_plugin
 
         self.metadata: MetadataEntityDB = MetadataEntityDB() if metadata is None else metadata
         self.covers: CoverEntityDB = CoverEntityDB() if covers is None else covers

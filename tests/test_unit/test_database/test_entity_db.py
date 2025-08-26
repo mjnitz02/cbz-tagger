@@ -887,16 +887,27 @@ def test_update_manga_entity_id_metadata_and_find_updated_ids_with_multiple_enti
     # Setup metadata with varying hash values
     mock_metadata = mock.MagicMock()
 
+    # Need to account for all to_hash calls:
+    # - 4 initial calls (one per entity)
+    # - 4 calls after metadata update for comparison
+    # - 4 final calls for result checking
     mock_metadata.to_hash = mock.MagicMock(
         side_effect=[
-            "initial_hash",
-            "initial_hash",
-            "initial_hash",
-            "initial_hash",
-            "initial_hash",
-            "updated_hash",
-            "initial_hash",
-            "initial_hash",
+            # Initial hashes (4 calls)
+            "initial_hash",  # entity1
+            "initial_hash",  # entity2
+            "initial_hash",  # entity3
+            "initial_hash",  # entity4
+            # After metadata update hashes (4 calls)
+            "initial_hash",  # entity1 - no change
+            "updated_hash",  # entity2 - metadata changed
+            "initial_hash",  # entity3 - no metadata change
+            "initial_hash",  # entity4 - no metadata change
+            # Final hashes for result checking (4 calls)
+            "initial_hash",  # entity1 - no change
+            "updated_hash",  # entity2 - metadata changed
+            "initial_hash",  # entity3 - no metadata change
+            "initial_hash",  # entity4 - no metadata change
         ]
     )
     mock_metadata.__getitem__ = mock.MagicMock(return_value=mock.MagicMock())
@@ -906,21 +917,23 @@ def test_update_manga_entity_id_metadata_and_find_updated_ids_with_multiple_enti
     mock_chapters = mock.MagicMock()
     mock_chapters.to_hash = mock.MagicMock(
         side_effect=[
-            "initial_hash",
-            "initial_hash",
-            "initial_hash",
-            "initial_hash",
-            "initial_hash",
-            "initial_hash",
-            "updated_hash",
-            "initial_hash",
+            # Initial hashes (4 calls)
+            "initial_hash",  # entity1
+            "initial_hash",  # entity2
+            "initial_hash",  # entity3
+            "initial_hash",  # entity4
+            # Final hashes for result checking (4 calls)
+            "initial_hash",  # entity1 - no change
+            "initial_hash",  # entity2 - no change
+            "updated_hash",  # entity3 - chapter changed due to plugin
+            "initial_hash",  # entity4 - no change
         ]
     )
     mock_chapters.update = mock.MagicMock()
 
     simple_mock_entity_db.metadata = mock_metadata
     simple_mock_entity_db.chapters = mock_chapters
-    # Entity3 has a chapter plugin
+    # Entity3 and entity4 have chapter plugins
     simple_mock_entity_db.entity_chapter_plugin = {
         entity_id3: {"plugin_type": "cmk", "plugin_id": entity_id3},
         entity_id4: {"plugin_type": "cmk", "plugin_id": entity_id4},
@@ -938,10 +951,19 @@ def test_update_manga_entity_id_metadata_and_find_updated_ids_with_multiple_enti
     )
 
     # Verify the correct calls were made
-    assert mock_metadata.update.call_count == 2  # Two batches: [entity1, entity2] and [entity3]
-    assert mock_chapters.update.call_count == 2  # Two plugins: [entity3, entity4]
+    assert mock_metadata.update.call_count == 2  # Two batches: [entity1, entity2] and [entity3, entity4]
+    # Expect 3 chapters.update calls: entity2 (metadata changed), entity3 (plugin), entity4 (plugin)
+    assert mock_chapters.update.call_count == 3
 
-    # Entity2 has metadata changes, Entity3 has a chapter plugin
+    # Verify the specific calls
+    expected_calls = [
+        mock.call(entity_id2),  # metadata changed
+        mock.call(entity_id3, plugin_type="cmk", plugin_id=entity_id3),  # plugin
+        mock.call(entity_id4, plugin_type="cmk", plugin_id=entity_id4),  # plugin
+    ]
+    mock_chapters.update.assert_has_calls(expected_calls, any_order=False)
+
+    # Entity2 has metadata changes, Entity3 has a chapter plugin (and chapter changes)
     assert sorted(updated_ids) == sorted([entity_id2, entity_id3])
 
 
