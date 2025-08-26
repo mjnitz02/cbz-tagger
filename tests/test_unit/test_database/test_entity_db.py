@@ -795,7 +795,8 @@ def test_update_manga_entity_id_metadata_and_find_updated_ids_with_updated_metad
     # Setup metadata with a mock that will return different hash values before and after update
     mock_metadata = mock.MagicMock()
 
-    mock_metadata.to_hash = mock.MagicMock(side_effect=["initial_hash", "updated_hash"])
+    # Need 3 calls: initial, after metadata update (for comparison), final (for result check)
+    mock_metadata.to_hash = mock.MagicMock(side_effect=["initial_hash", "updated_hash", "updated_hash"])
     mock_metadata.update = mock.MagicMock()
     mock_metadata.__getitem__ = mock.MagicMock(return_value=mock.MagicMock())
 
@@ -813,6 +814,8 @@ def test_update_manga_entity_id_metadata_and_find_updated_ids_with_updated_metad
 
     # Verify the metadata was updated and the entity ID was returned
     mock_metadata.update.assert_called_once_with([manga_request_id], batch_response=True)
+    # Now expect chapters.update to be called since metadata changed
+    mock_chapters.update.assert_called_once_with(manga_request_id)
     assert updated_ids == [manga_request_id]
 
 
