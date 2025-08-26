@@ -3,7 +3,8 @@ import logging
 import os
 import re
 import shutil
-from typing import Optional, Any
+from typing import Any
+from typing import Optional
 from xml.dom import minidom
 from xml.etree import ElementTree
 from zipfile import ZIP_DEFLATED
