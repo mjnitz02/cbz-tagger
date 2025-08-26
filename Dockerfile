@@ -16,6 +16,7 @@ RUN apk update && apk upgrade
 ### CBZ Tagger ###
 COPY . /app
 COPY pyproject.toml ./
+COPY uv.lock ./
 
 ### Dependencies ###
 RUN echo "Install dependencies" && \

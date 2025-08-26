@@ -4,7 +4,6 @@ from datetime import datetime
 
 from nicegui import ui
 
-from cbz_tagger.common.enums import APPLICATION_MAJOR_VERSION
 from cbz_tagger.common.enums import Emoji
 from cbz_tagger.common.enums import Plugins
 from cbz_tagger.common.env import AppEnv
@@ -51,7 +50,7 @@ class SimpleGui:
         with ui.header().classes(replace="row items-center"):
             # pylint: disable=unnecessary-lambda
             ui.button(on_click=lambda: left_drawer.toggle(), icon="menu").props("flat color=white")
-            ui.html(f"<h2><strong>CBZ Tagger {APPLICATION_MAJOR_VERSION}</strong></h2>")
+            ui.html(f"<h2><strong>CBZ Tagger {self.env.VERSION}</strong></h2>")
             ui.space()
             with ui.tabs() as tabs:
                 ui.tab("Series")

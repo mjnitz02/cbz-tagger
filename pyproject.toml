@@ -1,6 +1,6 @@
 [project]
-name = "cbz_tagger" # REQUIRED, is the only field that cannot be marked as dynamic.
-version = "3.10.0" # REQUIRED, although can be dynamic
+name = "cbz_tagger"
+version = "3.12.2"
 description = "CBZ Tagger is a tool to tag comic book files in CBZ format"
 authors = [
     {name = "Matt Nitzken",email = "mjnitz02@gmail.com"}
