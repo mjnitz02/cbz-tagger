@@ -8,6 +8,9 @@ install:
 pre-commit-install:
 	pre-commit install
 
+update-packages:
+	uv sync --upgrade
+
 lint-format:
 	uv run ruff format .
 
