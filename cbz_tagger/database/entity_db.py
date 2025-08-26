@@ -3,6 +3,7 @@ import logging
 import os
 import re
 import shutil
+from typing import Any
 from typing import Optional
 from xml.dom import minidom
 from xml.etree import ElementTree
@@ -46,7 +47,7 @@ class EntityDB:
         self.entity_names: dict[str, str] = {} if entity_names is None else entity_names
         self.entity_downloads = set() if entity_downloads is None else entity_downloads
         self.entity_tracked = set() if entity_tracked is None else entity_tracked
-        self.entity_chapter_plugin: dict[str, str] = {} if entity_chapter_plugin is None else entity_chapter_plugin
+        self.entity_chapter_plugin: dict[str, Any] = {} if entity_chapter_plugin is None else entity_chapter_plugin
 
         self.metadata: MetadataEntityDB = MetadataEntityDB() if metadata is None else metadata
         self.covers: CoverEntityDB = CoverEntityDB() if covers is None else covers
@@ -286,8 +287,12 @@ class EntityDB:
         for idx, entity_id in enumerate(entity_ids):
             if idx % 10 == 0:
                 logger.info("Checking for chapter updates... [Remaining: %d]", len(entity_ids) - (idx + 1))
+            # Check if non-plugin chapter updates are available, update if metadata changed
+            updated_metadata = self.metadata.to_hash(entity_id)
+            metadata_changed = updated_metadata != previous_metadata.get(entity_id, "0")
+            # Check if chapter uses plugin, always update when plugin present
             chapter_plugin = self.entity_chapter_plugin.get(entity_id, {})
-            if chapter_plugin:
+            if chapter_plugin or metadata_changed:
                 self.chapters.update(entity_id, **chapter_plugin)
 
         # There are extra verbose checks here, but this makes debugging easier if breakpoints are set
