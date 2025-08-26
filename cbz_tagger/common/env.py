@@ -5,9 +5,12 @@ import platform
 import pwd
 
 from cbz_tagger.common.enums import ContainerMode
+from cbz_tagger.common.version import extract_version
 
 
 class AppEnv:
+    VERSION = extract_version()
+
     if os.getenv("PUID") is not None:
         PUID = os.getenv("PUID")
     elif platform.system() == "Darwin":
