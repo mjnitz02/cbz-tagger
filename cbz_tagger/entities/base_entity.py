@@ -124,8 +124,24 @@ class BaseEntity(BaseEntityObject):
                 if offset >= response_json["total"]:
                     # This is a deep sanity check to ensure the uniqueness of the retrieved IDs.
                     # Some endpoints with specific settings may return non-deterministic responses :(
-                    if len(set(r["id"] for r in response_content)) != total:
-                        raise EnvironmentError("Paginated response contains duplicate entries")
+                    unique_ids = set(r["id"] for r in response_content)
+                    if len(unique_ids) != total:
+                        logger.warning(
+                            "Paginated response contains duplicate entries. "
+                            "Expected %s unique entries, got %s. "
+                            "Removing duplicates.",
+                            total,
+                            len(unique_ids),
+                        )
+                        # Remove duplicates while preserving order
+                        seen_ids = set()
+                        deduplicated_content = []
+                        for item in response_content:
+                            if item["id"] not in seen_ids:
+                                seen_ids.add(item["id"])
+                                deduplicated_content.append(item)
+                        response_content = deduplicated_content
+
                     return response_content
 
                 # Only make 2 queries per second
