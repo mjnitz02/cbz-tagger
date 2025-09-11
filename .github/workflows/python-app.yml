@@ -19,6 +19,37 @@ permissions:
   contents: read
 
 jobs:
+  version_check:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch full history for comparison
+    - name: Check if version was updated
+      run: |
+        # Get the version from the current branch
+        CURRENT_VERSION=$(grep -E '^version = ' pyproject.toml | sed 's/version = "//' | sed 's/"//')
+
+        # Get the version from the target branch (main)
+        git checkout origin/main -- pyproject.toml
+        MAIN_VERSION=$(grep -E '^version = ' pyproject.toml | sed 's/version = "//' | sed 's/"//')
+
+        # Restore the current branch version
+        git checkout HEAD -- pyproject.toml
+
+        echo "Current branch version: $CURRENT_VERSION"
+        echo "Main branch version: $MAIN_VERSION"
+
+        # Compare versions
+        if [ "$CURRENT_VERSION" = "$MAIN_VERSION" ]; then
+          echo "❌ ERROR: Version in pyproject.toml has not been updated!"
+          echo "Please update the version number in pyproject.toml before merging."
+          exit 1
+        else
+          echo "✅ SUCCESS: Version has been updated from $MAIN_VERSION to $CURRENT_VERSION"
+        fi
+
   linter_and_formatting_checks:
     runs-on: ubuntu-latest
     steps:
