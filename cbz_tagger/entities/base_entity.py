@@ -125,7 +125,7 @@ class BaseEntity(BaseEntityObject):
                     # This is a deep sanity check to ensure the uniqueness of the retrieved IDs.
                     # Some endpoints with specific settings may return non-deterministic responses :(
                     unique_ids = set(r["id"] for r in response_content)
-                    if len(unique_ids) != total:
+                    if len(unique_ids) != len(response_content):
                         logger.warning(
                             "Paginated response contains duplicate entries. "
                             "Expected %s unique entries, got %s. "
