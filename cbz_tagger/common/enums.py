@@ -40,7 +40,7 @@ class Plugins:
 
     @classmethod
     def all(cls):
-        return [cls.MDX, cls.CMK, cls.WBC]
+        return [cls.MDX, cls.WBC, cls.KAL]
 
 
 class Status:
