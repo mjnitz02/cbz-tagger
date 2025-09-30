@@ -438,11 +438,13 @@ class EntityDB:
 
     def to_local_image_file(self, manga_name, chapter_number, chapter_is_volume=False) -> Optional[str]:
         entity_id = self.entity_map.get(manga_name)
+        max_chapter_number = self.chapters.get_max_chapter_number(entity_id)
+        cover_volumes = self.covers.get_sorted_cover_volumes(entity_id)
 
         if chapter_is_volume:
             volume = str(int(chapter_number))
         else:
-            volume = self.volumes[entity_id].get_volume(chapter_number)
+            volume = self.volumes[entity_id].get_volume(chapter_number, max_chapter_number, cover_volumes)
 
         cover_entity = self.covers.get_cover_for_volume(entity_id, volume, self.metadata[entity_id].cover_art_id)
         return cover_entity.local_filename if cover_entity else None

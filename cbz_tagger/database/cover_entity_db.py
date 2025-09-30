@@ -94,3 +94,7 @@ class CoverEntityDB(BaseEntityDB):
                 cover_entity = self.get_latest_cover_for_entity(entity_id)
 
         return cover_entity
+
+    def get_sorted_cover_volumes(self, entity_id):
+        volume_covers = set(float(cover.volume) for cover in self.database[entity_id] if cover.volume != "-1")
+        return sorted(volume_covers)

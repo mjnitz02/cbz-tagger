@@ -85,3 +85,11 @@ class ChapterEntityDB(BaseEntityDB):
             if latest_chapter is None or chapter.chapter_number > latest_chapter.chapter_number:
                 latest_chapter = chapter
         return latest_chapter
+
+    def get_max_chapter_number(self, entity_id) -> float:
+        chapters = self.database[entity_id]
+        max_chapter_number = 0.0
+        for chapter in chapters:
+            if chapter.chapter_number is not None and chapter.chapter_number > max_chapter_number:
+                max_chapter_number = chapter.chapter_number
+        return max_chapter_number
