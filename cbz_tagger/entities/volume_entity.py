@@ -67,6 +67,8 @@ class VolumeEntity(BaseEntity):
 
     @property
     def last_volume(self):
+        if len(self.volumes) == 0:
+            return -1
         max_volume = max(float(key) for key in self.volumes if key != "none")
         return int(math.floor(max_volume))
 
@@ -92,14 +94,26 @@ class VolumeEntity(BaseEntity):
     def chapter_count(self):
         return len(self.chapters)
 
-    def get_volume(self, chapter_number: str) -> str:
-        if len(self.volume_map) == 0:
+    def get_volume(
+        self, chapter_number: str, max_chapter_number: Optional[int] = None, cover_volumes: Optional[list[float]] = None
+    ) -> str:
+        volume_map = self.volume_map
+        if len(volume_map) == 0:
             return "-1"
 
-        if len(self.volume_map) == 1 and self.volume_map[0][0] == "-1":
-            return "-1"
+        if len(volume_map) == 1 and volume_map[0][0] == "-1":
+            if max_chapter_number is not None and cover_volumes is not None:
+                # Create a synthetic volume map
+                volume_map = []
+                chapters_per_volume = max_chapter_number / len(cover_volumes)
+                for idx, volume in enumerate(cover_volumes):
+                    volume_start = idx * chapters_per_volume
+                    volume_end = (idx + 1) * chapters_per_volume
+                    volume_map.append((str(int(volume)), math.ceil(volume_start), math.ceil(volume_end)))
+            else:
+                return "-1"
 
-        for volume_number, volume_start, volume_end in self.volume_map:
+        for volume_number, volume_start, volume_end in volume_map:
             if volume_start <= math.floor(float(chapter_number)) < volume_end:
                 return volume_number
 
@@ -107,9 +121,9 @@ class VolumeEntity(BaseEntity):
         chapter_num = float(chapter_number)
         if chapter_num > self.last_volume:
             # Determine the maximum chapters in a known volume
-            max_volume_step = float(max(end - start for _, start, end in self.volume_map))
-            last_volume = int(self.volume_map[-1][0])
-            last_volume_chapter = float(self.volume_map[-1][2])
+            max_volume_step = float(max(end - start for _, start, end in volume_map))
+            last_volume = int(volume_map[-1][0])
+            last_volume_chapter = float(volume_map[-1][2])
             # Determine the number of synthetic volumes
             synthetic_volumes = math.ceil((chapter_num - last_volume_chapter) / max_volume_step)
             if synthetic_volumes == 0:

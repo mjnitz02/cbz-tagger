@@ -2,6 +2,12 @@ from unittest import mock
 
 import pytest
 
+from cbz_tagger.common.enums import Plugins
+from cbz_tagger.entities.chapter_entity import ChapterEntity
+from cbz_tagger.entities.cover_entity import CoverEntity
+from cbz_tagger.entities.metadata_entity import MetadataEntity
+from cbz_tagger.entities.volume_entity import VolumeEntity
+
 
 @pytest.fixture
 def end_to_end_manga_name():
@@ -91,3 +97,30 @@ def test_end_to_end_live_wbc(
     integration_scanner.add_tracked_entity()
     integration_scanner.refresh()
     assert True
+
+
+@pytest.mark.skip("Debugging only")
+@pytest.mark.parametrize(
+    "entity_id,plugin_type,plugin_id",
+    [("", Plugins.WBC, "")],
+)
+def test_entity_retrievals(
+    entity_id,
+    plugin_type,
+    plugin_id,
+):
+    if entity_id is None:
+        return
+
+    """This is a smoke test to make sure that chapter plugins can connect to their respective APIs"""
+    # Check that some entities can be retrieved and don't flake
+    metadata_entity = MetadataEntity.from_server_url(query_params={"ids[]": [entity_id]})[0]
+    assert metadata_entity
+    volume_entity = VolumeEntity.from_server_url(query_params={"ids[]": [entity_id]})[0]
+    assert volume_entity
+    cover_entities = CoverEntity.from_server_url(query_params={"manga[]": [entity_id]})
+    assert cover_entities
+    chapter_entities = ChapterEntity.from_server_url(
+        {"ids[]": [entity_id]}, plugin_type=plugin_type, plugin_id=plugin_id
+    )
+    assert chapter_entities
