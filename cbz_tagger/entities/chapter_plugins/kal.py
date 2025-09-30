@@ -61,6 +61,7 @@ class ChapterPluginKAL(ChapterPluginEntity):
             raise EnvironmentError("Could not find chapter images")
 
         chapter_images = chapter_images.strip().replace('var chapImages = "', "")
+        chapter_images = chapter_images.replace('";', "")
         pages = chapter_images.split(",")
 
         links = []
