@@ -102,7 +102,7 @@ class VolumeEntity(BaseEntity):
             return "-1"
 
         if len(volume_map) == 1 and volume_map[0][0] == "-1":
-            if max_chapter_number is not None and cover_volumes is not None:
+            if max_chapter_number is not None and cover_volumes is not None and len(cover_volumes) > 1:
                 # Create a synthetic volume map
                 volume_map = []
                 chapters_per_volume = max_chapter_number / len(cover_volumes)
