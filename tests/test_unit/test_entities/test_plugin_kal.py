@@ -123,5 +123,5 @@ def test_parse_chapter_download_links(chapter_entity):
     assert result == [
         "https://site.com/chapter-5/6841338_720_4030_548075.webp",
         "https://site.com/chapter-5/6841339_720_4030_437011.webp",
-        'https://site.com/chapter-5/6841340_720_1242_156219.webp";',
+        "https://site.com/chapter-5/6841340_720_1242_156219.webp",
     ]
