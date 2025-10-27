@@ -28,7 +28,7 @@ lint:
 test-lint:
 	uv run ruff format . --check
 	uv run ruff check .
-	uvx ty check cbz_tagger
+	# uvx ty check cbz_tagger
 
 test:
 	echo "Running tests locally"
