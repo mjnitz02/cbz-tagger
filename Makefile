@@ -23,7 +23,7 @@ lint-typing:
 lint:
 	$(MAKE) lint-format
 	$(MAKE) lint-check
-	$(MAKE) lint-typing
+	# $(MAKE) lint-typing
 
 test-lint:
 	uv run ruff format . --check

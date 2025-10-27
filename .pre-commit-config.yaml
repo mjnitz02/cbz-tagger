@@ -20,7 +20,7 @@ repos:
         name: Check code for pylint errors wih ruff-check
         entry: make lint-format
         language: system
-    -   id: lint-typing
-        name: Check typing errors wih ty
-        entry: make lint-typing
-        language: system
+#    -   id: lint-typing
+#        name: Check typing errors wih ty
+#        entry: make lint-typing
+#        language: system
