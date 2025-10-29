@@ -32,7 +32,7 @@ lint:
 test-lint:
 	uv run ruff format . --check
 	uv run ruff check .
-	uvx yamllint .
+	uvx yamllint --strict .
 	uvx ty check cbz_tagger
 
 test:
