@@ -81,3 +81,6 @@ docstring-code-line-length = "dynamic"
 
 [tool.ruff.lint.isort]
 force-single-line = true
+
+[tool.yamlfix]
+line_length = 80

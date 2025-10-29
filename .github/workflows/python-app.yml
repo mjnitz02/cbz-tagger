@@ -1,118 +1,107 @@
+---
 # This workflow will install Python dependencies, run tests and lint with a single version of Python
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
-
 name: Python
-
 on:
   push:
-    branches:
-      - "main"
+    branches: [main]
   pull_request:
-    branches:
-      - "main"
-
+    branches: [main]
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref
+    }}
   cancel-in-progress: true
-
 permissions:
   contents: read
-
 jobs:
   version_check:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # Fetch full history for comparison
-    - name: Check if version was updated
-      run: |
-        # Get the version from the current branch
-        CURRENT_VERSION=$(grep -E '^version = ' pyproject.toml | sed 's/version = "//' | sed 's/"//')
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history for comparison
+      - name: Check if version was updated
+        run: |
+          # Get the version from the current branch
+          CURRENT_VERSION=$(grep -E '^version = ' pyproject.toml | sed 's/version = "//' | sed 's/"//')
 
-        # Get the version from the target branch (main)
-        git checkout origin/main -- pyproject.toml
-        MAIN_VERSION=$(grep -E '^version = ' pyproject.toml | sed 's/version = "//' | sed 's/"//')
+          # Get the version from the target branch (main)
+          git checkout origin/main -- pyproject.toml
+          MAIN_VERSION=$(grep -E '^version = ' pyproject.toml | sed 's/version = "//' | sed 's/"//')
 
-        # Restore the current branch version
-        git checkout HEAD -- pyproject.toml
+          # Restore the current branch version
+          git checkout HEAD -- pyproject.toml
+          echo "Current branch version: $CURRENT_VERSION"
+          echo "Main branch version: $MAIN_VERSION"
 
-        echo "Current branch version: $CURRENT_VERSION"
-        echo "Main branch version: $MAIN_VERSION"
-
-        # Compare versions
-        if [ "$CURRENT_VERSION" = "$MAIN_VERSION" ]; then
-          echo "❌ ERROR: Version in pyproject.toml has not been updated!"
-          echo "Please update the version number in pyproject.toml before merging."
-          exit 1
-        else
-          echo "✅ SUCCESS: Version has been updated from $MAIN_VERSION to $CURRENT_VERSION"
-        fi
-
+          # Compare versions
+          if [ "$CURRENT_VERSION" = "$MAIN_VERSION" ]; then
+            echo "❌ ERROR: Version in pyproject.toml has not been updated!"
+            echo "Please update the version number in pyproject.toml before merging."
+            exit 1
+          else
+            echo "✅ SUCCESS: Version has been updated from $MAIN_VERSION to $CURRENT_VERSION"
+          fi
   linter_and_formatting_checks:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Install uv
-      uses: astral-sh/setup-uv@v5
-    - name: Set up Python 3.13
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.13"
-    - name: Install dependencies
-      run: |
-        make install
-    - name: Lint
-      run: |
-        make test-lint
-
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install dependencies
+        run: |
+          make install
+      - name: Lint
+        run: |
+          make test-lint
   pytest_unit_tests:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Install uv
-      uses: astral-sh/setup-uv@v5
-    - name: Set up Python 3.13
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.13"
-    - name: Install dependencies
-      run: |
-        make install
-    - name: Test with pytest
-      run: |
-        make test-unit
-
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install dependencies
+        run: |
+          make install
+      - name: Test with pytest
+        run: |
+          make test-unit
   pytest_integration_tests:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Install uv
-      uses: astral-sh/setup-uv@v5
-    - name: Set up Python 3.13
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.13"
-    - name: Install dependencies
-      run: |
-        make install
-    - name: Test with pytest
-      run: |
-        make test-integration
-
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install dependencies
+        run: |
+          make install
+      - name: Test with pytest
+        run: |
+          make test-integration
   docker_image_unit_tests:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Test docker image
-      run: |
-        make test-unit-docker
-
+      - uses: actions/checkout@v4
+      - name: Test docker image
+        run: |
+          make test-unit-docker
   docker_image_integration_tests:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Build docker image
-      run: |
-        make test-integration-docker
+      - uses: actions/checkout@v4
+      - name: Build docker image
+        run: |-
+          make test-integration-docker
