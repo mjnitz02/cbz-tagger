@@ -1,0 +1,12 @@
+---
+version: 2
+updates:
+  - package-ecosystem: pip  # For Python dependencies (works with uv and pyproject.toml)
+    directory: /  # Location of your pyproject.toml
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3  # Limit to 3 open PRs
+    # Group related updates together
+    groups:
+      python-dependencies:
+        patterns: ['*']
