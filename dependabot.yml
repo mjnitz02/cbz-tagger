@@ -1,0 +1,11 @@
+version: 2
+updates:
+  - package-ecosystem: "pip" # For Python dependencies
+    directory: "/" # Location of your requirements.txt
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 5 # Limit to 5 open PRs
+  - package-ecosystem: "npm" # For Node.js dependencies
+    directory: "/frontend" # Location of your package.json
+    schedule:
+      interval: "weekly"
