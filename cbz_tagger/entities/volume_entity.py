@@ -100,7 +100,10 @@ class VolumeEntity(BaseEntity):
         return len(self.chapters)
 
     def get_volume(
-        self, chapter_number: str, max_chapter_number: int | None = None, cover_volumes: list[float] | None = None
+        self,
+        chapter_number: str,
+        max_chapter_number: int | float | None = None,
+        cover_volumes: list[float] | None = None,
     ) -> str:
         volume_map = self.volume_map
         if len(volume_map) == 0:
