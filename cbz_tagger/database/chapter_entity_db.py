@@ -5,7 +5,7 @@ from cbz_tagger.database.base_db import BaseEntityDB
 from cbz_tagger.entities.chapter_entity import ChapterEntity
 
 
-class ChapterEntityDB(BaseEntityDB):
+class ChapterEntityDB(BaseEntityDB[list[ChapterEntity]]):
     database: dict[str, list[ChapterEntity]]
     entity_class = ChapterEntity
 

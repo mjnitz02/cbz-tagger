@@ -11,7 +11,7 @@ from cbz_tagger.entities.cover_entity import CoverEntity
 logger = logging.getLogger()
 
 
-class CoverEntityDB(BaseEntityDB):
+class CoverEntityDB(BaseEntityDB[list[CoverEntity]]):
     entity_class = CoverEntity
     database: dict[str, list[CoverEntity]]
     query_param_field: str = "manga[]"

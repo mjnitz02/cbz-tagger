@@ -1,21 +1,25 @@
 import hashlib
 import json
+from typing import Generic
+from typing import TypeVar
 from typing import Union
 
 from cbz_tagger.entities.base_entity import BaseEntity
 from cbz_tagger.entities.base_entity import BaseEntityObject
 
+T = TypeVar("T", bound=BaseEntity)
 
-class BaseEntityDB(BaseEntityObject):
-    entity_class: BaseEntity
-    database: dict[str, "BaseEntity"]
+
+class BaseEntityDB(BaseEntityObject, Generic[T]):
+    entity_class: type[T]
+    database: dict[str, T]
     query_param_field = "ids[]"
 
     def __init__(self, database=None):
         self.version = 2
         self.database = {} if database is None else database
 
-    def __getitem__(self, entity_id) -> BaseEntity:
+    def __getitem__(self, entity_id) -> T | None:
         return self.database.get(entity_id)
 
     def __len__(self):

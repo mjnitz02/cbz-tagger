@@ -512,9 +512,13 @@ class EntityDB:
         if entity_id is None:
             raise ValueError(f"Could not find an entity for {manga_name}")
 
+        metadata = self.metadata[entity_id]
+        if metadata is None:
+            raise ValueError(f"Could not find metadata for entity {entity_id}")
+
         total_issues = "-1"
-        if self.metadata[entity_id].completed:
-            total_issues = self.metadata[entity_id].last_chapter
+        if metadata.completed:
+            total_issues = metadata.last_chapter
 
         mylar_metadata = {
             "version": "1.0.2",
@@ -522,10 +526,10 @@ class EntityDB:
                 "type": "comicSeries",
                 "publisher": "",
                 "imprint": None,
-                "name": self.metadata[entity_id].title,
+                "name": metadata.title,
                 "comicid": 0,
-                "year": self.metadata[entity_id].created_at.year,
-                "description_text": self.metadata[entity_id].description,
+                "year": metadata.created_at.year,
+                "description_text": metadata.description,
                 "description_formatted": None,
                 "volume": None,
                 "booktype": "Print",
@@ -533,7 +537,7 @@ class EntityDB:
                 "comic_image": "",
                 "total_issues": int(total_issues),
                 "publication_run": "",
-                "status": self.metadata[entity_id].mylar_status,
+                "status": metadata.mylar_status,
             },
         }
 
