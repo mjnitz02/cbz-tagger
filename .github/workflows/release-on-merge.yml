@@ -1,14 +1,11 @@
 name: Create Release on Merge to Main
-
 on:
   push:
     branches:
       - main
-
 jobs:
   create-release:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
