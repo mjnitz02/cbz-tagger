@@ -21,20 +21,20 @@ jobs:
       - name: Check if release exists
         id: check-release
         run: |
-          RELEASE_EXISTS=$(gh release view "v${{ steps.get-version.outputs.version }}" --json tagName --jq '.tagName' 2>/dev/null || echo "")
+          RELEASE_EXISTS=$(gh release view "${{ steps.get-version.outputs.version }}" --json tagName --jq '.tagName' 2>/dev/null || echo "")
           if [ -n "$RELEASE_EXISTS" ]; then
             echo "exists=true" >> $GITHUB_OUTPUT
-            echo "Release v${{ steps.get-version.outputs.version }} already exists"
+            echo "Release ${{ steps.get-version.outputs.version }} already exists"
           else
             echo "exists=false" >> $GITHUB_OUTPUT
-            echo "Release v${{ steps.get-version.outputs.version }} does not exist"
+            echo "Release ${{ steps.get-version.outputs.version }} does not exist"
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Create Release
         if: steps.check-release.outputs.exists == 'false'
         run: |
-          gh release create "v${{ steps.get-version.outputs.version }}" \
+          gh release create "${{ steps.get-version.outputs.version }}" \
             --title "${{ steps.get-version.outputs.version }}" \
             --generate-notes
         env:
@@ -42,4 +42,4 @@ jobs:
       - name: Skip Release Creation
         if: steps.check-release.outputs.exists == 'true'
         run: |
-          echo "Skipping release creation - v${{ steps.get-version.outputs.version }} already exists"
+          echo "Skipping release creation - ${{ steps.get-version.outputs.version }} already exists"
