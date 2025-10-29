@@ -1,5 +1,3 @@
-from typing import Optional
-
 import pytest
 
 from cbz_tagger.entities.chapter_entity import ChapterEntity
@@ -7,7 +5,7 @@ from cbz_tagger.entities.chapter_entity import ChapterEntity
 
 @pytest.fixture
 def get_chapter_entity():
-    def _get_chapter_entity(chapter: Optional[str]) -> ChapterEntity:
+    def _get_chapter_entity(chapter: str | None) -> ChapterEntity:
         return ChapterEntity(
             {
                 "id": "chapter_id",

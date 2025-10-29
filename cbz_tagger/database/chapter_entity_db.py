@@ -1,5 +1,4 @@
 from collections import defaultdict
-from typing import Optional
 
 from cbz_tagger.database.base_db import BaseEntityDB
 from cbz_tagger.entities.chapter_entity import ChapterEntity
@@ -57,7 +56,7 @@ class ChapterEntityDB(BaseEntityDB[list[ChapterEntity]]):
         return filtered_chapters
 
     @staticmethod
-    def remove_chapter_duplicate_entries(list_of_chapters) -> list[Optional[str]]:
+    def remove_chapter_duplicate_entries(list_of_chapters) -> list[str | None]:
         grouped_chapters, scanlation_groups = ChapterEntityDB.group_chapters(list_of_chapters)
         priority_groups = ChapterEntityDB.get_priority_scanlation_groups(scanlation_groups)
         filtered_chapters = ChapterEntityDB.filter_chapters_by_priority_scanlation_groups(
@@ -66,20 +65,27 @@ class ChapterEntityDB(BaseEntityDB[list[ChapterEntity]]):
 
         return filtered_chapters
 
-    def format_content_for_entity(self, content, entity_id: Optional[str] = None):
+    def format_content_for_entity(self, content, entity_id: str | None = None):
         content.extend(self.database.get(entity_id, []))
         filtered_content = self.remove_chapter_duplicate_entries(content)
         return filtered_content
 
     def download(self, entity_id: str, chapter_id: str, filepath: str):
-        chapter = next(iter(c for c in self[entity_id] if c.entity_id == chapter_id), None)
+        chapters = self[entity_id]
+        if chapters is None:
+            raise EnvironmentError(f"No chapters found for entity {entity_id}")
+
+        chapter = next(iter(c for c in chapters if c.entity_id == chapter_id), None)
         if chapter is not None:
             return chapter.download_chapter(filepath)
 
         raise EnvironmentError(f"Chapter {chapter_id} not found for {entity_id}")
 
-    def get_latest_chapter(self, entity_id) -> Optional[ChapterEntity]:
-        chapters = self.database[entity_id]
+    def get_latest_chapter(self, entity_id) -> ChapterEntity | None:
+        chapters = self.database.get(entity_id)
+        if chapters is None:
+            return None
+
         latest_chapter = None
         for chapter in chapters:
             if latest_chapter is None or chapter.chapter_number > latest_chapter.chapter_number:
@@ -87,7 +93,10 @@ class ChapterEntityDB(BaseEntityDB[list[ChapterEntity]]):
         return latest_chapter
 
     def get_max_chapter_number(self, entity_id) -> float:
-        chapters = self.database[entity_id]
+        chapters = self.database.get(entity_id)
+        if chapters is None:
+            return 0.0
+
         max_chapter_number = 0.0
         for chapter in chapters:
             if chapter.chapter_number is not None and chapter.chapter_number > max_chapter_number:

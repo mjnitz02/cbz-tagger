@@ -1,12 +1,10 @@
-from typing import Optional
-
 from cbz_tagger.database.chapter_entity_db import ChapterEntityDB
 from cbz_tagger.entities.metadata_entity import MetadataEntity
 
 
 class InputEntity:
     @classmethod
-    def search(cls, search_term: Optional[str] = None):
+    def search(cls, search_term: str | None = None):
         if search_term is None:
             search_term = get_raw_input("Enter a new name to search for: ")
 
