@@ -1,8 +1,8 @@
+---
 services:
   cbz_tagger:
     build: .
-    ports:
-      - "8080:8080"
+    ports: [8080:8080]
     environment:
       - TIMER_MODE=true
       - TIMER_DELAY=30

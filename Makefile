@@ -17,6 +17,9 @@ lint-format:
 lint-check:
 	uv run ruff check . --fix
 
+lint-yaml:
+	uvx yamlfix .github cbz_tagger tests docker-compose.yaml .pre-commit-config.yaml
+
 lint-typing:
 	uvx ty check cbz_tagger
 
@@ -24,10 +27,12 @@ lint:
 	$(MAKE) lint-format
 	$(MAKE) lint-check
 	$(MAKE) lint-typing
+	$(MAKE) lint-yaml
 
 test-lint:
 	uv run ruff format . --check
 	uv run ruff check .
+	uvx yamlfix .github cbz_tagger tests docker-compose.yaml .pre-commit-config.yaml --check
 	uvx ty check cbz_tagger
 
 test:
