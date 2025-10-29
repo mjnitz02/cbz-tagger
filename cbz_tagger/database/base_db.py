@@ -57,7 +57,7 @@ class BaseEntityDB(BaseEntityObject, Generic[T]):
         if isinstance(entity_content, list):
             sha_1 = hashlib.sha1()
             for item in entity_content:
-                sha_1.update(item.to_hash().encode("utf-8"))
+                sha_1.update(item.to_hash().encode("utf-8"))  # type: ignore
             return sha_1.hexdigest()
         else:
             return entity_content.to_hash()  # type: ignore
@@ -84,6 +84,6 @@ class BaseEntityDB(BaseEntityObject, Generic[T]):
                 )
                 self.database[entity_id] = self.format_content_for_entity(content, entity_id)
 
-    def format_content_for_entity(self, content, entity_id=None):
+    def format_content_for_entity(self, content, entity_id: str):
         _ = entity_id
         return content[0] if len(content) == 1 else content

@@ -65,8 +65,10 @@ class ChapterEntityDB(BaseEntityDB[list[ChapterEntity]]):
 
         return filtered_chapters
 
-    def format_content_for_entity(self, content, entity_id: str | None = None):
-        content.extend(self.database.get(entity_id, []))
+    def format_content_for_entity(self, content, entity_id: str):
+        existing_chapters = self.database.get(entity_id)
+        if existing_chapters is not None:
+            content.extend(existing_chapters)
         filtered_content = self.remove_chapter_duplicate_entries(content)
         return filtered_content
 

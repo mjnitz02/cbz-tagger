@@ -73,7 +73,7 @@ def test_download_missing_covers(mock_download, cover_entity_db):
 )
 def test_format_content_for_entity(content, expected_locale):
     test_db = CoverEntityDB()
-    result = test_db.format_content_for_entity(content)
+    result = test_db.format_content_for_entity(content, "entity_id")
     assert len(result) == 1
     assert result[0].attributes["locale"] == expected_locale
 

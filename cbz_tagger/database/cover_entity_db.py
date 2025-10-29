@@ -56,7 +56,7 @@ class CoverEntityDB(BaseEntityDB[list[CoverEntity]]):
             raise ValueError(f"No covers found for entity {entity_id}")
         return sorted(covers, key=lambda x: x.attributes["createdAt"], reverse=True)[0]
 
-    def format_content_for_entity(self, content, entity_id=None):
+    def format_content_for_entity(self, content, entity_id: str):
         _ = entity_id
 
         def _filter_content(original_content, locale):
