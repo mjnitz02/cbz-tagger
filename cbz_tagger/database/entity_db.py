@@ -128,6 +128,8 @@ class EntityDB:
         state = []
         for entity_name, entity_id in self.entity_map.items():
             entity_metadata = self.metadata[entity_id]
+            if entity_metadata is None:
+                continue  # Skip entities without metadata
             latest_chapter = self.chapters.get_latest_chapter(entity_id)
             plugin_type = self.entity_chapter_plugin.get(entity_id, {}).get("plugin_type", Plugins.MDX)
             plugin_id = self.entity_chapter_plugin.get(entity_id, {}).get("plugin_id", entity_id)
@@ -438,6 +440,13 @@ class EntityDB:
 
     def to_local_image_file(self, manga_name, chapter_number, chapter_is_volume=False) -> Optional[str]:
         entity_id = self.entity_map.get(manga_name)
+        if entity_id is None:
+            return None
+
+        metadata = self.metadata[entity_id]
+        if metadata is None:
+            return None
+
         max_chapter_number = self.chapters.get_max_chapter_number(entity_id)
         cover_volumes = self.covers.get_sorted_cover_volumes(entity_id)
 
@@ -446,7 +455,7 @@ class EntityDB:
         else:
             volume = self.volumes[entity_id].get_volume(chapter_number, max_chapter_number, cover_volumes)
 
-        cover_entity = self.covers.get_cover_for_volume(entity_id, volume, self.metadata[entity_id].cover_art_id)
+        cover_entity = self.covers.get_cover_for_volume(entity_id, volume, metadata.cover_art_id)
         return cover_entity.local_filename if cover_entity else None
 
     def to_xml_tree(self, manga_name, chapter_number, chapter_is_volume=False) -> ElementTree.Element:
@@ -454,14 +463,18 @@ class EntityDB:
         if entity_id is None:
             raise ValueError(f"Could not find an entity for {manga_name}")
 
+        metadata = self.metadata[entity_id]
+        if metadata is None:
+            raise ValueError(f"Could not find metadata for entity {entity_id}")
+
         # build a tree structure
         root = ElementTree.Element("ComicInfo")
         root.attrib["xmlns:xsi"] = "http://www.w3.org/2001/XMLSchema-instance"
         root.attrib["xmlns:xsd"] = "http://www.w3.org/2001/XMLSchema"
 
         # Lookup the authors
-        author = self.authors[self.metadata[entity_id].author_id]
-        artist = self.authors[self.metadata[entity_id].artist_id]
+        author = self.authors[metadata.author_id]
+        artist = self.authors[metadata.artist_id]
 
         author_name = author.name if author else None
         artist_name = artist.name if artist else author_name
@@ -476,28 +489,28 @@ class EntityDB:
         else:
             volume = self.volumes[entity_id].get_volume(chapter_number)
             count = -1
-            if self.metadata[entity_id].completed:
-                count = self.metadata[entity_id].last_chapter
+            if metadata.completed:
+                count = metadata.last_chapter
 
-        assign("Series", self.metadata[entity_id].title)
-        assign("LocalizedSeries", self.metadata[entity_id].alt_title)
+        assign("Series", metadata.title)
+        assign("LocalizedSeries", metadata.alt_title)
         assign("Number", chapter_number)
         assign("Count", count)
         assign("Volume", volume)
-        assign("Summary", self.metadata[entity_id].description)
-        assign("Year", self.metadata[entity_id].created_at.year)
-        assign("Month", self.metadata[entity_id].created_at.month)
-        assign("Day", self.metadata[entity_id].created_at.day)
+        assign("Summary", metadata.description)
+        assign("Year", metadata.created_at.year)
+        assign("Month", metadata.created_at.month)
+        assign("Day", metadata.created_at.day)
         assign("Writer", author_name)
         assign("Penciller", artist_name)
         assign("Inker", artist_name)
         assign("Colorist", artist_name)
         assign("Letterer", artist_name)
         assign("CoverArtist", artist_name)
-        assign("LanguageISO", self.metadata[entity_id].language)
+        assign("LanguageISO", metadata.language)
         assign("Manga", "Yes")
-        assign("Genre", ",".join(self.metadata[entity_id].genres))
-        assign("AgeRating", self.metadata[entity_id].age_rating)
+        assign("Genre", ",".join(metadata.genres))
+        assign("AgeRating", metadata.age_rating)
         assign("Web", f"https://{Urls.MDX}/title/{entity_id}")
         return root
 
