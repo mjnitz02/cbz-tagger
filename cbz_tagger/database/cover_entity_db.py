@@ -11,7 +11,7 @@ from cbz_tagger.entities.cover_entity import CoverEntity
 logger = logging.getLogger()
 
 
-class CoverEntityDB(BaseEntityDB):
+class CoverEntityDB(BaseEntityDB[list[CoverEntity]]):
     entity_class = CoverEntity
     database: dict[str, list[CoverEntity]]
     query_param_field: str = "manga[]"
@@ -51,9 +51,12 @@ class CoverEntityDB(BaseEntityDB):
             self.download(entity_id, image_db_path)
 
     def get_latest_cover_for_entity(self, entity_id: str) -> CoverEntity:
-        return sorted(self[entity_id], key=lambda x: x.attributes["createdAt"], reverse=True)[0]
+        covers = self[entity_id]
+        if covers is None or len(covers) == 0:
+            raise ValueError(f"No covers found for entity {entity_id}")
+        return sorted(covers, key=lambda x: x.attributes["createdAt"], reverse=True)[0]
 
-    def format_content_for_entity(self, content, entity_id=None):
+    def format_content_for_entity(self, content, entity_id: str):
         _ = entity_id
 
         def _filter_content(original_content, locale):
@@ -71,8 +74,12 @@ class CoverEntityDB(BaseEntityDB):
         return content
 
     def download(self, entity_id: str, filepath: str):
+        covers = self[entity_id]
+        if covers is None:
+            return  # No covers to download
+
         os.makedirs(filepath, exist_ok=True)
-        for cover in self[entity_id]:
+        for cover in covers:
             image_path = path.join(filepath, cover.local_filename)
             if not path.exists(image_path):
                 logger.info("Downloading: %s", cover.cover_url)
@@ -84,6 +91,9 @@ class CoverEntityDB(BaseEntityDB):
 
     def get_cover_for_volume(self, entity_id, volume, default_cover_art_id):
         covers = self[entity_id]
+        if covers is None:
+            return None
+
         cover_entity = None
         if volume != "-1":
             cover_entity = next((cover for cover in covers if cover.volume == volume), None)
@@ -96,7 +106,9 @@ class CoverEntityDB(BaseEntityDB):
         return cover_entity
 
     def get_sorted_cover_volumes(self, entity_id):
-        volume_covers = set(
-            float(cover.volume) for cover in self.database[entity_id] if cover.volume and cover.volume != "-1"
-        )
+        covers = self.database.get(entity_id)
+        if covers is None:
+            return []
+
+        volume_covers = set(float(cover.volume) for cover in covers if cover.volume and cover.volume != "-1")
         return sorted(volume_covers)

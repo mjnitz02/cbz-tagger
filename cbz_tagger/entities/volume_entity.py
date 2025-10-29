@@ -1,5 +1,4 @@
 import math
-from typing import Optional
 
 from cbz_tagger.entities.base_entity import BaseEntity
 
@@ -9,7 +8,7 @@ class VolumeEntity(BaseEntity):
     paginated: bool = False
 
     @classmethod
-    def from_server_url(cls, query_params: Optional[dict] = None, **kwargs):
+    def from_server_url(cls, query_params: dict | None = None, **kwargs):
         if query_params is None:
             query_params = {}
         entity_id = query_params["ids[]"][0]
@@ -101,7 +100,10 @@ class VolumeEntity(BaseEntity):
         return len(self.chapters)
 
     def get_volume(
-        self, chapter_number: str, max_chapter_number: Optional[int] = None, cover_volumes: Optional[list[float]] = None
+        self,
+        chapter_number: str,
+        max_chapter_number: int | float | None = None,
+        cover_volumes: list[float] | None = None,
     ) -> str:
         volume_map = self.volume_map
         if len(volume_map) == 0:

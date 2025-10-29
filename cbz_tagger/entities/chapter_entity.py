@@ -142,7 +142,7 @@ class ChapterEntity(BaseEntity):
                 try:
                     in_memory_image.save(image_path, quality=95, optimize=True)
                 except OSError:
-                    ImageFile.LOAD_TRUNCATED_IMAGES = True
+                    ImageFile.LOAD_TRUNCATED_IMAGES = True  # type: ignore[misc]
                     in_memory_image.save(image_path, quality=95, optimize=True)
 
         if self.pages != -1 and len(cached_images) != self.pages:

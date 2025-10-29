@@ -1,21 +1,25 @@
 import hashlib
 import json
+from typing import Generic
+from typing import TypeVar
 from typing import Union
 
 from cbz_tagger.entities.base_entity import BaseEntity
 from cbz_tagger.entities.base_entity import BaseEntityObject
 
+T = TypeVar("T")
 
-class BaseEntityDB(BaseEntityObject):
-    entity_class: BaseEntity
-    database: dict[str, "BaseEntity"]
+
+class BaseEntityDB(BaseEntityObject, Generic[T]):
+    entity_class: type[BaseEntity]
+    database: dict[str, T]
     query_param_field = "ids[]"
 
     def __init__(self, database=None):
         self.version = 2
         self.database = {} if database is None else database
 
-    def __getitem__(self, entity_id) -> BaseEntity:
+    def __getitem__(self, entity_id) -> T | None:
         return self.database.get(entity_id)
 
     def __len__(self):
@@ -28,9 +32,9 @@ class BaseEntityDB(BaseEntityObject):
         content = {}
         for key, value in self.database.items():
             if isinstance(value, list):
-                content[key] = [v.to_json() for v in value]
+                content[key] = [v.to_json() for v in value]  # type: ignore
             else:
-                content[key] = value.to_json()
+                content[key] = value.to_json()  # type: ignore
         return json.dumps(content)
 
     @classmethod
@@ -53,10 +57,10 @@ class BaseEntityDB(BaseEntityObject):
         if isinstance(entity_content, list):
             sha_1 = hashlib.sha1()
             for item in entity_content:
-                sha_1.update(item.to_hash().encode("utf-8"))
+                sha_1.update(item.to_hash().encode("utf-8"))  # type: ignore
             return sha_1.hexdigest()
         else:
-            return entity_content.to_hash()
+            return entity_content.to_hash()  # type: ignore
 
     def update(self, entity_ids: Union[list[str], str], skip_on_exist=False, batch_response=False, **kwargs):
         if not isinstance(entity_ids, list):
@@ -80,6 +84,6 @@ class BaseEntityDB(BaseEntityObject):
                 )
                 self.database[entity_id] = self.format_content_for_entity(content, entity_id)
 
-    def format_content_for_entity(self, content, entity_id=None):
+    def format_content_for_entity(self, content, entity_id: str):
         _ = entity_id
         return content[0] if len(content) == 1 else content

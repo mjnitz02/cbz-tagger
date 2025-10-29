@@ -4,7 +4,6 @@ import logging
 from json import JSONDecodeError
 from time import sleep
 from typing import Any
-from typing import Optional
 
 import cloudscraper
 import requests
@@ -46,7 +45,7 @@ class BaseEntity(BaseEntityObject):
         return cls(json.loads(json_str))
 
     @classmethod
-    def from_server_url(cls, query_params: Optional[dict] = None, **kwargs):
+    def from_server_url(cls, query_params: dict | None = None, **kwargs):
         _ = kwargs
         if query_params is None:
             query_params = {}

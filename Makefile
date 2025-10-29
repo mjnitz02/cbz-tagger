@@ -23,12 +23,12 @@ lint-typing:
 lint:
 	$(MAKE) lint-format
 	$(MAKE) lint-check
-	# $(MAKE) lint-typing
+	$(MAKE) lint-typing
 
 test-lint:
 	uv run ruff format . --check
 	uv run ruff check .
-	# uvx ty check cbz_tagger
+	uvx ty check cbz_tagger
 
 test:
 	echo "Running tests locally"

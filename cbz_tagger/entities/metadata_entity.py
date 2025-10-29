@@ -1,6 +1,5 @@
 import math
 from datetime import datetime
-from typing import Optional
 from typing import Union
 
 from cbz_tagger.common.enums import Emoji
@@ -21,11 +20,11 @@ class MetadataEntity(BaseEntity):
             self.content["attributes"]["description"] = {"en": self.content["attributes"]["description"].get("en", "")}
 
     @property
-    def title(self) -> Optional[str]:
+    def title(self) -> str | None:
         return next((item for item in self.attributes["title"].values()), None)
 
     @property
-    def alt_title(self) -> Optional[str]:
+    def alt_title(self) -> str | None:
         return next((item["en"] for item in self.attributes["altTitles"] if "en" in item), None)
 
     @property
@@ -33,7 +32,7 @@ class MetadataEntity(BaseEntity):
         return [self.title] + list(list(item.values())[0] for item in self.attributes["altTitles"])
 
     @property
-    def description(self) -> Optional[str]:
+    def description(self) -> str | None:
         return self.attributes["description"].get("en")
 
     @property
@@ -94,19 +93,19 @@ class MetadataEntity(BaseEntity):
         return list(set(item for item in (self.author_id, self.artist_id, self.creator_id) if item))
 
     @property
-    def author_id(self) -> Optional[str]:
+    def author_id(self) -> str | None:
         return next((item["id"] for item in self.relationships if item["type"] == "author"), None)
 
     @property
-    def artist_id(self) -> Optional[str]:
+    def artist_id(self) -> str | None:
         return next((item["id"] for item in self.relationships if item["type"] == "artist"), None)
 
     @property
-    def creator_id(self) -> Optional[str]:
+    def creator_id(self) -> str | None:
         return next((item["id"] for item in self.relationships if item["type"] == "creator"), None)
 
     @property
-    def cover_art_id(self) -> Optional[str]:
+    def cover_art_id(self) -> str | None:
         return next((item["id"] for item in self.relationships if item["type"] == "cover_art"), None)
 
     @property

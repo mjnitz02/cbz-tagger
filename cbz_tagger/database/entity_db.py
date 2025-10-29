@@ -4,7 +4,6 @@ import os
 import re
 import shutil
 from typing import Any
-from typing import Optional
 from xml.dom import minidom
 from xml.etree import ElementTree
 from zipfile import ZIP_DEFLATED
@@ -55,7 +54,7 @@ class EntityDB:
         self.volumes: VolumeEntityDB = VolumeEntityDB() if volumes is None else volumes
         self.chapters: ChapterEntityDB = ChapterEntityDB() if volumes is None else chapters
 
-    def __getitem__(self, manga_name) -> str:
+    def __getitem__(self, manga_name) -> str | None:
         return self.entity_map.get(manga_name)
 
     def __len__(self):
@@ -128,6 +127,8 @@ class EntityDB:
         state = []
         for entity_name, entity_id in self.entity_map.items():
             entity_metadata = self.metadata[entity_id]
+            if entity_metadata is None:
+                continue  # Skip entities without metadata
             latest_chapter = self.chapters.get_latest_chapter(entity_id)
             plugin_type = self.entity_chapter_plugin.get(entity_id, {}).get("plugin_type", Plugins.MDX)
             plugin_id = self.entity_chapter_plugin.get(entity_id, {}).get("plugin_id", entity_id)
@@ -153,11 +154,11 @@ class EntityDB:
         return manga_name not in self.keys()
 
     @staticmethod
-    def search(manga_name: Optional[str] = None):
+    def search(manga_name: str | None = None):
         """This is a temporary abstraction to the new class"""
         return InputEntity.search(manga_name)
 
-    def add(self, manga_name: Optional[str], update=True, track=False):
+    def add(self, manga_name: str | None, update=True, track=False):
         entity_id, entity_name = self.search(manga_name)
 
         if track:
@@ -202,7 +203,9 @@ class EntityDB:
             self.entity_tracked.add(entity_id)
             if mark_as_tracked:
                 logger.info("Marking all chapters as downloaded. %s (%s)", entity_name, entity_id)
-                self.entity_downloads.update((entity_id, chapter.entity_id) for chapter in self.chapters[entity_id])
+                chapters = self.chapters[entity_id]
+                if chapters is not None:
+                    self.entity_downloads.update((entity_id, chapter.entity_id) for chapter in chapters)
             else:
                 logger.info("No chapters marked as downloaded. %s (%s)", entity_name, entity_id)
 
@@ -323,7 +326,10 @@ class EntityDB:
                 logger.info("Updating %s: %s", manga_name, entity_id)
                 self.volumes.update(entity_id)
                 self.covers.update(entity_id)
-                self.authors.update(self.metadata[entity_id].author_entities)
+
+                metadata = self.metadata[entity_id]
+                if metadata is not None:
+                    self.authors.update(metadata.author_entities)
 
                 # Update missing covers
                 self.covers.download(entity_id, self.image_db_path)
@@ -430,23 +436,33 @@ class EntityDB:
         entity_name = " ".join(entity_name.split())
         return entity_name
 
-    def to_entity_name(self, manga_name) -> Optional[str]:
+    def to_entity_name(self, manga_name) -> str | None:
         entity_id = self.entity_map.get(manga_name)
         if entity_id is None:
             return None
         return self.entity_names.get(entity_id)
 
-    def to_local_image_file(self, manga_name, chapter_number, chapter_is_volume=False) -> Optional[str]:
+    def to_local_image_file(self, manga_name, chapter_number, chapter_is_volume=False) -> str | None:
         entity_id = self.entity_map.get(manga_name)
+        if entity_id is None:
+            return None
+
+        metadata = self.metadata[entity_id]
+        if metadata is None:
+            return None
+
         max_chapter_number = self.chapters.get_max_chapter_number(entity_id)
         cover_volumes = self.covers.get_sorted_cover_volumes(entity_id)
 
         if chapter_is_volume:
             volume = str(int(chapter_number))
         else:
-            volume = self.volumes[entity_id].get_volume(chapter_number, max_chapter_number, cover_volumes)
+            volume_entity = self.volumes[entity_id]
+            if volume_entity is None:
+                return None
+            volume = volume_entity.get_volume(chapter_number, max_chapter_number, cover_volumes)
 
-        cover_entity = self.covers.get_cover_for_volume(entity_id, volume, self.metadata[entity_id].cover_art_id)
+        cover_entity = self.covers.get_cover_for_volume(entity_id, volume, metadata.cover_art_id)
         return cover_entity.local_filename if cover_entity else None
 
     def to_xml_tree(self, manga_name, chapter_number, chapter_is_volume=False) -> ElementTree.Element:
@@ -454,17 +470,26 @@ class EntityDB:
         if entity_id is None:
             raise ValueError(f"Could not find an entity for {manga_name}")
 
+        metadata = self.metadata[entity_id]
+        if metadata is None:
+            raise ValueError(f"Could not find metadata for entity {entity_id}")
+
         # build a tree structure
         root = ElementTree.Element("ComicInfo")
         root.attrib["xmlns:xsi"] = "http://www.w3.org/2001/XMLSchema-instance"
         root.attrib["xmlns:xsd"] = "http://www.w3.org/2001/XMLSchema"
 
         # Lookup the authors
-        author = self.authors[self.metadata[entity_id].author_id]
-        artist = self.authors[self.metadata[entity_id].artist_id]
+        author = self.authors[metadata.author_id]
+        artist = self.authors[metadata.artist_id]
 
         author_name = author.name if author else None
         artist_name = artist.name if artist else author_name
+
+        # Lookup volumes
+        volume_entity = self.volumes[entity_id]
+        if volume_entity is None:
+            raise ValueError(f"Could not find volume data for entity {entity_id}")
 
         def assign(cix_entry, md_entry):
             if md_entry is not None:
@@ -472,32 +497,32 @@ class EntityDB:
 
         if chapter_is_volume:
             volume = str(int(chapter_number))
-            count = self.volumes[entity_id].last_volume
+            count = volume_entity.last_volume
         else:
-            volume = self.volumes[entity_id].get_volume(chapter_number)
+            volume = volume_entity.get_volume(chapter_number)
             count = -1
-            if self.metadata[entity_id].completed:
-                count = self.metadata[entity_id].last_chapter
+            if metadata.completed:
+                count = metadata.last_chapter
 
-        assign("Series", self.metadata[entity_id].title)
-        assign("LocalizedSeries", self.metadata[entity_id].alt_title)
+        assign("Series", metadata.title)
+        assign("LocalizedSeries", metadata.alt_title)
         assign("Number", chapter_number)
         assign("Count", count)
         assign("Volume", volume)
-        assign("Summary", self.metadata[entity_id].description)
-        assign("Year", self.metadata[entity_id].created_at.year)
-        assign("Month", self.metadata[entity_id].created_at.month)
-        assign("Day", self.metadata[entity_id].created_at.day)
+        assign("Summary", metadata.description)
+        assign("Year", metadata.created_at.year)
+        assign("Month", metadata.created_at.month)
+        assign("Day", metadata.created_at.day)
         assign("Writer", author_name)
         assign("Penciller", artist_name)
         assign("Inker", artist_name)
         assign("Colorist", artist_name)
         assign("Letterer", artist_name)
         assign("CoverArtist", artist_name)
-        assign("LanguageISO", self.metadata[entity_id].language)
+        assign("LanguageISO", metadata.language)
         assign("Manga", "Yes")
-        assign("Genre", ",".join(self.metadata[entity_id].genres))
-        assign("AgeRating", self.metadata[entity_id].age_rating)
+        assign("Genre", ",".join(metadata.genres))
+        assign("AgeRating", metadata.age_rating)
         assign("Web", f"https://{Urls.MDX}/title/{entity_id}")
         return root
 
@@ -512,9 +537,13 @@ class EntityDB:
         if entity_id is None:
             raise ValueError(f"Could not find an entity for {manga_name}")
 
+        metadata = self.metadata[entity_id]
+        if metadata is None:
+            raise ValueError(f"Could not find metadata for entity {entity_id}")
+
         total_issues = "-1"
-        if self.metadata[entity_id].completed:
-            total_issues = self.metadata[entity_id].last_chapter
+        if metadata.completed:
+            total_issues = metadata.last_chapter
 
         mylar_metadata = {
             "version": "1.0.2",
@@ -522,10 +551,10 @@ class EntityDB:
                 "type": "comicSeries",
                 "publisher": "",
                 "imprint": None,
-                "name": self.metadata[entity_id].title,
+                "name": metadata.title,
                 "comicid": 0,
-                "year": self.metadata[entity_id].created_at.year,
-                "description_text": self.metadata[entity_id].description,
+                "year": metadata.created_at.year,
+                "description_text": metadata.description,
                 "description_formatted": None,
                 "volume": None,
                 "booktype": "Print",
@@ -533,7 +562,7 @@ class EntityDB:
                 "comic_image": "",
                 "total_issues": int(total_issues),
                 "publication_run": "",
-                "status": self.metadata[entity_id].mylar_status,
+                "status": metadata.mylar_status,
             },
         }
 
