@@ -11,40 +11,6 @@ from cbz_tagger.common.version import extract_version
 class AppEnv:
     VERSION = extract_version()
 
-    if os.getenv("PUID") is not None:
-        PUID = os.getenv("PUID")
-    elif platform.system() == "Darwin":
-        PUID = pwd.getpwnam(getpass.getuser()).pw_uid
-    else:
-        PUID = 99
-
-    if os.getenv("PGID") is not None:
-        PGID = os.getenv("PGID")
-    elif platform.system() == "Darwin":
-        PGID = pwd.getpwnam(getpass.getuser()).pw_gid
-    else:
-        PGID = 100
-
-    if os.getenv("UMASK") is not None:
-        UMASK = os.getenv("UMASK")
-    else:
-        UMASK = "022"
-
-    if os.getenv("CONFIG_PATH") is not None:
-        CONFIG_PATH = str(os.getenv("CONFIG_PATH"))
-    else:
-        CONFIG_PATH = "\\config"
-
-    if os.getenv("SCAN_PATH") is not None:
-        SCAN_PATH = str(os.getenv("SCAN_PATH"))
-    else:
-        SCAN_PATH = "\\scan"
-
-    if os.getenv("STORAGE_PATH") is not None:
-        STORAGE_PATH = str(os.getenv("STORAGE_PATH"))
-    else:
-        STORAGE_PATH = "\\storage"
-
     if os.getenv("GUI_MODE") == "true":
         CONTAINER_MODE = ContainerMode.GUI
     elif os.getenv("TIMER_MODE") == "true":
@@ -52,15 +18,20 @@ class AppEnv:
     else:
         CONTAINER_MODE = ContainerMode.MANUAL
 
-    if os.getenv("TIMER_DELAY") is None:
-        TIMER_DELAY = 6000
+    if platform.system() == "Darwin":
+        PUID = os.getenv("PUID", pwd.getpwnam(getpass.getuser()).pw_uid)
+        PGID = os.getenv("PGID", pwd.getpwnam(getpass.getuser()).pw_gid)
     else:
-        TIMER_DELAY = int(os.getenv("TIMER_DELAY"))
+        PUID = os.getenv("PUID", 99)
+        PGID = os.getenv("PGID", 100)
 
-    if os.getenv("PROXY_URL") is None:
-        PROXY_URL = None
-    else:
-        PROXY_URL = os.getenv("PROXY_URL")
+    UMASK: str = os.getenv("UMASK", "022")
+    CONFIG_PATH: str = str(os.getenv("CONFIG_PATH", "\\config"))
+    SCAN_PATH: str = str(os.getenv("SCAN_PATH", "\\scan"))
+    STORAGE_PATH: str = str(os.getenv("STORAGE_PATH", "\\storage"))
+    TIMER_DELAY: int = int(os.getenv("TIMER_DELAY", 6000))
+    PROXY_URL: str | None = os.getenv("PROXY_URL", None)
+    DELAY_PER_REQUEST: float = float(os.getenv("DELAY_PER_REQUEST", 0.5))
 
     if os.getenv("LOG_LEVEL") is None:
         LOG_LEVEL = logging.INFO

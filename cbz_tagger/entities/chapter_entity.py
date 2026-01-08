@@ -86,8 +86,11 @@ class ChapterEntity(BaseEntity):
         return self.plugins[self.entity_type](self.content)
 
     @property
-    def volume_number(self):
-        return float(self.attributes.get("volume"))
+    def volume_number(self) -> float | None:
+        volume = self.attributes.get("volume")
+        if volume is None:
+            return None
+        return float(volume)
 
     @property
     def translated_language(self):

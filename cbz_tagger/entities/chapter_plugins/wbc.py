@@ -22,7 +22,7 @@ class ChapterPluginWBC(ChapterPluginEntity):
         content = []
         # This constructs an api compatible response from the rss feed
         for item in items:
-            item_content = item.find_all(
+            item_content = item.find_all(  # type: ignore[unresolved-attribute]
                 "a",
                 {"class": "flex-1"},
                 href=True,
@@ -30,7 +30,7 @@ class ChapterPluginWBC(ChapterPluginEntity):
             chapter_id = str(item_content.get("href").split("chapters/")[-1])
             link = str(item_content.get("href"))
 
-            item_x_data = item.get("x-data")
+            item_x_data = item.get("x-data")  # type: ignore[unresolved-attribute]
             updated = str(item_x_data[item_x_data.index("('") + 2 : item_x_data.index("')")])
 
             # Find spans with empty class attribute - compatible with BS4 4.13 where class="" is not
@@ -64,7 +64,7 @@ class ChapterPluginWBC(ChapterPluginEntity):
 
         # Find the root url for the chapter
         root_element = soup.find_all("link", {"rel": "preload"})[0]
-        root_url = root_element.get("href")
+        root_url = root_element.get("href")  # type: ignore[unresolved-attribute]
         base_url = "/".join(root_url.split("/")[:-1])
         base_chapter = root_url.split("/")[-1].split("-")[0]
 
@@ -73,7 +73,7 @@ class ChapterPluginWBC(ChapterPluginEntity):
         if len(page_select_element) == 0:
             raise EnvironmentError("Could not find page_select_modal dialog")
         page_select_modal = page_select_element[0]
-        page_tags = list(x for x in page_select_modal.find_all("button", {"class": "w-full btn"}))
+        page_tags = list(x for x in page_select_modal.find_all("button", {"class": "w-full btn"}))  # type: ignore[unresolved-attribute]
         pages = [int(str(p.contents[0])) for p in page_tags]
 
         links = []
