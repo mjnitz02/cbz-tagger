@@ -50,8 +50,8 @@ class ChapterPluginCMK(ChapterPluginEntity):
                 break  # Success, exit retry loop
             except EnvironmentError as e:
                 if attempt < max_retries:
-                    logger.warning(f"Attempt {attempt + 1} failed: {e}. Retrying in 3 seconds...")
-                    time.sleep(3)
+                    logger.warning(f"Attempt {attempt + 1} failed: {e}. Retrying in 10 seconds...")
+                    time.sleep(10)
                 else:
                     logger.error(f"All {max_retries + 1} attempts failed: {e}")
                     raise

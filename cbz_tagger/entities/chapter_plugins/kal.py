@@ -17,7 +17,7 @@ class ChapterPluginKAL(ChapterPluginEntity):
 
         soup = BeautifulSoup(response.text, "html.parser")
         chapter_entity = soup.find_all("ul", {"class": "chapter-list"})
-        items = chapter_entity[0].find_all("li")
+        items = chapter_entity[0].find_all("li")  # type: ignore[unresolved-attribute]
 
         content = []
         # This constructs an api compatible response from the rss feed

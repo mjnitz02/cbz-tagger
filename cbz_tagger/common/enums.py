@@ -1,7 +1,6 @@
 import base64
 
 APPLICATION_MAJOR_VERSION = 3
-DELAY_PER_REQUEST = 0.3
 
 
 class Mode:

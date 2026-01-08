@@ -1,14 +1,13 @@
 import hashlib
 import json
 import logging
+import time
 from json import JSONDecodeError
-from time import sleep
 from typing import Any
 
 import cloudscraper
 import requests
 
-from cbz_tagger.common.enums import DELAY_PER_REQUEST
 from cbz_tagger.common.enums import Urls
 from cbz_tagger.common.env import AppEnv
 
@@ -81,17 +80,17 @@ class BaseEntity(BaseEntityObject):
                 try:
                     response = scraper.get(**request_parameters)
                     if response.status_code == 200:
-                        sleep(DELAY_PER_REQUEST)
+                        time.sleep(AppEnv.DELAY_PER_REQUEST)
                         return response
                     # If the status code wasn't success, retry
                     attempt += 1
                     logger.error("Error downloading %s: %s. Attempt: %s", url, response.status_code, attempt)
-                    sleep(5 * attempt)
+                    time.sleep(10 * attempt)
                 # If the request times out, retry
                 except requests.exceptions.Timeout:  # ty: ignore[unresolved-attribute]
                     attempt += 1
                     logger.error("Error downloading %s. Attempt: %s", url, attempt)
-                    sleep(5 * attempt)
+                    time.sleep(10 * attempt)
 
             raise EnvironmentError(f"Failed to receive response from {url} after {retries} attempts")
 
@@ -144,6 +143,6 @@ class BaseEntity(BaseEntityObject):
                     return response_content
 
                 # Only make 2 queries per second
-                sleep(DELAY_PER_REQUEST)
+                time.sleep(AppEnv.DELAY_PER_REQUEST)
         except JSONDecodeError as err:
             raise EnvironmentError("API is down! Please try again later!") from err

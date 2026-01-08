@@ -1,5 +1,5 @@
 import logging
-from time import sleep
+import time
 from typing import Any
 
 from cbz_tagger.common.enums import Urls
@@ -46,7 +46,7 @@ class ChapterPluginMDX(ChapterPluginEntity):
         # If we didn't retrieve enough pages, try to query again
         if len(response["chapter"][self.quality]) != pages:
             logger.error("Not enough pages returned from server. Waiting 10s and retrying query.")
-            sleep(10)
+            time.sleep(10)
             response = self.request_with_retry(url).json()
             if len(response["chapter"][self.quality]) != pages:
                 raise EnvironmentError(

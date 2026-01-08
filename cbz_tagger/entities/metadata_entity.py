@@ -1,6 +1,5 @@
 import math
 from datetime import datetime
-from typing import Union
 
 from cbz_tagger.common.enums import Emoji
 from cbz_tagger.common.enums import IgnoredTags
@@ -29,29 +28,30 @@ class MetadataEntity(BaseEntity):
 
     @property
     def all_titles(self) -> list[str]:
-        return [self.title] + list(list(item.values())[0] for item in self.attributes["altTitles"])
+        titles = [self.title] + list(list(item.values())[0] for item in self.attributes["altTitles"])
+        return [title for title in titles if title is not None]
 
     @property
     def description(self) -> str | None:
         return self.attributes["description"].get("en")
 
     @property
-    def updated(self) -> str:
+    def updated(self) -> str | None:
         return self.attributes.get("updatedAt")
 
     @property
-    def latest_chapter(self) -> str:
+    def latest_chapter(self) -> str | None:
         return self.attributes.get("latestUploadedChapter")
 
     @property
-    def last_chapter(self) -> str:
+    def last_chapter(self) -> str | None:
         last_chapter_value = self.attributes.get("lastChapter")
         if last_chapter_value is None or len(last_chapter_value) == 0:
             return "-1"
         return str(int(math.floor(float(last_chapter_value))))
 
     @property
-    def last_volume(self) -> str:
+    def last_volume(self) -> str | None:
         return self.attributes.get("lastVolume")
 
     @property
@@ -128,12 +128,14 @@ class MetadataEntity(BaseEntity):
             if attr.get("id") not in IgnoredTags
         )
         genre_tags = sorted(set(tag for tag in tags if tag))
+        if len(genre_tags) == 0:
+            genre_tags = ["Unknown"]
         if self.demographic and self.demographic not in genre_tags:
             genre_tags = [self.demographic] + genre_tags
-        return genre_tags
+        return genre_tags  # type: ignore[invalid-return-type]
 
     @property
-    def demographic(self) -> Union[str, None]:
+    def demographic(self) -> str | None:
         demo = self.attributes.get("publicationDemographic")
         if demo:
             return demo.title()

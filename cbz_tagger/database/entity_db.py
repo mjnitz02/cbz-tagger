@@ -416,7 +416,7 @@ class EntityDB:
 
         # Write the cover image
         cover_path = self.to_local_image_file(manga_name, chapter_item.chapter_string)
-        entity_image_path = os.path.join(self.image_db_path, cover_path)
+        entity_image_path = os.path.join(str(self.image_db_path), str(cover_path))
         with open(os.path.join(chapter_filepath, "000_cover.jpg"), "wb") as write_file:
             with open(entity_image_path, "rb") as read_file:
                 write_file.write(read_file.read())
@@ -542,8 +542,8 @@ class EntityDB:
             raise ValueError(f"Could not find metadata for entity {entity_id}")
 
         total_issues = "-1"
-        if metadata.completed:
-            total_issues = metadata.last_chapter
+        if metadata.completed and metadata.last_chapter is not None:
+            total_issues = str(metadata.last_chapter)
 
         mylar_metadata = {
             "version": "1.0.2",
