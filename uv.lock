@@ -151,7 +151,7 @@ requires-dist = [
     { name = "aiohttp", specifier = ">=3.13.3" },
     { name = "beautifulsoup4", specifier = "==4.13.4" },
     { name = "cloudscraper", specifier = ">=1.2.71" },
-    { name = "nicegui", specifier = "==2.24.2" },
+    { name = "nicegui", specifier = ">=2.24.2,<3.0.0" },
     { name = "pillow", specifier = ">=11.3.0" },
     { name = "pre-commit", specifier = ">=4.2.0" },
     { name = "pytest", specifier = ">=8.4.1" },
