@@ -50,7 +50,7 @@ class SimpleGui:
         with ui.header().classes(replace="row items-center"):
             # pylint: disable=unnecessary-lambda
             ui.button(on_click=lambda: left_drawer.toggle(), icon="menu").props("flat color=white")
-            ui.html(f"<h2><strong>CBZ Tagger {self.env.VERSION}</strong></h2>")
+            ui.html(f"<h2><strong>CBZ Tagger {self.env.VERSION}</strong></h2>", sanitize=False)
             ui.space()
             with ui.tabs() as tabs:
                 ui.tab("Series")
