@@ -1,5 +1,7 @@
 import json
 
+from unittest.mock import patch
+
 import pytest
 
 from cbz_tagger.common.enums import Plugins
@@ -106,7 +108,9 @@ def test_from_server_url_no_plugin_id(chapter_entity):
         chapter_entity.from_server_url({"ids[]": ["example_manga"]}, plugin_type=Plugins.CMK)
 
 
-def test_from_server_url(chapter_entity):
+@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=0.1)
+@patch("cbz_tagger.entities.base_entity.time.sleep")
+def test_from_server_url(mock_sleep, mock_random, chapter_entity):
     result = chapter_entity.from_server_url(
         {"ids[]": ["example_manga"]}, plugin_type=Plugins.CMK, plugin_id="example_manga"
     )
@@ -120,7 +124,9 @@ def test_from_server_url(chapter_entity):
     assert result[2].get_chapter_url() == f"https://{Urls.CMK}/chapter/Ae82S7St?tachiyomi=true"
 
 
-def test_parse_info_feed(chapter_entity):
+@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=0.1)
+@patch("cbz_tagger.entities.base_entity.time.sleep")
+def test_parse_info_feed(mock_sleep, mock_random, chapter_entity):
     _ = chapter_entity
     result = ChapterPluginCMK.parse_info_feed("example_manga")
 
@@ -173,7 +179,9 @@ def test_parse_info_feed(chapter_entity):
     ]
 
 
-def test_parse_chapter_download_links(chapter_entity):
+@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=0.1)
+@patch("cbz_tagger.entities.base_entity.time.sleep")
+def test_parse_chapter_download_links(mock_sleep, mock_random, chapter_entity):
     result = chapter_entity.parse_chapter_download_links("http://cmk.example.com/chapter")
 
     assert result == [
