@@ -1,6 +1,7 @@
 import hashlib
 import json
 import logging
+import random
 import time
 from json import JSONDecodeError
 from typing import Any
@@ -68,31 +69,103 @@ class BaseEntity(BaseEntityObject):
         return self.content.get("relationships", {})
 
     @classmethod
-    def request_with_retry(cls, url, params=None, retries=3, timeout=30):
-        with cloudscraper.create_scraper() as scraper:
-            env = AppEnv()
-            request_parameters = {"url": url, "params": params, "timeout": timeout}
-            if env.PROXY_URL is not None:
-                request_parameters["proxies"] = {"http": env.PROXY_URL, "https": env.PROXY_URL}
+    def _get_request_configs(cls) -> list[dict]:
+        """Generate different browser configurations to rotate through for better anti-detection."""
+        return [
+            {
+                "browser": "chrome",
+                "platform": "windows",
+                "headers": {
+                    "Accept": "application/json,text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                    "Accept-Language": "en-US,en;q=0.9",
+                    "Accept-Encoding": "gzip, deflate, br",
+                    "DNT": "1",
+                    "Connection": "keep-alive",
+                    "Upgrade-Insecure-Requests": "1",
+                },
+            },
+            {
+                "browser": "firefox",
+                "platform": "darwin",
+                "headers": {
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                    "Accept-Language": "en-US,en;q=0.5",
+                    "Accept-Encoding": "gzip, deflate, br",
+                    "DNT": "1",
+                    "Connection": "keep-alive",
+                },
+            },
+            {
+                "browser": "chrome",
+                "platform": "darwin",
+                "headers": {
+                    "Accept": "application/json,text/html,application/xhtml+xml",
+                    "Accept-Language": "en-GB,en;q=0.9",
+                    "Accept-Encoding": "gzip, deflate, br",
+                    "Connection": "keep-alive",
+                    "Sec-Fetch-Dest": "document",
+                    "Sec-Fetch-Mode": "navigate",
+                    "Sec-Fetch-Site": "none",
+                },
+            },
+        ]
 
-            attempt = 0
-            while attempt < retries:
-                try:
+    @classmethod
+    def request_with_retry(cls, url, params=None, retries=3, timeout=30):
+        """Enhanced request with browser fingerprinting rotation and improved 403 handling."""
+        env = AppEnv()
+        configs = cls._get_request_configs()
+
+        for attempt in range(retries):
+            try:
+                # Rotate through different browser configurations
+                config = configs[attempt % len(configs)]
+
+                with cloudscraper.create_scraper(
+                    browser={"browser": config["browser"], "platform": config["platform"], "mobile": False},
+                    delay=10,  # Add delay between challenge solving attempts
+                ) as scraper:
+                    request_parameters = {
+                        "url": url,
+                        "params": params,
+                        "timeout": timeout,
+                        "headers": config["headers"],
+                    }
+
+                    if env.PROXY_URL is not None:
+                        request_parameters["proxies"] = {"http": env.PROXY_URL, "https": env.PROXY_URL}
+
+                    # Add random jitter to appear more human-like
+                    time.sleep(random.uniform(0.5, 2.0))
+
                     response = scraper.get(**request_parameters)
+
                     if response.status_code == 200:
                         time.sleep(AppEnv.DELAY_PER_REQUEST)
                         return response
-                    # If the status code wasn't success, retry
-                    attempt += 1
-                    logger.error("Error downloading %s: %s. Attempt: %s", url, response.status_code, attempt)
-                    time.sleep(10 * attempt)
-                # If the request times out, retry
-                except requests.exceptions.Timeout:  # ty: ignore[unresolved-attribute]
-                    attempt += 1
-                    logger.error("Error downloading %s. Attempt: %s", url, attempt)
-                    time.sleep(10 * attempt)
+                    elif response.status_code == 403:
+                        logger.warning(
+                            "403 Forbidden on %s - switching browser config (attempt %s/%s)",
+                            url,
+                            attempt + 1,
+                            retries,
+                        )
+                        # Longer backoff for 403s to let rate limits reset
+                        time.sleep(15 * (attempt + 1))
+                    else:
+                        logger.error(
+                            "Error downloading %s: %s. Attempt: %s/%s", url, response.status_code, attempt + 1, retries
+                        )
+                        time.sleep(10 * (attempt + 1))
 
-            raise EnvironmentError(f"Failed to receive response from {url} after {retries} attempts")
+            except requests.exceptions.Timeout:
+                logger.error("Timeout downloading %s. Attempt: %s/%s", url, attempt + 1, retries)
+                time.sleep(10 * (attempt + 1))
+            except Exception as e:
+                logger.error("Unexpected error downloading %s: %s. Attempt: %s/%s", url, str(e), attempt + 1, retries)
+                time.sleep(10 * (attempt + 1))
+
+        raise EnvironmentError(f"Failed to receive response from {url} after {retries} attempts")
 
     @classmethod
     def download_file(cls, url):
