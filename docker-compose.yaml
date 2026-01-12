@@ -8,6 +8,7 @@ services:
       - TIMER_DELAY=30
       - GUI_MODE=true
       - LOG_LEVEL=INFO
+      - CBZ_TAGGER_SKIP_INTEGRATION_TESTS=WBC
     volumes:
       - ~/Downloads/cbz_tagger/config:/config
       - ~/Downloads/cbz_tagger/scan:/scan
