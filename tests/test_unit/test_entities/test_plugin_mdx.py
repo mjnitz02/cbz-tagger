@@ -77,7 +77,9 @@ def test_chapter_entity_with_triple_decimal_chapter(chapter_request_content):
     assert entity.translated_language == "en"
 
 
-def test_chapter_from_url(chapter_request_response):
+@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=0.1)
+@patch("cbz_tagger.entities.base_entity.time.sleep")
+def test_chapter_from_url(mock_sleep, mock_random, chapter_request_response):
     with mock.patch("cbz_tagger.entities.chapter_plugins.mdx.ChapterPluginMDX.unpaginate_request") as mock_request:
         mock_request.return_value = chapter_request_response["data"]
         entities = ChapterEntity.from_server_url(query_params={"ids[]": ["1361d404-d03c-4fd9-97b4-2c297914b098"]})

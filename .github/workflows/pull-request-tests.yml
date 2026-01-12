@@ -93,6 +93,8 @@ jobs:
         run: |
           make install
       - name: Test with pytest
+        env:
+          CBZ_TAGGER_SKIP_INTEGRATION_TESTS: WBC
         run: |
           make test-integration
   docker_image_unit_tests:
@@ -109,5 +111,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Build docker image
+        env:
+          CBZ_TAGGER_SKIP_INTEGRATION_TESTS: WBC
         run: |-
           make test-integration-docker

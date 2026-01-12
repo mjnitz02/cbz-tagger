@@ -6,7 +6,9 @@ import requests
 from cbz_tagger.entities.base_entity import BaseEntity
 
 
-def test_unpaginate_request_success(requests_mock):
+@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=0.1)
+@patch("cbz_tagger.entities.base_entity.time.sleep")
+def test_unpaginate_request_success(mock_sleep, mock_random, requests_mock):
     url = "https://api.example.com/data"
     data = [{"id": 1}, {"id": 2}]
     requests_mock.get(url, json={"data": data, "total": 2})
@@ -15,7 +17,9 @@ def test_unpaginate_request_success(requests_mock):
     assert result == data
 
 
-def test_unpaginate_request_multiple_pages(requests_mock):
+@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=0.1)
+@patch("cbz_tagger.entities.base_entity.time.sleep")
+def test_unpaginate_request_multiple_pages(mock_sleep, mock_random, requests_mock):
     url = "https://api.example.com/data"
     data_page_1 = [{"id": 1}, {"id": 2}]
     data_page_2 = [{"id": 3}, {"id": 4}]
@@ -25,15 +29,21 @@ def test_unpaginate_request_multiple_pages(requests_mock):
     assert result == data_page_1 + data_page_2
 
 
-def test_unpaginate_request_api_down(requests_mock):
+@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=0.1)
+@patch("cbz_tagger.entities.base_entity.time.sleep")
+def test_unpaginate_request_api_down(mock_sleep, mock_random, requests_mock):
     url = "https://api.example.com/data"
     requests_mock.get(url, exc=requests.exceptions.JSONDecodeError("Expecting value", "", 0))
 
-    with pytest.raises(EnvironmentError, match="API is down! Please try again later!"):
+    with pytest.raises(
+        EnvironmentError, match="Failed to receive response from https://api.example.com/data after 3 attempts"
+    ):
         BaseEntity.unpaginate_request(url)
 
 
-def test_unpaginate_request_with_duplicates_single_page(requests_mock, caplog):
+@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=0.1)
+@patch("cbz_tagger.entities.base_entity.time.sleep")
+def test_unpaginate_request_with_duplicates_single_page(mock_sleep, mock_random, requests_mock, caplog):
     """Test that duplicates in a single page response are detected and removed."""
     url = "https://api.example.com/data"
     # Response contains duplicates - id 1 appears twice, but total says 2 (which should match unique count)
@@ -55,7 +65,9 @@ def test_unpaginate_request_with_duplicates_single_page(requests_mock, caplog):
         assert result == expected_result
 
 
-def test_unpaginate_request_with_duplicates_multiple_pages(requests_mock):
+@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=0.1)
+@patch("cbz_tagger.entities.base_entity.time.sleep")
+def test_unpaginate_request_with_duplicates_multiple_pages(mock_sleep, mock_random, requests_mock):
     """Test that duplicates across multiple pages are detected and removed."""
     url = "https://api.example.com/data"
     # Page 1 has ids 1, 2
@@ -79,7 +91,9 @@ def test_unpaginate_request_with_duplicates_multiple_pages(requests_mock):
         assert result == expected_result
 
 
-def test_unpaginate_request_no_duplicates_no_warning(requests_mock):
+@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=0.1)
+@patch("cbz_tagger.entities.base_entity.time.sleep")
+def test_unpaginate_request_no_duplicates_no_warning(mock_sleep, mock_random, requests_mock):
     """Test that no warning is logged when there are no duplicates."""
     url = "https://api.example.com/data"
     data = [{"id": 1, "name": "first"}, {"id": 2, "name": "second"}]
@@ -95,7 +109,9 @@ def test_unpaginate_request_no_duplicates_no_warning(requests_mock):
         assert result == data
 
 
-def test_unpaginate_request_preserves_order_when_deduplicating(requests_mock):
+@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=0.1)
+@patch("cbz_tagger.entities.base_entity.time.sleep")
+def test_unpaginate_request_preserves_order_when_deduplicating(mock_sleep, mock_random, requests_mock):
     """Test that the original order is preserved when removing duplicates."""
     url = "https://api.example.com/data"
     # Complex case with multiple duplicates in different positions

@@ -60,8 +60,9 @@ def test_base_entity_to_hash(manga_request_content):
     assert entity4.to_hash() == hash_value
 
 
+@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=1.0)
 @patch("cbz_tagger.entities.base_entity.time.sleep")
-def test_request_with_retry_success(mock_sleep):
+def test_request_with_retry_success(mock_sleep, mock_random):
     with requests_mock.Mocker() as rm:
         rm.get("http://example.com/file", json={"data": "file content"})
 
@@ -69,11 +70,14 @@ def test_request_with_retry_success(mock_sleep):
 
         assert result.status_code == 200
         assert result.json() == {"data": "file content"}
-        mock_sleep.assert_called_once_with(0.5)
+        # Should have jitter sleep and success sleep
+        mock_sleep.assert_has_calls([mock.call(1.0), mock.call(0.5)])
+        mock_random.assert_called_once_with(0.5, 2.0)
 
 
+@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=1.0)
 @patch("cbz_tagger.entities.base_entity.time.sleep")
-def test_request_with_retry_retry_success(mock_sleep):
+def test_request_with_retry_retry_success(mock_sleep, mock_random):
     with requests_mock.Mocker() as rm:
         rm.get(
             "http://example.com/file",
@@ -86,17 +90,21 @@ def test_request_with_retry_retry_success(mock_sleep):
         result = BaseEntity.request_with_retry("http://example.com/file")
 
         assert result.status_code == 200
-        # Should have 1 retry of 5s sleep, and one default sleep of 0.3 on success
+        # Should have jitter sleep (1.0), retry sleep (10), jitter sleep (1.0), success sleep (0.5)
         mock_sleep.assert_has_calls(
             [
-                mock.call(10),
-                mock.call(0.5),
+                mock.call(1.0),  # jitter before first attempt
+                mock.call(10),  # retry backoff
+                mock.call(1.0),  # jitter before second attempt
+                mock.call(0.5),  # success sleep
             ]
         )
+        assert mock_random.call_count == 2  # Called for both attempts
 
 
+@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=1.0)
 @patch("cbz_tagger.entities.base_entity.time.sleep")
-def test_request_with_retry_timeout(mock_sleep):
+def test_request_with_retry_timeout(mock_sleep, mock_random):
     with requests_mock.Mocker() as rm:
         rm.get("http://example.com/file", exc=requests.exceptions.ConnectTimeout)
 
@@ -105,18 +113,23 @@ def test_request_with_retry_timeout(mock_sleep):
         ):
             BaseEntity.request_with_retry("http://example.com/file")
 
-        # Assert has 3 retry sleeps of increasing time
+        # Assert has jitter sleeps before each attempt and retry sleeps after failures
         mock_sleep.assert_has_calls(
             [
-                mock.call(10),
-                mock.call(20),
-                mock.call(30),
+                mock.call(1.0),  # jitter before attempt 1
+                mock.call(10),  # retry backoff
+                mock.call(1.0),  # jitter before attempt 2
+                mock.call(20),  # retry backoff
+                mock.call(1.0),  # jitter before attempt 3
+                mock.call(30),  # retry backoff
             ]
         )
+        assert mock_random.call_count == 3  # Called for all 3 attempts
 
 
+@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=1.0)
 @patch("cbz_tagger.entities.base_entity.time.sleep")
-def test_request_with_retry_failure(mock_sleep):
+def test_request_with_retry_failure(mock_sleep, mock_random):
     with requests_mock.Mocker() as rm:
         rm.get("http://example.com/file", json={"data": "file content"}, status_code=500)
 
@@ -125,19 +138,24 @@ def test_request_with_retry_failure(mock_sleep):
         ):
             BaseEntity.request_with_retry("http://example.com/file")
 
-        # Assert has 3 retry sleeps of increasing time
+        # Assert has jitter sleeps before each attempt and retry sleeps after failures
         mock_sleep.assert_has_calls(
             [
-                mock.call(10),
-                mock.call(20),
-                mock.call(30),
+                mock.call(1.0),  # jitter before attempt 1
+                mock.call(10),  # retry backoff
+                mock.call(1.0),  # jitter before attempt 2
+                mock.call(20),  # retry backoff
+                mock.call(1.0),  # jitter before attempt 3
+                mock.call(30),  # retry backoff
             ]
         )
+        assert mock_random.call_count == 3  # Called for all 3 attempts
 
 
+@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=1.0)
 @patch("cbz_tagger.entities.base_entity.time.sleep")
 @patch("cbz_tagger.entities.base_entity.AppEnv")
-def test_request_with_retry_with_proxy(mock_app_env, mock_sleep):
+def test_request_with_retry_with_proxy(mock_app_env, mock_sleep, mock_random):
     def verify_proxy_in_headers(request, content):
         _ = content
         assert request.proxies == {"http": "http://proxy.example.com", "https": "http://proxy.example.com"}
@@ -146,39 +164,48 @@ def test_request_with_retry_with_proxy(mock_app_env, mock_sleep):
     with requests_mock.Mocker() as rm:
         rm.get("http://example.com/file", text=verify_proxy_in_headers)
         mock_app_env.return_value.PROXY_URL = "http://proxy.example.com"
+        mock_app_env.DELAY_PER_REQUEST = 0.5
 
         result = BaseEntity.request_with_retry("http://example.com/file")
 
         assert result.status_code == 200
         assert result.text == "passed"
-        mock_sleep.assert_called_once()
+        # Should have jitter sleep and success sleep
+        mock_sleep.assert_has_calls([mock.call(1.0), mock.call(0.5)])
+        mock_random.assert_called_once_with(0.5, 2.0)
 
 
+@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=1.0)
 @patch("cbz_tagger.entities.base_entity.time.sleep")
-def test_download_file_success(mock_sleep):
+def test_download_file_success(mock_sleep, mock_random):
     with requests_mock.Mocker() as rm:
         rm.get("http://example.com/file", content=b"file content")
 
         result = BaseEntity.download_file("http://example.com/file")
 
         assert result == b"file content"
-        mock_sleep.assert_called_once_with(0.5)
+        # Should have jitter sleep and success sleep
+        mock_sleep.assert_has_calls([mock.call(1.0), mock.call(0.5)])
+        mock_random.assert_called_once_with(0.5, 2.0)
 
 
+@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=1.0)
 @patch("cbz_tagger.entities.base_entity.time.sleep")
-def test_download_file_retry_success(mock_sleep):
+def test_download_file_retry_success(mock_sleep, mock_random):
     with requests_mock.Mocker() as rm:
         rm.get("http://example.com/file", [{"status_code": 500}, {"content": b"file content"}])
 
         result = BaseEntity.download_file("http://example.com/file")
 
         assert result == b"file content"
-        # assert mock_requests_get.call_count == 2
-        mock_sleep.assert_called_with(0.5)
+        # Should have jitter sleep (1.0), retry sleep (10), jitter sleep (1.0), success sleep (0.5)
+        mock_sleep.assert_has_calls([mock.call(1.0), mock.call(10), mock.call(1.0), mock.call(0.5)])
+        assert mock_random.call_count == 2
 
 
+@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=1.0)
 @patch("cbz_tagger.entities.base_entity.time.sleep")
-def test_download_file_failure(mock_sleep):
+def test_download_file_failure(mock_sleep, mock_random):
     with requests_mock.Mocker() as rm:
         rm.get("http://example.com/file", status_code=500)
 
@@ -187,4 +214,16 @@ def test_download_file_failure(mock_sleep):
         ):
             BaseEntity.download_file("http://example.com/file")
 
-        assert mock_sleep.call_count == 3
+        # Should have 3 jitter sleeps and 3 retry sleeps = 6 total
+        assert mock_sleep.call_count == 6
+        mock_sleep.assert_has_calls(
+            [
+                mock.call(1.0),  # jitter before attempt 1
+                mock.call(10),  # retry backoff
+                mock.call(1.0),  # jitter before attempt 2
+                mock.call(20),  # retry backoff
+                mock.call(1.0),  # jitter before attempt 3
+                mock.call(30),  # retry backoff
+            ]
+        )
+        assert mock_random.call_count == 3
