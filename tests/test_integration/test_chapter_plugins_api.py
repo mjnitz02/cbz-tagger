@@ -1,4 +1,5 @@
 import os
+
 import pytest
 
 from cbz_tagger.common.enums import Plugins
