@@ -1,3 +1,4 @@
+import os
 import pytest
 
 from cbz_tagger.common.enums import Plugins
@@ -14,17 +15,21 @@ def check_entity_download_links(entity, entity_link_count):
 
 # These are random selections of cancelled free web comics for testing the API connections
 @pytest.mark.parametrize(
-    "entity_id,plugin_type,plugin_id,entity_count,first_entity_count,second_entity_count",
+    "test_key,entity_id,plugin_type,plugin_id,entity_count,first_entity_count,second_entity_count",
     [
-        ("f2def508-4407-471c-bf2c-86bea3e4e592", Plugins.MDX, "", 14, 4, 1),
-        ("example_manga", Plugins.KAL, "23032-umbella", 3, 3, 3),
-        ("example_manga", Plugins.WBC, "01J76XY9B20J1KHJ1FWVZ8N1PK", 5, 21, 20),
+        ("MDX", "f2def508-4407-471c-bf2c-86bea3e4e592", Plugins.MDX, "", 14, 4, 1),
+        ("KAL", "example_manga", Plugins.KAL, "23032-umbella", 3, 3, 3),
+        ("WBC", "example_manga", Plugins.WBC, "01J76XY9B20J1KHJ1FWVZ8N1PK", 5, 21, 20),
     ],
 )
 def test_chapter_plugins_api_connection_test(
-    entity_id, plugin_type, plugin_id, entity_count, first_entity_count, second_entity_count
+    test_key, entity_id, plugin_type, plugin_id, entity_count, first_entity_count, second_entity_count
 ):
     """This is a smoke test to make sure that chapter plugins can connect to their respective APIs"""
+    skip_keys = os.getenv("CBZ_TAGGER_SKIP_INTEGRATION_TESTS", "").split(",")
+    if test_key in skip_keys:
+        pytest.skip(f"Skipping integration test for {test_key}")
+
     # Check that some entities can be retrieved and don't flake
     chapter_entities = ChapterEntity.from_server_url(
         {"ids[]": [entity_id]}, plugin_type=plugin_type, plugin_id=plugin_id
