@@ -55,7 +55,7 @@ test-unit-docker:
 
 test-integration-docker:
 	docker build -t cbz-tagger .
-	docker run --entrypoint "/bin/sh" cbz-tagger -c "uv run pytest /app/tests/test_integration/ -W ignore::DeprecationWarning"
+	docker run -e CBZ_TAGGER_SKIP_INTEGRATION_TESTS --entrypoint "/bin/sh" cbz-tagger -c "uv run pytest /app/tests/test_integration/ -W ignore::DeprecationWarning"
 
 build-docker:
 	docker build -t cbz-tagger .
