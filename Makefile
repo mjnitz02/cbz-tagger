@@ -74,7 +74,14 @@ test-unit-docker:
 
 test-integration-docker:
 	docker build -t cbz-tagger .
-	docker run -e CBZ_TAGGER_SKIP_INTEGRATION_TESTS --entrypoint "/bin/sh" cbz-tagger -c "uv run pytest /app/tests/test_integration/ -W ignore::DeprecationWarning"
+	docker run -e CBZ_TAGGER_SKIP_INTEGRATION_TESTS --entrypoint "/bin/sh" cbz-tagger -c "\
+		cd /app && \
+		uv run python -m cbz_tagger.api.server & \
+		sleep 3 && \
+		uv run pytest /app/tests/test_integration/ -W ignore::DeprecationWarning; \
+		TEST_EXIT=\$$?; \
+		kill %1 2>/dev/null || true; \
+		exit \$$TEST_EXIT"
 
 build-docker:
 	docker build -t cbz-tagger .

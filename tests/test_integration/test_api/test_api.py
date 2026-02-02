@@ -189,7 +189,6 @@ class TestLogsEndpoints:
         assert len(data["logs"]) <= 5
 
 
-@pytest.mark.slow
 class TestIntegrationEndpoints:
     """Test endpoints that perform operations (slower tests)."""
 
