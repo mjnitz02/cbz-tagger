@@ -86,5 +86,7 @@ dev:
 	@echo "Starting Reflex GUI in development mode"
 	@echo "Access the app at http://localhost:8080"
 	GUI_MODE=true TIMER_DELAY=600 \
-	CONFIG_PATH=~/Downloads/cbz_tagger/config SCAN_PATH=./scan STORAGE_PATH=./storage \
+	CONFIG_PATH=~/Downloads/cbz_tagger/config \
+	SCAN_PATH=~/Downloads/cbz_tagger/scan \
+	STORAGE_PATH=~/Downloads/cbz_tagger/storage \
 	uv run reflex run

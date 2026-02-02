@@ -23,12 +23,12 @@ def logs_page() -> rx.Component:
                         "Refresh Logs",
                         on_click=LogState.refresh_logs,
                         loading=LogState.is_loading,
-                        color_scheme="blue",
+                        # color_scheme="blue",
                     ),
                     rx.button(
                         "Clear Logs",
                         on_click=LogState.clear_logs,
-                        color_scheme="red",
+                        # color_scheme="red",
                     ),
                     rx.switch(
                         "Auto-refresh",
@@ -49,6 +49,7 @@ def logs_page() -> rx.Component:
                                     font_size="0.875rem",
                                     white_space="pre-wrap",
                                     word_break="break-all",
+                                    color="#222",
                                 ),
                             ),
                             spacing="1",

@@ -3,6 +3,7 @@
 import reflex as rx
 
 from cbz_tagger.common.enums import Emoji
+from cbz_tagger.reflex_gui.components.navbar import navbar
 from cbz_tagger.reflex_gui.states.series_state import SeriesState
 
 
@@ -25,62 +26,121 @@ def series_table() -> rx.Component:
     """Create the series data table.
 
     Returns:
-        Reflex data table component with series data
+        Reflex table component with series data
     """
     return rx.box(
-        rx.data_table(
-            data=SeriesState.series_data,
-            columns=[
-                {
-                    "title": "Entity Name",
-                    "accessorKey": "entity_name_display",
-                    "id": "entity_name_display",
-                },
-                {
-                    "title": "Entity ID",
-                    "accessorKey": "entity_id",
-                    "id": "entity_id",
-                    "show": SeriesState.show_entity_id,
-                },
-                {
-                    "title": "Status",
-                    "accessorKey": "status",
-                    "id": "status",
-                },
-                {
-                    "title": "Tracked",
-                    "accessorKey": "tracked",
-                    "id": "tracked",
-                },
-                {
-                    "title": "Chapter",
-                    "accessorKey": "latest_chapter",
-                    "id": "latest_chapter",
-                },
-                {
-                    "title": "Chapter Updated",
-                    "accessorKey": "latest_chapter_date",
-                    "id": "latest_chapter_date",
-                },
-                {
-                    "title": "Metadata Updated",
-                    "accessorKey": "updated",
-                    "id": "updated",
-                    "show": SeriesState.show_metadata_updated,
-                },
-                {
-                    "title": "Plugin",
-                    "accessorKey": "plugin",
-                    "id": "plugin",
-                    "show": SeriesState.show_plugin,
-                },
-            ],
-            search=True,
-            sort=True,
-            pagination=True,
+        rx.container(
+            rx.vstack(
+                rx.heading("Series Table", size="8"),
+                rx.cond(
+                    SeriesState.is_loaded,
+                    rx.vstack(
+                        rx.hstack(
+                            rx.text("Entity ID", weight="bold", width="500px"),
+                            # rx.text("Status", weight="bold", width="300px"),
+                            # rx.text("Tracked", weight="bold", width="300px"),
+                            # rx.text("Chapter", weight="bold", width="300px"),
+                            # rx.text("Chapter Updated", weight="bold", width="300px"),
+                            # rx.text("Metadata Updated", weight="bold", width="200px"),
+                            # rx.text("Plugin", weight="bold", width="200px"),
+                            width="100%",
+                            padding="0.5rem",
+                            border_bottom="2px solid #e0e0e0",
+                        ),
+                        rx.foreach(
+                            SeriesState.series_data,
+                            lambda item: rx.hstack(
+                                rx.text(item, width="500px"),
+                                # rx.text(item["status"], width="300px"),
+                                # rx.text(item["tracked"], width="300px"),
+                                # rx.text(item["latest_chapter"], width="300px"),
+                                # rx.text(item["chapter_date_display"]["text"], width="200px"),
+                                # rx.text(item["updated_display"]["text"], width="200px"),
+                                # rx.text(item["plugin"], width="100px"),
+                                width="100%",
+                                padding="0.5rem",
+                                border_bottom="1px solid #f0f0f0",
+                            ),
+                        ),
+                        width="100%",
+                        border="1px solid #e0e0e0",
+                        border_radius="8px",
+                        overflow="hidden",
+                    ),
+                    rx.spinner(),
+                ),
+                spacing="4",
+                padding="2rem",
+            ),
+            max_width="1400px",
         ),
-        width="100%",
+        on_mount=SeriesState.refresh_table,
     )
+
+    # return rx.box(
+    #     rx.vstack(
+    #         # Header row
+    #         rx.hstack(
+    #             rx.text("Entity Name", weight="bold", width="300px"),
+    #             rx.cond(
+    #                 SeriesState.show_entity_id,
+    #                 rx.text("Entity ID", weight="bold", width="100px"),
+    #             ),
+    #             rx.text("Status", weight="bold", width="100px"),
+    #             rx.text("Tracked", weight="bold", width="100px"),
+    #             rx.text("Chapter", weight="bold", width="100px"),
+    #             rx.text("Chapter Updated", weight="bold", width="200px"),
+    #             rx.cond(
+    #                 SeriesState.show_metadata_updated,
+    #                 rx.text("Metadata Updated", weight="bold", width="200px"),
+    #             ),
+    #             rx.cond(
+    #                 SeriesState.show_plugin,
+    #                 rx.text("Plugin", weight="bold", width="100px"),
+    #             ),
+    #             width="100%",
+    #             padding="0.5rem",
+    #             border_bottom="2px solid #e0e0e0",
+    #             align="start",
+    #         ),
+    #         # Data rows
+    #         rx.foreach(
+    #             SeriesState.series_data,
+    #             lambda item: rx.hstack(
+    #                 rx.text(item["entity_name_display"], width="300px"),
+    #                 rx.cond(
+    #                     SeriesState.show_entity_id,
+    #                     rx.text(item["entity_id"], width="100px"),
+    #                     rx.fragment(),
+    #                 ),
+    #                 rx.text(item["status"], width="100px"),
+    #                 rx.text(item["tracked"], width="100px"),
+    #                 rx.text(item["latest_chapter"], width="100px"),
+    #                 rx.text(item["chapter_date_display"]["text"], width="200px"),
+    #                 rx.cond(
+    #                     SeriesState.show_metadata_updated,
+    #                     rx.text(item["updated_display"]["text"], width="200px"),
+    #                     rx.fragment(),
+    #                 ),
+    #                 rx.cond(
+    #                     SeriesState.show_plugin,
+    #                     rx.text(item["plugin"], width="100px"),
+    #                     rx.fragment(),
+    #                 ),
+    #                 width="100%",
+    #                 padding="0.5rem",
+    #                 border_bottom="1px solid #f0f0f0",
+    #                 align="start",
+    #             ),
+    #         ),
+    #         width="100%",
+    #         border="1px solid #e0e0e0",
+    #         border_radius="8px",
+    #         overflow="auto",
+    #         max_height="70vh",
+    #     ),
+    #     width="100%",
+    # )
 
 
 def legend() -> rx.Component:

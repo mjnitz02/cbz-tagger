@@ -23,14 +23,14 @@ def series_page() -> rx.Component:
                     rx.button(
                         "Refresh Table",
                         on_click=SeriesState.refresh_table,
-                        loading=SeriesState.is_loading,
-                        color_scheme="blue",
+                        # loading=SeriesState.is_loaded,
+                        # color_scheme="blue",
                     ),
                     rx.button(
                         "Refresh Database",
                         on_click=SeriesState.refresh_database,
-                        loading=SeriesState.is_loading,
-                        color_scheme="green",
+                        # loading=SeriesState.is_loading,
+                        # color_scheme="green",
                     ),
                     spacing="4",
                 ),
@@ -64,7 +64,7 @@ def series_page() -> rx.Component:
                     rx.callout(
                         SeriesState.notification_message,
                         icon="info",
-                        color_scheme=SeriesState.notification_severity,
+                        # color_scheme=SeriesState.notification_severity,
                         on_click=SeriesState.clear_notification,
                     ),
                 ),

@@ -56,6 +56,48 @@ class ManageState(BaseState):
     delete_button_enabled: bool = False
     reset_button_enabled: bool = False
 
+    def set_add_search_term(self, value: str):
+        """Set the search term for adding series."""
+        self.add_search_term = value
+
+    def set_add_series_value(self, value: str):
+        """Set the selected series value."""
+        self.add_series_value = value
+
+    def set_add_name_value(self, value: str):
+        """Set the selected name value."""
+        self.add_name_value = value
+
+    def set_add_backend_value(self, value: str):
+        """Set the backend plugin value."""
+        self.add_backend_value = value
+
+    def set_add_backend_id(self, value: str):
+        """Set the backend ID."""
+        self.add_backend_id = value
+
+    def set_add_mark_tracked(self, value: str):
+        """Set the mark tracked option."""
+        self.add_mark_tracked = value
+
+    def set_manage_series_value(self, value: str):
+        """Set the selected series for management."""
+        self.manage_series_value = value
+
+    def set_manage_chapter_value(self, value: str):
+        """Set the selected chapter for management."""
+        self.manage_chapter_value = value
+
+    async def handle_add_series_select(self, value: str):
+        """Handle series selection change in add form."""
+        self.set_add_series_value(value)
+        await self.update_series_names()
+
+    async def handle_manage_series_select(self, value: str):
+        """Handle series selection change in manage form."""
+        self.set_manage_series_value(value)
+        await self.load_chapters()
+
     async def search_series(self):
         """Search for series using MDX API."""
         if not self.add_search_term or len(self.add_search_term) == 0:

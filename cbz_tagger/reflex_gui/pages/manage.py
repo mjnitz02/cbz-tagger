@@ -28,14 +28,14 @@ def add_series_section() -> rx.Component:
             "Search for New Series",
             on_click=ManageState.search_series,
             loading=ManageState.is_searching,
-            color_scheme="blue",
+            # color_scheme="blue",
         ),
         # Series selector
         rx.select(
             ManageState.add_series_options,
             placeholder="Select a series (type to filter)",
             value=ManageState.add_series_value,
-            on_change=lambda v: [ManageState.set_add_series_value(v), ManageState.update_series_names()],
+            on_change=ManageState.handle_add_series_select,
             width="66%",
         ),
         # Name selector
@@ -80,7 +80,7 @@ def add_series_section() -> rx.Component:
                 on_click=ManageState.add_series,
                 loading=ManageState.is_adding,
                 disabled=ManageState.add_button_enabled == False,  # noqa: E712
-                color_scheme="green",
+                # color_scheme="green",
             ),
             rx.cond(
                 ManageState.is_adding,
@@ -108,7 +108,7 @@ def manage_series_section() -> rx.Component:
             ManageState.manage_series_options,
             placeholder="Select a series (type to filter)",
             value=ManageState.manage_series_value,
-            on_change=lambda v: [ManageState.set_manage_series_value(v), ManageState.load_chapters()],
+            on_change=ManageState.handle_manage_series_select,
             width="66%",
         ),
         # Chapter selector
@@ -125,21 +125,21 @@ def manage_series_section() -> rx.Component:
                 "Refresh Series List",
                 on_click=ManageState.load_series_list,
                 loading=ManageState.is_loading_series,
-                color_scheme="blue",
+                # color_scheme="blue",
             ),
             rx.button(
                 "Delete Selected Series",
                 on_click=ManageState.delete_series,
                 loading=ManageState.is_deleting,
                 disabled=ManageState.delete_button_enabled == False,  # noqa: E712
-                color_scheme="red",
+                # color_scheme="red",
             ),
             rx.button(
                 "Reset Tracked Chapter",
                 on_click=ManageState.reset_chapter_tracking,
                 loading=ManageState.is_resetting,
                 disabled=ManageState.reset_button_enabled == False,  # noqa: E712
-                color_scheme="orange",
+                # color_scheme="orange",
             ),
             spacing="4",
             wrap="wrap",
@@ -149,7 +149,7 @@ def manage_series_section() -> rx.Component:
             "Clean Orphaned Files",
             on_click=ManageState.clean_orphaned_files,
             loading=ManageState.is_cleaning,
-            color_scheme="purple",
+            # color_scheme="purple",
         ),
         spacing="4",
         align="start",

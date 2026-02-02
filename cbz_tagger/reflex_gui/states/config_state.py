@@ -16,8 +16,9 @@ class ConfigState(BaseState):
     """
 
     config_data: list[dict] = []
+    is_loaded: bool = False
 
-    def load_config(self):
+    async def load_config(self):
         """Load configuration from environment."""
         env = AppEnv()
 
@@ -35,3 +36,7 @@ class ConfigState(BaseState):
         ]
 
         logger.debug("Config loaded: %d items", len(self.config_data))
+        for item in self.config_data:
+            logger.debug("Config item: %s = %s", item["property"], item["value"])
+        
+        self.is_loaded = True

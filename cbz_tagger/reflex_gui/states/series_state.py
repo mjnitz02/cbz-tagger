@@ -2,11 +2,35 @@
 
 import logging
 from datetime import datetime
+from typing import Any, TypedDict
+
+import reflex as rx
 
 from cbz_tagger.common.enums import Emoji
 from cbz_tagger.reflex_gui.states.base_state import BaseState
 
 logger = logging.getLogger()
+
+
+class DateDisplayDict(TypedDict, total=False):
+    """Type for date display data."""
+    text: str
+    color: str
+
+
+class SeriesItemDict(TypedDict, total=False):
+    """Type for series table item data."""
+    entity_name: str
+    entity_name_display: str
+    entity_id: str
+    status: str
+    tracked: str
+    latest_chapter: str
+    latest_chapter_date: str
+    chapter_date_display: DateDisplayDict
+    updated: str
+    updated_display: DateDisplayDict
+    plugin: str
 
 
 class SeriesState(BaseState):
@@ -19,7 +43,7 @@ class SeriesState(BaseState):
     """
 
     # Table data
-    series_data: list[dict] = []
+    series_data: list[SeriesItemDict] = []
 
     # Column visibility (default hidden columns)
     show_entity_id: bool = False
@@ -27,7 +51,56 @@ class SeriesState(BaseState):
     show_plugin: bool = False
 
     # Loading state
-    is_loading: bool = False
+    is_loaded: bool = False
+
+    @rx.var
+    def table_columns(self) -> list[dict]:
+        """Get table columns based on visibility settings."""
+        columns = [
+            {
+                "title": "Entity Name",
+                "accessorKey": "entity_name_display",
+            },
+        ]
+        
+        if self.show_entity_id:
+            columns.append({
+                "title": "Entity ID",
+                "accessorKey": "entity_id",
+            })
+        
+        columns.extend([
+            {
+                "title": "Status",
+                "accessorKey": "status",
+            },
+            {
+                "title": "Tracked",
+                "accessorKey": "tracked",
+            },
+            {
+                "title": "Chapter",
+                "accessorKey": "latest_chapter",
+            },
+            {
+                "title": "Chapter Updated",
+                "accessorKey": "chapter_date_display",
+            },
+        ])
+        
+        if self.show_metadata_updated:
+            columns.append({
+                "title": "Metadata Updated",
+                "accessorKey": "updated_display",
+            })
+        
+        if self.show_plugin:
+            columns.append({
+                "title": "Plugin",
+                "accessorKey": "plugin",
+            })
+        
+        return columns
 
     async def refresh_table(self):
         """Refresh the series table data.
@@ -35,7 +108,7 @@ class SeriesState(BaseState):
         Reloads scanner and updates table with formatted data.
         """
         logger.debug("Refreshing series table")
-        self.is_loading = True
+        self.is_loaded = False
 
         try:
 
@@ -60,7 +133,6 @@ class SeriesState(BaseState):
                         item["chapter_date_display"] = self._format_date(item["latest_chapter_date"])
 
                     formatted_state.append(item)
-
                 return formatted_state
 
             # Run in executor
@@ -71,7 +143,7 @@ class SeriesState(BaseState):
             logger.error("Error refreshing table: %s", e)
             self.notify(f"Error refreshing table: {e}", "error")
         finally:
-            self.is_loading = False
+            self.is_loaded = True
 
     async def refresh_database(self):
         """Perform full database refresh (scan for new files and update metadata).
@@ -83,7 +155,7 @@ class SeriesState(BaseState):
             return
 
         self.notify("Refreshing database... please wait", "info")
-        self.is_loading = True
+        self.is_loaded = False
 
         try:
 
@@ -102,7 +174,7 @@ class SeriesState(BaseState):
             logger.error("Error refreshing database: %s", e)
             self.notify(f"Error refreshing database: {e}", "error")
         finally:
-            self.is_loading = False
+            self.is_loaded = True
 
     def toggle_entity_id(self):
         """Toggle Entity ID column visibility."""
