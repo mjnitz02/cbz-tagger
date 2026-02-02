@@ -308,7 +308,12 @@ class SimpleGui:
             except Exception as e:
                 logger.error("Error refreshing table: %s", str(e))
 
-        asyncio.create_task(fetch())
+        # Ensure the event loop is running
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(fetch())
+        except RuntimeError:
+            asyncio.run(fetch())
 
     async def add_new_series(self):
         if not self.can_use_database():

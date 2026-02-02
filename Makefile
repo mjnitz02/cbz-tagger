@@ -66,7 +66,7 @@ run-api-dev:
 	uv run uvicorn cbz_tagger.api.app:app --host 0.0.0.0 --port 8000 --reload
 
 run-frontend:
-	export GUI_MODE=true && uv run run.py
+	export GUI_MODE=true && uv run run.py --entrymode
 
 test-unit-docker:
 	docker build -t cbz-tagger .
