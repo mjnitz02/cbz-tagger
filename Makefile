@@ -67,6 +67,21 @@ clean-git:
 	chmod +x ./scripts/clean_git.sh
 	./scripts/clean_git.sh
 
+clean-pyc:
+	find . -type d -name '__pycache__' -exec rm -rf {} +
+	find . -type d -name '.pytest_cache' -exec rm -rf {} +
+	find . -type d -name '.mypy_cache' -exec rm -rf {} +
+	find . -type d -name '.ruff_cache' -exec rm -rf {} +
+	find . -type d -name '.coverage' -exec rm -rf {} +
+	find . -type d -name '.hypothesis' -exec rm -rf {} +
+	find . -type d -name '.cache' -exec rm -rf {} +
+	find . -type d -name 'htmlcov' -exec rm -rf {} +
+	find . -type d -name '.tox' -exec rm -rf {} +
+	find . -type d -name '.eggs' -exec rm -rf {} +
+	find . -type f -name '*.pyc' -delete
+	find . -type f -name '*.pyo' -delete
+	find . -type f -name '*.pyd' -delete
+
 dev:
 	@echo "Starting Reflex GUI in development mode"
 	@echo "Access the app at http://localhost:8080"
