@@ -85,6 +85,6 @@ clean-pyc:
 dev:
 	@echo "Starting Reflex GUI in development mode"
 	@echo "Access the app at http://localhost:8080"
-	GUI_MODE=true TIMER_DELAY=600 USE_REFLEX=true \
-	CONFIG_PATH=./config SCAN_PATH=./scan STORAGE_PATH=./storage \
-	uv run reflex run --reload
+	GUI_MODE=true TIMER_DELAY=600 \
+	CONFIG_PATH=~/Downloads/cbz_tagger/config SCAN_PATH=./scan STORAGE_PATH=./storage \
+	uv run reflex run
