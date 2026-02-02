@@ -22,7 +22,18 @@ COPY uv.lock ./
 RUN echo "Install dependencies" && \
 # These dependencies don't seem necessary when using uv, but leaving them commented out for reference
 #    apk add --no-cache gcc libffi-dev musl-dev postgresql-dev zlib-dev jpeg-dev && \
-    apk add --no-cache uv nodejs npm && \
+    apk update && \
+    apk add --no-cache \
+        uv \
+        nodejs \
+        npm \
+        libgcc \
+        libstdc++ \
+        libuv \
+        nghttp2-libs \
+        brotli-libs \
+        c-ares \
+        icu-libs && \
     uv sync --no-cache
 
 ### Container Aliases ###
