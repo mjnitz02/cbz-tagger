@@ -47,7 +47,16 @@ test-unit:
 	uv run pytest tests/test_unit/ -W ignore::DeprecationWarning
 
 test-integration:
-	uv run pytest tests/test_integration/ -W ignore::DeprecationWarning
+	@echo "Starting API server..."
+	@uv run python -m cbz_tagger.api.server & echo $$! > /tmp/cbz-tagger-api.pid
+	@sleep 3
+	@echo "Running integration tests..."
+	@uv run pytest tests/test_integration/ -W ignore::DeprecationWarning; \
+	TEST_EXIT=$$?; \
+	echo "Stopping API server..."; \
+	kill `cat /tmp/cbz-tagger-api.pid` 2>/dev/null || true; \
+	rm -f /tmp/cbz-tagger-api.pid; \
+	exit $$TEST_EXIT
 
 # API Server targets
 run-api:
