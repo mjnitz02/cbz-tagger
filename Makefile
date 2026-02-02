@@ -21,7 +21,7 @@ lint-yaml:
 	uvx yamlfix .github cbz_tagger tests docker-compose.yaml .pre-commit-config.yaml
 
 lint-typing:
-	uvx ty@0.0.14 check cbz_tagger
+	uvx ty@0.0.14 check cbz_tagger --exclude 'cbz_tagger/reflex_gui/**'
 
 lint:
 	$(MAKE) lint-format
@@ -33,7 +33,7 @@ test-lint:
 	uv run ruff format . --check
 	uv run ruff check .
 	uvx yamlfix .github cbz_tagger tests docker-compose.yaml .pre-commit-config.yaml --check
-	uvx ty check cbz_tagger
+	uvx ty check cbz_tagger --exclude 'cbz_tagger/reflex_gui/**'
 
 test:
 	echo "Running tests locally"
@@ -66,3 +66,10 @@ run-docker:
 clean-git:
 	chmod +x ./scripts/clean_git.sh
 	./scripts/clean_git.sh
+
+dev:
+	@echo "Starting Reflex GUI in development mode"
+	@echo "Access the app at http://localhost:8080"
+	GUI_MODE=true TIMER_DELAY=600 USE_REFLEX=true \
+	CONFIG_PATH=./config SCAN_PATH=./scan STORAGE_PATH=./storage \
+	uv run reflex run --reload
