@@ -9,7 +9,9 @@ from cbz_tagger.entities.chapter_plugins.plugin import ChapterPluginEntity
 logger = logging.getLogger()
 
 
+@Plugins.register(Plugins.CMK)
 class ChapterPluginCMK(ChapterPluginEntity):
+    PLUGIN_TYPE = Plugins.CMK
     entity_url = f"https://{Urls.CMK}/"
 
     @classmethod
@@ -57,28 +59,25 @@ class ChapterPluginCMK(ChapterPluginEntity):
                     raise
 
         content = []
-        # This constructs an api compatible response from the rss feed
         for item in items:
-            # link = str(item.find("link").text)
             group_id = None
             if isinstance(item["group_name"], list) and len(item["group_name"]) > 0:
                 group_id = item["group_name"][0]
+
             content.append(
-                {
-                    "id": f"{manga_id}-{item['hid']}",
-                    "type": Plugins.CMK,
-                    "attributes": {
-                        "title": item["title"],
-                        "url": f"{cls.entity_url}chapter/{item['hid']}?tachiyomi=true",
-                        "chapter": item["chap"],
-                        "translatedLanguage": "en",
-                        "pages": -1,
-                        "volume": item["vol"],
-                        "createdAt": item.get("created_at"),
-                        "updatedAt": item.get("created_at"),  # updatedAt is unreliable for CMK
-                    },
-                    "relationships": [{"type": "scanlation_group", "id": group_id}],
-                }
+                cls.ResponseBuilder.build(
+                    cls.build_chapter_data(
+                        chapter_id=f"{manga_id}-{item['hid']}",
+                        entity_id=entity_id,
+                        title=item["title"],
+                        url=f"{cls.entity_url}chapter/{item['hid']}?tachiyomi=true",
+                        chapter=item["chap"],
+                        volume=item["vol"],
+                        created_at=item.get("created_at"),
+                        updated_at=item.get("created_at"),  # updatedAt is unreliable for CMK
+                        scanlation_group=group_id,
+                    )
+                )
             )
         return content
 

@@ -6,12 +6,10 @@ from io import BytesIO
 from PIL import Image
 from PIL import ImageFile
 
+# Import plugins to trigger registration
+import cbz_tagger.entities.chapter_plugins  # noqa: F401
 from cbz_tagger.common.enums import Plugins
 from cbz_tagger.entities.base_entity import BaseEntity
-from cbz_tagger.entities.chapter_plugins.cmk import ChapterPluginCMK
-from cbz_tagger.entities.chapter_plugins.kal import ChapterPluginKAL
-from cbz_tagger.entities.chapter_plugins.mdx import ChapterPluginMDX
-from cbz_tagger.entities.chapter_plugins.wbc import ChapterPluginWBC
 
 logger = logging.getLogger()
 
@@ -20,17 +18,11 @@ class ChapterEntity(BaseEntity):
     download_url: str
     paginated: bool = False
     quality = "data"
-    plugins = {
-        Plugins.MDX: ChapterPluginMDX,
-        Plugins.CMK: ChapterPluginCMK,
-        Plugins.WBC: ChapterPluginWBC,
-        Plugins.KAL: ChapterPluginKAL,
-    }
 
     @classmethod
     def from_server_url(cls, query_params=None, **kwargs):
         plugin_type = kwargs.get("plugin_type", Plugins.MDX)
-        entity_plugin = cls.plugins[plugin_type]
+        entity_plugin = Plugins.get_plugin(plugin_type)
         response = entity_plugin.from_server_url(query_params=query_params, **kwargs)
         return [cls(data) for data in response]
 
@@ -83,7 +75,7 @@ class ChapterEntity(BaseEntity):
 
     @property
     def entity_plugin(self):
-        return self.plugins[self.entity_type](self.content)
+        return Plugins.get_plugin(self.entity_type)(self.content)
 
     @property
     def volume_number(self) -> float | None:

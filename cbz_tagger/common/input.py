@@ -1,4 +1,4 @@
-from cbz_tagger.database.chapter_entity_db import ChapterEntityDB
+from cbz_tagger.common.enums import Plugins
 from cbz_tagger.entities.metadata_entity import MetadataEntity
 
 
@@ -45,7 +45,7 @@ class InputEntity:
 
     @staticmethod
     def select_a_chapter_backend():
-        plugins_types = list(ChapterEntityDB.entity_class.plugins.keys())
+        plugins_types = list(Plugins._REGISTRY.keys())
         choice = console_selector(
             plugins_types,
             "Select a chapter backend for the series (Default: mdx)",
