@@ -4,7 +4,6 @@ import os
 
 from cbz_tagger.common.enums import ContainerMode
 from cbz_tagger.common.env import AppEnv
-from cbz_tagger.container.gui_container import GuiContainer
 from cbz_tagger.container.manual_container import ManualContainer
 from cbz_tagger.container.reflex_gui_container import ReflexGuiContainer
 from cbz_tagger.container.timer_container import TimerContainer
@@ -68,26 +67,14 @@ def run_container(**kwargs):
     if kwargs.get("entrymode"):
         container_mode = AppEnv.CONTAINER_MODE
         if container_mode == ContainerMode.GUI:
-            # Check if we should use Reflex or NiceGUI
-            use_reflex = os.getenv("USE_REFLEX", "false").lower() == "true"
-            if use_reflex:
-                logger.info("Using Reflex GUI")
-                container = ReflexGuiContainer(
-                    config_path=env_vars["config_path"],
-                    scan_path=env_vars["scan_path"],
-                    storage_path=env_vars["storage_path"],
-                    timer_delay=env_vars["timer_delay"],
-                    environment=env_vars["environment"],
-                )
-            else:
-                logger.info("Using NiceGUI (legacy)")
-                container = GuiContainer(
-                    config_path=env_vars["config_path"],
-                    scan_path=env_vars["scan_path"],
-                    storage_path=env_vars["storage_path"],
-                    timer_delay=env_vars["timer_delay"],
-                    environment=env_vars["environment"],
-                )
+            logger.info("Using Reflex GUI")
+            container = ReflexGuiContainer(
+                config_path=env_vars["config_path"],
+                scan_path=env_vars["scan_path"],
+                storage_path=env_vars["storage_path"],
+                timer_delay=env_vars["timer_delay"],
+                environment=env_vars["environment"],
+            )
         elif container_mode == ContainerMode.TIMER:
             container = TimerContainer(
                 config_path=env_vars["config_path"],
