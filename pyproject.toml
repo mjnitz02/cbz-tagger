@@ -18,6 +18,7 @@ dependencies = [
     "beautifulsoup4>=4.14.0",
     "pre-commit>=4.2.0",
     "pydantic>=2.12.5",
+    "fastapi[standard]>=0.128.0",
 ]
 
 
