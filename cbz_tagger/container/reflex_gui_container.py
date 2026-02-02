@@ -53,9 +53,10 @@ class ReflexGuiContainer(BaseContainer):
         logger.info("Access the web interface at http://0.0.0.0:8080")
 
         # Run reflex with production settings
+        # Note: We use --env prod without --backend-only so Reflex builds and serves the frontend
         try:
             subprocess.run(
-                [sys.executable, "-m", "reflex", "run", "--env", "prod", "--backend-only"],
+                [sys.executable, "-m", "reflex", "run", "--env", "prod"],
                 check=True,
                 cwd="/app",
             )
