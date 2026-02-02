@@ -70,7 +70,7 @@ async def add_series_task(
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(
             None,
-            app_state.scanner.entity_database.add_entity,
+            app_state.scanner.entity_database.add_entity,  # type: ignore[union-attr]
             entity_name,
             entity_id,
             None,  # manga_name
@@ -174,7 +174,7 @@ async def get_series_chapters(entity_id: str):
         if not entity_name:
             raise HTTPException(status_code=404, detail=f"Entity {entity_id} not found")
 
-        chapters = app_state.scanner.entity_database.chapters.get(entity_id, [])
+        chapters = app_state.scanner.entity_database.chapters.get(entity_id, [])  # type: ignore[union-attr]
 
         chapter_items = [
             ChapterItem(

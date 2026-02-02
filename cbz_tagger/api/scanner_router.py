@@ -69,7 +69,9 @@ async def get_scanner_status():
     if not app_state.scanner:
         raise HTTPException(status_code=500, detail="Scanner not initialized")
 
-    status = "scanning" if app_state.scanning_state else "idle"
+    from cbz_tagger.api.models import ScannerStatus
+
+    status = ScannerStatus.SCANNING if app_state.scanning_state else ScannerStatus.IDLE
 
     return ScannerStatusResponse(
         status=status, is_first_scan=app_state.first_scan, last_scan_time=app_state.last_scan_time

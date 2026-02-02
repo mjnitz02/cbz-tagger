@@ -34,38 +34,6 @@ def api_client(api_base_url):
     session.close()
 
 
-#!/usr/bin/env python3
-"""Pytest tests for the CBZ Tagger API."""
-
-
-import pytest
-
-
-@pytest.fixture(scope="module")
-def api_base_url():
-    """Get the API base URL from environment or use default."""
-    return os.getenv("API_BASE_URL", "http://localhost:8000")
-
-
-@pytest.fixture(scope="module")
-def api_client(api_base_url):
-    """Create a requests session for API calls."""
-    session = requests.Session()
-    session.headers.update({"Content-Type": "application/json"})
-
-    # Check if API is reachable
-    try:
-        response = session.get(f"{api_base_url}/health", timeout=5)
-        response.raise_for_status()
-    except (ConnectionError, Timeout):
-        pytest.skip(
-            f"API server not reachable at {api_base_url}. Start the server with: python -m cbz_tagger.api.server"
-        )
-
-    yield session
-    session.close()
-
-
 class TestAPIHealthEndpoints:
     """Test API health and status endpoints."""
 
