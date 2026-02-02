@@ -17,6 +17,7 @@ class AppEnv:
         CONTAINER_MODE = ContainerMode.TIMER
     else:
         CONTAINER_MODE = ContainerMode.MANUAL
+    print(f"Container mode set to: {CONTAINER_MODE}")
 
     if platform.system() == "Darwin":
         PUID = os.getenv("PUID", pwd.getpwnam(getpass.getuser()).pw_uid)
@@ -31,7 +32,9 @@ class AppEnv:
     STORAGE_PATH: str = str(os.getenv("STORAGE_PATH", "\\storage"))
     TIMER_DELAY: int = int(os.getenv("TIMER_DELAY", 6000))
     PROXY_URL: str | None = os.getenv("PROXY_URL", None)
+    USE_PROXY: bool = PROXY_URL is not None
     DELAY_PER_REQUEST: float = float(os.getenv("DELAY_PER_REQUEST", 0.5))
+    API_URL: str = str(os.getenv("API_URL", "http://localhost:8000"))
 
     if os.getenv("LOG_LEVEL") is None:
         LOG_LEVEL = logging.INFO

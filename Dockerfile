@@ -17,6 +17,7 @@ RUN apk update && apk upgrade
 COPY . /app
 COPY pyproject.toml ./
 COPY uv.lock ./
+COPY entrypoint.sh /app/entrypoint.sh
 
 ### Dependencies ###
 RUN echo "Install dependencies" && \
@@ -30,9 +31,13 @@ RUN echo "Adding aliases to container" && \
     for cmd in auto manual refresh add remove delete; do \
         echo -e '#!/bin/sh\nuv run /app/run.py --'$cmd > /usr/bin/$cmd && \
         chmod +x /usr/bin/$cmd; \
-    done
+    done && \
+    chmod +x /app/entrypoint.sh
+
+# Expose ports
+EXPOSE 8000 8080
 
 # Define volume mappings
 VOLUME /config /scan /storage
 
-ENTRYPOINT ["uv", "run", "/app/run.py", "--entrymode"]
+ENTRYPOINT ["/app/entrypoint.sh"]

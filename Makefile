@@ -49,6 +49,16 @@ test-unit:
 test-integration:
 	uv run pytest tests/test_integration/ -W ignore::DeprecationWarning
 
+# API Server targets
+run-api:
+	uv run python -m cbz_tagger.api.server
+
+run-api-dev:
+	uv run uvicorn cbz_tagger.api.app:app --host 0.0.0.0 --port 8000 --reload
+
+run-frontend:
+	export GUI_MODE=true && uv run run.py
+
 test-unit-docker:
 	docker build -t cbz-tagger .
 	docker run --entrypoint "/bin/sh" cbz-tagger -c "uv run pytest /app/tests/test_unit/ -W ignore::DeprecationWarning"

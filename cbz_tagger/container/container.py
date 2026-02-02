@@ -40,6 +40,7 @@ def get_environment_variables():
         "storage_path": os.path.abspath(env.STORAGE_PATH),
         "timer_delay": env.TIMER_DELAY,
         "environment": env.get_user_environment(),
+        "api_url": env.API_URL,
     }
 
     logger.info("Environment Variables:")
@@ -72,6 +73,7 @@ def run_container(**kwargs):
                 scan_path=env_vars["scan_path"],
                 storage_path=env_vars["storage_path"],
                 timer_delay=env_vars["timer_delay"],
+                api_url=env_vars["api_url"],
                 environment=env_vars["environment"],
             )
         elif container_mode == ContainerMode.TIMER:
