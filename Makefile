@@ -21,7 +21,7 @@ lint-yaml:
 	uvx yamlfix .github cbz_tagger tests docker-compose.yaml .pre-commit-config.yaml
 
 lint-typing:
-	uvx ty check cbz_tagger
+	uvx ty@0.0.14 check cbz_tagger
 
 lint:
 	$(MAKE) lint-format

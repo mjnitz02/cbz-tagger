@@ -89,9 +89,11 @@ def test_parse_info_feed(mock_sleep, mock_random, chapter_entity):
                 "chapter": "5",
                 "translatedLanguage": "en",
                 "pages": -1,
-                "volume": -1,
+                "volume": None,
+                "createdAt": None,
                 "updatedAt": None,
             },
+            "relationships": [{"type": "scanlation_group", "id": None}],
         },
         {
             "id": "example_manga-example-chapter-3.1",
@@ -102,9 +104,11 @@ def test_parse_info_feed(mock_sleep, mock_random, chapter_entity):
                 "chapter": "3.1",
                 "translatedLanguage": "en",
                 "pages": -1,
-                "volume": -1,
+                "volume": None,
+                "createdAt": None,
                 "updatedAt": None,
             },
+            "relationships": [{"type": "scanlation_group", "id": None}],
         },
         {
             "id": "example_manga-example-chapter-1",
@@ -115,9 +119,11 @@ def test_parse_info_feed(mock_sleep, mock_random, chapter_entity):
                 "chapter": "1",
                 "translatedLanguage": "en",
                 "pages": -1,
-                "volume": -1,
+                "volume": None,
+                "createdAt": None,
                 "updatedAt": None,
             },
+            "relationships": [{"type": "scanlation_group", "id": None}],
         },
     ]
 

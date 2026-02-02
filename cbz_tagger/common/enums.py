@@ -1,4 +1,8 @@
 import base64
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from cbz_tagger.entities.chapter_plugins.plugin import ChapterPluginEntity
 
 APPLICATION_MAJOR_VERSION = 3
 
@@ -37,9 +41,46 @@ class Plugins:
         KAL: f"https://{Urls.WBC}/manga/",
     }
 
+    # Plugin registry - populated by @Plugins.register() decorator
+    _REGISTRY: dict[str, type["ChapterPluginEntity"]] = {}
+
     @classmethod
     def all(cls):
         return [cls.MDX, cls.WBC, cls.KAL]
+
+    @classmethod
+    def register(cls, plugin_type: str):
+        """Decorator to register a plugin class.
+
+        Usage:
+            @Plugins.register(Plugins.ABC)
+            class ChapterPluginABC(ChapterPluginEntity):
+                PLUGIN_TYPE = Plugins.ABC
+                ...
+        """
+
+        def decorator(plugin_cls: type["ChapterPluginEntity"]) -> type["ChapterPluginEntity"]:
+            cls._REGISTRY[plugin_type] = plugin_cls
+            return plugin_cls
+
+        return decorator
+
+    @classmethod
+    def get_plugin(cls, plugin_type: str) -> type["ChapterPluginEntity"]:
+        """Get a registered plugin class by type.
+
+        Args:
+            plugin_type: The plugin type constant (e.g., Plugins.MDX)
+
+        Returns:
+            The plugin class
+
+        Raises:
+            KeyError: If plugin type is not registered
+        """
+        if plugin_type not in cls._REGISTRY:
+            raise KeyError(f"Plugin '{plugin_type}' not registered. Available: {list(cls._REGISTRY.keys())}")
+        return cls._REGISTRY[plugin_type]
 
 
 class Status:

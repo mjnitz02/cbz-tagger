@@ -2,13 +2,22 @@ import logging
 import time
 from typing import Any
 
+from cbz_tagger.common.enums import Plugins
 from cbz_tagger.common.enums import Urls
 from cbz_tagger.entities.chapter_plugins.plugin import ChapterPluginEntity
 
 logger = logging.getLogger()
 
 
+@Plugins.register(Plugins.MDX)
 class ChapterPluginMDX(ChapterPluginEntity):
+    """MangaDex chapter plugin.
+
+    Note: MDX uses the standard API response format directly from the server,
+    so it doesn't use the ResponseBuilder for parse_info_feed.
+    """
+
+    PLUGIN_TYPE = Plugins.MDX
     entity_url: str = f"https://api.{Urls.MDX}/manga"
     download_url: str = f"https://api.{Urls.MDX}/at-home/server"
     quality = "data"

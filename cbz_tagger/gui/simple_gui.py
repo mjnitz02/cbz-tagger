@@ -256,9 +256,10 @@ class SimpleGui:
         entity_index = self.manage_series_names.index(self.gui_elements["selector_manage_series"].value)
         selected_series_name, selected_series_id = self.manage_series_ids[entity_index]
 
+        chapters = self.scanner.entity_database.chapters[selected_series_id]
         self.manage_chapter_ids = [
             (selected_series_id, selected_series_name, chapter.entity_id, f"Chapter {chapter.chapter_number}")
-            for chapter in self.scanner.entity_database.chapters[selected_series_id]
+            for chapter in (chapters if chapters is not None else [])
         ]
         self.manage_chapter_names = [chapter_name for _, _, _, chapter_name in self.manage_chapter_ids]
         if len(self.manage_chapter_ids) == 0:
