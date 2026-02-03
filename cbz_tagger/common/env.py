@@ -29,7 +29,7 @@ class AppEnv:
     CONFIG_PATH: str = str(os.getenv("CONFIG_PATH", "\\config"))
     SCAN_PATH: str = str(os.getenv("SCAN_PATH", "\\scan"))
     STORAGE_PATH: str = str(os.getenv("STORAGE_PATH", "\\storage"))
-    LOG_PATH: str = str(os.getenv("LOG_PATH", os.path.join(CONFIG_PATH, "logs", "cbz_tagger.log")))
+    LOG_PATH: str = str(os.getenv("LOG_PATH", "\\config\\cbz_tagger.log"))
     TIMER_DELAY: int = int(os.getenv("TIMER_DELAY", 6000))
     PROXY_URL: str | None = os.getenv("PROXY_URL", None)
     DELAY_PER_REQUEST: float = float(os.getenv("DELAY_PER_REQUEST", 0.5))

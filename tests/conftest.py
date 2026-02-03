@@ -57,13 +57,11 @@ def integration_scanner(config_path, scan_path, storage_path):
         os.makedirs(scan_path, exist_ok=True)
         os.makedirs(storage_path, exist_ok=True)
 
-        env_vars = AppEnv.get_user_environment()
-
         scanner = FileScanner(
             config_path=config_path,
             scan_path=scan_path,
             storage_path=storage_path,
-            environment=env_vars["environment"],
+            environment=AppEnv().get_user_environment(),
         )
 
         yield scanner
