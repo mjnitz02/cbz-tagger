@@ -14,6 +14,7 @@
                 "GUI_MODE": "true",
                 "LOG_LEVEL": "INFO",
                 "CONFIG_PATH": "${env:HOME}/Downloads/cbz_tagger/config",
+                "LOG_PATH": "${env:HOME}/Downloads/cbz_tagger/config/logs/cbz_tagger.log",
                 "SCAN_PATH": "${env:HOME}/Downloads/cbz_tagger/scan",
                 "STORAGE_PATH": "${env:HOME}/Downloads/cbz_tagger/storage"
             }
