@@ -5,7 +5,7 @@ services:
     ports: [8080:8080]
     environment:
       - TIMER_MODE=true
-      - TIMER_DELAY=30
+      - TIMER_DELAY=60
       - GUI_MODE=true
       - LOG_LEVEL=INFO
     volumes:

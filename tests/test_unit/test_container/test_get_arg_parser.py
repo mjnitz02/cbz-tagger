@@ -1,4 +1,4 @@
-from cbz_tagger.container.container import get_arg_parser
+from cbz_tagger.common.get_arg_parser import get_arg_parser
 
 
 def test_get_arg_parser_no_args(monkeypatch):

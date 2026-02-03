@@ -27,10 +27,11 @@ class Container:
         logger.info(env.get_user_environment())
         logger.info("proxy_url: %s", env.PROXY_URL)
         self.timer_delay = env.TIMER_DELAY
+        self.scan_path = os.path.abspath(env.SCAN_PATH)
 
         self.scanner = FileScanner(
             config_path=os.path.abspath(env.CONFIG_PATH),
-            scan_path=os.path.abspath(env.SCAN_PATH),
+            scan_path=self.scan_path,
             storage_path=os.path.abspath(env.STORAGE_PATH),
             environment=env.get_user_environment(),
         )
@@ -42,7 +43,7 @@ class Container:
         logger.info("Manual scans can also be triggered through the container console.")
         logger.info("Timer Monitoring with %s(s) delay: %s", self.timer_delay, self.scan_path)
         SimpleGui(self.scanner)
-        root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        root_path = os.path.dirname(os.path.abspath(__file__))
         static_path = os.path.join(root_path, "static")
         app.add_static_files("/static", static_path)
         ui.run(reload=self.NICEGUI_DEBUG, favicon=os.path.join(static_path, "favicon.ico"))
