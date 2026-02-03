@@ -174,7 +174,7 @@ def ui_logger():
 
     # Create HTML element with pre tag for log display
     log_display = (
-        ui.html("")
+        ui.html("", sanitize=False)
         .classes("w-full")
         .style(
             "height: 70vh; overflow-y: auto; background-color: #1e1e1e; color: #d4d4d4; "
@@ -190,7 +190,8 @@ def ui_logger():
         log_content = log_content.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
         log_display.content = f"<pre style='margin: 0;'>{log_content}</pre>"
         # Auto-scroll to bottom
-        # log_display.run_method("scrollTo", 0, log_display.run_method("scrollHeight"))
+        # Logic is broken currently
+        # ui.run_javascript(f'getElement({log_display.id}).scrollTop = getElement({log_display.id}).scrollHeight')
 
     # Initial load
     refresh_logs()
@@ -232,7 +233,7 @@ class SimpleGui:
         with ui.header().classes(replace="row items-center"):
             # pylint: disable=unnecessary-lambda
             ui.button(on_click=lambda: left_drawer.toggle(), icon="menu").props("flat color=white")
-            ui.html(f"<h2><strong>CBZ Tagger {self.env.VERSION}</strong></h2>")
+            ui.html(f"<h2><strong>CBZ Tagger {self.env.VERSION}</strong></h2>", sanitize=False)
             ui.space()
             with ui.tabs() as tabs:
                 ui.tab("Series")
