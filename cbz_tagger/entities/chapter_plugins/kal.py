@@ -82,6 +82,7 @@ class ChapterPluginKAL(HtmlChapterPluginEntity):
                         url=link,
                         chapter=chapter_number_str,
                         volume=None,
+                        created_at=chapter_updated,
                         updated_at=chapter_updated,
                     )
                 )
