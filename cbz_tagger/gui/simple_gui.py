@@ -14,12 +14,14 @@ from cbz_tagger.entities.metadata_entity import MetadataEntity
 logger = logging.getLogger()
 
 
-def refresh_scanner(scanner):
+def refresh_scanner(scanner: FileScanner) -> FileScanner:
     scanner.run()
     return scanner
 
 
-def add_new_to_scanner(scanner, entity_name, entity_id, backend, enable_tracking, mark_all_tracked):
+def add_new_to_scanner(
+    scanner: FileScanner, entity_name: str, entity_id: str, backend: str, enable_tracking: bool, mark_all_tracked: bool
+) -> FileScanner:
     scanner.entity_database.add_entity(
         entity_name,
         entity_id,
@@ -32,12 +34,12 @@ def add_new_to_scanner(scanner, entity_name, entity_id, backend, enable_tracking
     return scanner
 
 
-def notify_and_log(msg):
+def notify_and_log(msg: str):
     ui.notify(msg)
     logger.info("%s %s", datetime.now(), msg)
 
 
-def config_table():
+def config_table() -> ui.table:
     env = AppEnv()
     columns = [
         {
@@ -70,7 +72,7 @@ def config_table():
     )
 
 
-def series_table():
+def series_table() -> ui.table:
     columns = [
         {
             "name": "entity_name",
@@ -168,7 +170,7 @@ def series_table():
     return table
 
 
-def ui_logger():
+def ui_logger() -> ui.html:
     env = AppEnv()
     log_reader = FileLogReader(env.LOG_PATH)
 
@@ -199,7 +201,7 @@ def ui_logger():
     # Set up timer to refresh logs every 2 seconds
     ui.timer(2.0, refresh_logs)
 
-    return log_reader
+    return log_display
 
 
 class SimpleGui:
@@ -233,7 +235,7 @@ class SimpleGui:
         with ui.header().classes(replace="row items-center"):
             # pylint: disable=unnecessary-lambda
             ui.button(on_click=lambda: left_drawer.toggle(), icon="menu").props("flat color=white")
-            ui.html(f"<h2><strong>CBZ Tagger {self.env.VERSION}</strong></h2>", sanitize=False)
+            ui.html(f"<h5><strong>CBZ Tagger {self.env.VERSION}</strong></h5>", sanitize=False)
             ui.space()
             with ui.tabs() as tabs:
                 ui.tab("Series")

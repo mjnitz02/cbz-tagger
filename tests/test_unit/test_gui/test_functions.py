@@ -2,9 +2,10 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
-from cbz_tagger.gui.functions import add_new_to_scanner
-from cbz_tagger.gui.functions import notify_and_log
-from cbz_tagger.gui.functions import refresh_scanner
+
+from cbz_tagger.gui.simple_gui import add_new_to_scanner
+from cbz_tagger.gui.simple_gui import notify_and_log
+from cbz_tagger.gui.simple_gui import refresh_scanner
 
 
 def test_refresh_scanner():
@@ -43,11 +44,11 @@ def test_add_new_to_scanner(enable_tracking, mark_all_tracked):
     assert result == mock_scanner
 
 
-@patch("cbz_tagger.gui.functions.ui.notify")
-@patch("cbz_tagger.gui.functions.logger")
+@patch("cbz_tagger.gui.simple_gui.ui.notify")
+@patch("cbz_tagger.gui.simple_gui.logger")
 def test_notify_and_log(mock_logger, mock_ui_notify):
     msg = "Test message"
-    with patch("cbz_tagger.gui.functions.datetime") as mock_datetime:
+    with patch("cbz_tagger.gui.simple_gui.datetime") as mock_datetime:
         mock_datetime.now.return_value = "test_date"
         notify_and_log(msg)
     mock_ui_notify.assert_called_once_with(msg)
