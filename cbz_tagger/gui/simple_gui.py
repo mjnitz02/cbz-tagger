@@ -7,16 +7,201 @@ from nicegui import ui
 from cbz_tagger.common.enums import Emoji
 from cbz_tagger.common.enums import Plugins
 from cbz_tagger.common.env import AppEnv
+from cbz_tagger.common.log_element_handler import FileLogReader
 from cbz_tagger.database.file_scanner import FileScanner
 from cbz_tagger.entities.metadata_entity import MetadataEntity
-from cbz_tagger.gui.elements.config_table import config_table
-from cbz_tagger.gui.elements.series_table import series_table
-from cbz_tagger.gui.elements.ui_logger import ui_logger
-from cbz_tagger.gui.functions import add_new_to_scanner
-from cbz_tagger.gui.functions import notify_and_log
-from cbz_tagger.gui.functions import refresh_scanner
 
 logger = logging.getLogger()
+
+
+def refresh_scanner(scanner: FileScanner) -> FileScanner:
+    scanner.run()
+    return scanner
+
+
+def add_new_to_scanner(
+    scanner: FileScanner, entity_name: str, entity_id: str, backend: str, enable_tracking: bool, mark_all_tracked: bool
+) -> FileScanner:
+    scanner.entity_database.add_entity(
+        entity_name,
+        entity_id,
+        manga_name=None,
+        backend=backend,
+        update=True,
+        track=enable_tracking,
+        mark_as_tracked=mark_all_tracked,
+    )
+    return scanner
+
+
+def notify_and_log(msg: str):
+    ui.notify(msg)
+    logger.info("%s %s", datetime.now(), msg)
+
+
+def config_table() -> ui.table:
+    env = AppEnv()
+    columns = [
+        {
+            "name": "property",
+            "label": "property",
+            "field": "property",
+            "align": "left",
+        },
+        {
+            "name": "value",
+            "label": "value",
+            "field": "value",
+            "align": "left",
+        },
+    ]
+    return ui.table(
+        columns=columns,
+        rows=[
+            {"property": "container_mode", "value": env.CONTAINER_MODE},
+            {"property": "config_path", "value": env.CONFIG_PATH},
+            {"property": "scan_path", "value": env.SCAN_PATH},
+            {"property": "storage_path", "value": env.STORAGE_PATH},
+            {"property": "timer_delay", "value": env.TIMER_DELAY},
+            {"property": "proxy_url", "value": env.PROXY_URL},
+            {"property": "PUID", "value": env.PUID},
+            {"property": "PGID", "value": env.PGID},
+            {"property": "UMASK", "value": env.UMASK},
+            {"property": "LOG_LEVEL", "value": env.LOG_LEVEL},
+        ],
+    )
+
+
+def series_table() -> ui.table:
+    columns = [
+        {
+            "name": "entity_name",
+            "label": "Entity Name",
+            "field": "entity_name",
+            "required": True,
+            "align": "left",
+        },
+        {
+            "name": "entity_id",
+            "label": "Entity ID",
+            "field": "entity_id",
+            "required": True,
+            "align": "left",
+            "sortable": True,
+            "classes": "hidden",
+            "headerClasses": "hidden",
+        },
+        {"name": "status", "label": "Status", "field": "status", "sortable": True},
+        {
+            "name": "tracked",
+            "label": "Tracked",
+            "field": "tracked",
+            "sortable": True,
+        },
+        {"name": "latest_chapter", "label": "Chapter", "field": "latest_chapter", "sortable": True},
+        {
+            "name": "latest_chapter_date",
+            "label": "Chapter Updated",
+            "field": "latest_chapter_date",
+            "sortable": True,
+        },
+        {
+            "name": "updated",
+            "label": "Metadata Updated",
+            "field": "updated",
+            "sortable": True,
+            "classes": "hidden",
+            "headerClasses": "hidden",
+        },
+        {
+            "name": "plugin",
+            "label": "Plugin",
+            "field": "plugin",
+            "sortable": True,
+            "classes": "hidden",
+            "headerClasses": "hidden",
+        },
+    ]
+    table = ui.table(columns=columns, rows=[], row_key="entity_name").classes("table-auto").props("flat dense")
+    table.add_slot(
+        "body-cell-entity_name",
+        """
+        <q-td :props="props">
+            <a :href="props.value.link">{{ props.value.name }}</a>
+        </q-td>
+        """,
+    )
+    table.add_slot(
+        "body-cell-updated",
+        """
+        <q-td :props="props">
+            <q-badge
+                :color="
+                Date.parse(props.value) > Date.now() - (45 * 86400000) ? 'green' :
+                    Date.parse(props.value) > Date.now() - (90 * 86400000) ? 'orange' : 'red'
+            ">
+                {{ new Date(props.value).toISOString().substring(0, 16) }}
+            </q-badge>
+        </q-td>
+    """,
+    )
+    table.add_slot(
+        "body-cell-latest_chapter_date",
+        """
+        <q-td :props="props">
+            <q-badge
+                :color="
+                Date.parse(props.value) > Date.now() - (45 * 86400000) ? 'green' :
+                    Date.parse(props.value) > Date.now() - (90 * 86400000) ? 'orange' : 'red'
+            ">
+                {{ new Date(props.value).toISOString().substring(0, 16) }}
+            </q-badge>
+        </q-td>
+    """,
+    )
+    table.add_slot(
+        "body-cell-plugin",
+        """
+        <q-td :props="props">
+            <a :href="props.value.link">{{ props.value.name }}</a>
+        </q-td>
+        """,
+    )
+    return table
+
+
+def ui_logger() -> ui.html:
+    env = AppEnv()
+    log_reader = FileLogReader(env.LOG_PATH)
+
+    # Create HTML element with pre tag for log display
+    log_display = (
+        ui.html("", sanitize=False)
+        .classes("w-full")
+        .style(
+            "height: 70vh; overflow-y: auto; background-color: #1e1e1e; color: #d4d4d4; "
+            "padding: 10px; border-radius: 5px; font-family: 'Courier New', monospace; "
+            "font-size: 12px; white-space: pre-wrap; word-wrap: break-word;"
+        )
+    )
+
+    # Function to refresh log display
+    def refresh_logs():
+        log_content = log_reader.read_last_lines(max_lines=1000)
+        # Escape HTML to prevent injection
+        log_content = log_content.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        log_display.content = f"<pre style='margin: 0;'>{log_content}</pre>"
+        # Auto-scroll to bottom
+        # Logic is broken currently
+        # ui.run_javascript(f'getElement({log_display.id}).scrollTop = getElement({log_display.id}).scrollHeight')
+
+    # Initial load
+    refresh_logs()
+
+    # Set up timer to refresh logs every 2 seconds
+    ui.timer(2.0, refresh_logs)
+
+    return log_display
 
 
 class SimpleGui:
@@ -50,7 +235,7 @@ class SimpleGui:
         with ui.header().classes(replace="row items-center"):
             # pylint: disable=unnecessary-lambda
             ui.button(on_click=lambda: left_drawer.toggle(), icon="menu").props("flat color=white")
-            ui.html(f"<h2><strong>CBZ Tagger {self.env.VERSION}</strong></h2>")
+            ui.html(f"<h5><strong>CBZ Tagger {self.env.VERSION}</strong></h5>", sanitize=False)
             ui.space()
             with ui.tabs() as tabs:
                 ui.tab("Series")
@@ -163,7 +348,7 @@ class SimpleGui:
                 ui.chip("Clear", icon="delete", color="red", on_click=self.clear_log)
 
     def clear_log(self):
-        self.gui_elements["logger"].clear()
+        self.gui_elements["logger"].clear_log_file()
         logger.info("Log file cleared. %s", datetime.now())
 
     def initialize(self):

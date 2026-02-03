@@ -1,10 +1,10 @@
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
-from cbz_tagger.gui.elements.series_table import series_table
+from cbz_tagger.gui.simple_gui import series_table
 
 
-@patch("cbz_tagger.gui.elements.series_table.ui.table")
+@patch("cbz_tagger.gui.simple_gui.ui.table")
 def test_series_table(mock_ui_table):
     mock_table = MagicMock()
     mock_ui_table.return_value.classes.return_value.props.return_value = mock_table

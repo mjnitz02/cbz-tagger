@@ -1,11 +1,11 @@
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
-from cbz_tagger.gui.elements.config_table import config_table
+from cbz_tagger.gui.simple_gui import config_table
 
 
-@patch("cbz_tagger.gui.elements.config_table.AppEnv")
-@patch("cbz_tagger.gui.elements.config_table.ui.table")
+@patch("cbz_tagger.gui.simple_gui.AppEnv")
+@patch("cbz_tagger.gui.simple_gui.ui.table")
 def test_config_table(mock_ui_table, mock_app_env):
     mock_env = MagicMock()
     mock_env.CONTAINER_MODE = "mock_container_mode"
