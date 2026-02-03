@@ -2,7 +2,7 @@
 
 import logging
 from datetime import datetime
-from typing import Any, TypedDict
+from typing import TypedDict
 
 import reflex as rx
 
@@ -14,14 +14,29 @@ logger = logging.getLogger()
 
 class DateDisplayDict(TypedDict, total=False):
     """Type for date display data."""
+
     text: str
     color: str
 
 
+class EntityNameDict(TypedDict, total=False):
+    """Type for entity name data."""
+
+    name: str
+    link: str
+
+
+class PluginDict(TypedDict, total=False):
+    """Type for plugin data."""
+
+    name: str
+    link: str
+
+
 class SeriesItemDict(TypedDict, total=False):
     """Type for series table item data."""
-    entity_name: str
-    entity_name_display: str
+
+    entity_name: EntityNameDict
     entity_id: str
     status: str
     tracked: str
@@ -30,7 +45,7 @@ class SeriesItemDict(TypedDict, total=False):
     chapter_date_display: DateDisplayDict
     updated: str
     updated_display: DateDisplayDict
-    plugin: str
+    plugin: PluginDict
 
 
 class SeriesState(BaseState):
@@ -62,44 +77,52 @@ class SeriesState(BaseState):
                 "accessorKey": "entity_name_display",
             },
         ]
-        
+
         if self.show_entity_id:
-            columns.append({
-                "title": "Entity ID",
-                "accessorKey": "entity_id",
-            })
-        
-        columns.extend([
-            {
-                "title": "Status",
-                "accessorKey": "status",
-            },
-            {
-                "title": "Tracked",
-                "accessorKey": "tracked",
-            },
-            {
-                "title": "Chapter",
-                "accessorKey": "latest_chapter",
-            },
-            {
-                "title": "Chapter Updated",
-                "accessorKey": "chapter_date_display",
-            },
-        ])
-        
+            columns.append(
+                {
+                    "title": "Entity ID",
+                    "accessorKey": "entity_id",
+                }
+            )
+
+        columns.extend(
+            [
+                {
+                    "title": "Status",
+                    "accessorKey": "status",
+                },
+                {
+                    "title": "Tracked",
+                    "accessorKey": "tracked",
+                },
+                {
+                    "title": "Chapter",
+                    "accessorKey": "latest_chapter",
+                },
+                {
+                    "title": "Chapter Updated",
+                    "accessorKey": "chapter_date_display",
+                },
+            ]
+        )
+
         if self.show_metadata_updated:
-            columns.append({
-                "title": "Metadata Updated",
-                "accessorKey": "updated_display",
-            })
-        
+            columns.append(
+                {
+                    "title": "Metadata Updated",
+                    "accessorKey": "updated_display",
+                }
+            )
+
         if self.show_plugin:
-            columns.append({
-                "title": "Plugin",
-                "accessorKey": "plugin",
-            })
-        
+            columns.append(
+                {
+                    "title": "Plugin",
+                    "accessorKey": "plugin",
+                }
+            )
+
         return columns
 
     async def refresh_table(self):
@@ -122,15 +145,14 @@ class SeriesState(BaseState):
                 for item in state:
                     # Truncate long entity names
                     if len(item["entity_name"]) > 50:
-                        item["entity_name_display"] = item["entity_name"][:50] + "..."
-                    else:
-                        item["entity_name_display"] = item["entity_name"]
+                        item["entity_name_display"] = item["entity_name"]["name"][:50] + "..."
+                    # else:
+                    item["entity_name_display"] = item["entity_name"]["name"]
+                    item["entity_name_link"] = item["entity_name"]["link"]
 
                     # Add formatted dates
-                    if item.get("updated"):
-                        item["updated_display"] = self._format_date(item["updated"])
-                    if item.get("latest_chapter_date"):
-                        item["chapter_date_display"] = self._format_date(item["latest_chapter_date"])
+                    item["updated_display"] = self._format_date(item["updated"])
+                    item["chapter_date_display"] = self._format_date(item["latest_chapter_date"])
 
                     formatted_state.append(item)
                 return formatted_state
@@ -200,8 +222,14 @@ class SeriesState(BaseState):
         """
         try:
             date = datetime.fromisoformat(date_str)
+            if date.tzinfo is not None:
+                date = date.replace(tzinfo=None)
+
             now = datetime.now()
+            if now.tzinfo is not None:
+                now = now.replace(tzinfo=None)
             days_old = (now - date).days
+            logger.info(days_old)
 
             # Determine color based on age
             if days_old < 45:
@@ -217,7 +245,10 @@ class SeriesState(BaseState):
             return {"text": formatted, "color": color}
 
         except (ValueError, TypeError):
-            return {"text": "Unknown", "color": "gray"}
+            # Fallback to Jan 1, 2025
+            fallback_date = datetime(2025, 1, 1, 0, 0)
+            formatted = fallback_date.strftime("%Y-%m-%d %H:%M")
+            return {"text": formatted, "color": "gray"}
 
     @staticmethod
     def get_status_emoji(status: str) -> str:

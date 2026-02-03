@@ -38,5 +38,5 @@ class ConfigState(BaseState):
         logger.debug("Config loaded: %d items", len(self.config_data))
         for item in self.config_data:
             logger.debug("Config item: %s = %s", item["property"], item["value"])
-        
+
         self.is_loaded = True

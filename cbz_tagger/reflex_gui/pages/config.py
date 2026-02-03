@@ -1,11 +1,14 @@
 """Config page - display server configuration."""
 
 import logging
+
 import reflex as rx
 
 from cbz_tagger.reflex_gui.components.navbar import navbar
 from cbz_tagger.reflex_gui.states.config_state import ConfigState
+
 logger = logging.getLogger()
+
 
 def config_page() -> rx.Component:
     """Create the config page.
