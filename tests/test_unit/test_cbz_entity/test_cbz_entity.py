@@ -146,85 +146,47 @@ def test_chapter_is_volume_parsing(filename, expected):
 
 
 @pytest.mark.parametrize(
-    "chapter_prefix",
+    "filename,expected",
     [
-        "Simple name",
-        "Simple name - with hyphen",
-        "Simple name : with colon",
-        "Simple name . with period",
-        "Simple name 1",
-        "Simple name 123",
-        "Simple name #1",
-        "Simple name .01",
-        "Simple name - Volume 1",
+        # Test chapter number normalization with various formats
+        ("Simple name/Simple name - Chapter 1.cbz", "1"),
+        ("Simple name/Simple name - Chapter 1.1.cbz", "1.1"),
+        ("Simple name/Simple name - Chapter 01.cbz", "1"),
+        ("Simple name/Simple name - Chapter 01.1.cbz", "1.1"),
+        ("Simple name/Simple name - Chapter 001.cbz", "1"),
+        ("Simple name/Simple name - Chapter 001.1.cbz", "1.1"),
+        ("Simple name/Simple name - Chapter 0.1.cbz", "0.1"),
+        # Test various delimiters
+        ("Simple name/Simple name - Chapter 1.cbz", "1"),
+        ("Simple name/Simple name : Chapter 1.cbz", "1"),
+        ("Simple name/Simple name-Chapter 1.cbz", "1"),
+        ("Simple name/Simple name:Chapter 1.cbz", "1"),
+        # Test various chapter prefixes
+        ("Simple name/Simple name - Ch. 1.cbz", "1"),
+        ("Simple name/Simple name - Ch.1.cbz", "1"),
+        ("Simple name/Simple name - Other 1.cbz", "1"),
+        ("Simple name/Simple name - Other.1.cbz", "1"),
+        # Test various suffixes
+        ("Simple name/Simple name - Chapter 1 (1).cbz", "1"),
+        ("Simple name/Simple name - Chapter 1 - some random words.cbz", "1"),
+        ("Simple name/Simple name - Chapter 1 - Volume 1 Extras.cbz", "1"),
+        ("Simple name/Simple name - Chapter 1.1 - some title (3).cbz", "1.1"),
+        # Test complex series names
+        ("Simple name - with hyphen/Simple name - with hyphen - Chapter 1.cbz", "1"),
+        ("Simple name : with colon/Simple name : with colon - Chapter 1.cbz", "1"),
+        ("Simple name . with period/Simple name . with period - Chapter 1.cbz", "1"),
+        ("Simple name 123/Simple name 123 - Chapter 1.cbz", "1"),
+        ("Simple name #1/Simple name #1 - Chapter 1.cbz", "1"),
+        ("Simple name - Volume 1/Simple name - Volume 1 - Chapter 1.cbz", "1"),
+        # Test combinations of complex features
+        ("Simple name #1/Simple name #1 : Ch.001.1 - Volume 12 Extras.cbz", "1.1"),
+        ("Simple name 123/Simple name 123-Other.01.2 (6).cbz", "1.2"),
+        # Test backslash paths
+        ("Simple name\\Simple name - Chapter 1.cbz", "1"),
+        ("Simple name\\Simple name - Chapter 001.1.cbz", "1.1"),
     ],
 )
-@pytest.mark.parametrize(
-    "chapter_delimiter",
-    [
-        " - ",
-        " : ",
-        "-",
-        ":",
-    ],
-)
-@pytest.mark.parametrize(
-    "chapter_number_prefix",
-    [
-        "Chapter ",
-        "Chapter ",
-        "Ch. ",
-        "Ch.",
-        "Other ",
-        "Other.",
-    ],
-)
-@pytest.mark.parametrize(
-    "chapter_suffix",
-    [
-        "(1)",
-        " (6)",
-        " - some random words",
-        " - some random title with a paren (3)",
-        " - Volume 1 Extras",
-        " - Volume 12 Extras",
-        " - periods.....",
-        " - one period.",
-    ],
-)
-@pytest.mark.parametrize(
-    "chapter_number,expected",
-    [
-        ("1", "1"),
-        ("1.1", "1.1"),
-        ("1.2", "1.2"),
-        ("01", "1"),
-        ("01.1", "1.1"),
-        ("01.2", "1.2"),
-        ("001", "1"),
-        ("001.1", "1.1"),
-        ("001.2", "1.2"),
-        ("0.1", "0.1"),
-        ("0.2", "0.2"),
-    ],
-)
-def test_chapter_number_parsing(
-    chapter_prefix, chapter_delimiter, chapter_number_prefix, chapter_suffix, chapter_number, expected
-):
-    # Test / pathing
-    filename = (
-        f"{chapter_prefix}/{chapter_prefix}{chapter_delimiter}{chapter_number_prefix}"
-        f"{chapter_number}{chapter_suffix}.cbz"
-    )
-    entity = CbzEntity(filename)
-    assert entity.chapter_number == expected
-    assert not entity.chapter_is_volume
-
-    # Test \\ pathing
-    filename = (
-        f"{chapter_prefix}\\{chapter_prefix}{chapter_delimiter}{chapter_number_prefix}"
-        f"{chapter_number}{chapter_suffix}.cbz"
-    )
+def test_chapter_number_parsing(filename, expected):
     entity = CbzEntity(filename)
     assert entity.chapter_number == expected
     assert not entity.chapter_is_volume

@@ -1,3 +1,6 @@
+import re
+from datetime import datetime
+from datetime import timedelta
 from typing import Any
 
 from bs4.element import Tag
@@ -11,6 +14,29 @@ from cbz_tagger.entities.chapter_plugins.html_plugin import HtmlChapterPluginEnt
 class ChapterPluginKAL(HtmlChapterPluginEntity):
     PLUGIN_TYPE = Plugins.KAL
     entity_url = f"https://{Urls.KAL}"
+
+    @staticmethod
+    def get_approximate_date(date_str) -> str | None:
+        pattern = r"(\d+)\s+(minute|minutes|day|days|month|months|year|years) ago"
+        match = re.match(pattern, date_str.strip())
+        if not match:
+            return None
+        value, unit = int(match.group(1)), match.group(2)
+        now = datetime.now().astimezone()
+        if unit.startswith("minute"):
+            delta = timedelta(minutes=value)
+        elif unit.startswith("day"):
+            delta = timedelta(days=value)
+        elif unit.startswith("month"):
+            # Approximate a month as 30 days
+            delta = timedelta(days=30 * value)
+        elif unit.startswith("year"):
+            # Approximate a year as 365 days
+            delta = timedelta(days=365 * value)
+        else:
+            return None
+        approx_date = now - delta
+        return approx_date.isoformat()
 
     @classmethod
     def parse_info_feed(cls, entity_id: str) -> list[Any]:
@@ -40,6 +66,13 @@ class ChapterPluginKAL(HtmlChapterPluginEntity):
             assert isinstance(chapter_title_elem, Tag), f"Expected Tag, got {type(chapter_title_elem)}"
             chapter_title = chapter_title_elem.text
 
+            item_time = item_content.find_all("time")
+            if len(item_time) > 0:
+                chapter_updated = None  # KAL may not provide chapter dates
+            else:
+                item_time_str = item_time[0].text.strip()
+                chapter_updated = ChapterPluginKAL.get_approximate_date(item_time_str)
+
             content.append(
                 cls.ResponseBuilder.build(
                     cls.build_chapter_data(
@@ -49,6 +82,7 @@ class ChapterPluginKAL(HtmlChapterPluginEntity):
                         url=link,
                         chapter=chapter_number_str,
                         volume=None,
+                        updated_at=chapter_updated,
                     )
                 )
             )
