@@ -2,6 +2,7 @@ import asyncio
 import logging
 from datetime import datetime
 
+from nicegui import app
 from nicegui import ui
 
 from cbz_tagger.common.enums import Emoji
@@ -12,6 +13,9 @@ from cbz_tagger.database.file_scanner import FileScanner
 from cbz_tagger.entities.metadata_entity import MetadataEntity
 
 logger = logging.getLogger()
+
+# Flag to ensure background timer is only started once
+_background_timer_started = False
 
 
 def refresh_scanner(scanner: FileScanner) -> FileScanner:
@@ -170,7 +174,7 @@ def series_table() -> ui.table:
     return table
 
 
-def ui_logger() -> ui.html:
+def ui_logger() -> FileLogReader:
     env = AppEnv()
     log_reader = FileLogReader(env.LOG_PATH)
 
@@ -201,7 +205,7 @@ def ui_logger() -> ui.html:
     # Set up timer to refresh logs every 2 seconds
     ui.timer(2.0, refresh_logs)
 
-    return log_display
+    return log_reader
 
 
 class SimpleGui:
@@ -352,9 +356,34 @@ class SimpleGui:
         logger.info("Log file cleared. %s", datetime.now())
 
     def initialize(self):
+        global _background_timer_started
+
         logger.info("proxy_url: %s", self.env.PROXY_URL)
-        logger.info("UI scan timer started with delay: %s", self.env.TIMER_DELAY)
-        self.gui_elements["timer_scanner"] = ui.timer(self.env.TIMER_DELAY, self.refresh_database)
+
+        # Set up background timer that runs even when no clients are connected
+        # Only register once, regardless of how many clients connect
+        if not _background_timer_started:
+            logger.info("UI scan timer started with delay: %s", self.env.TIMER_DELAY)
+            _background_timer_started = True
+            scanner = self.scanner
+            timer_delay = self.env.TIMER_DELAY
+
+            async def background_refresh():
+                # Skip first run
+                await asyncio.sleep(timer_delay)
+                while True:
+                    try:
+                        # Call the refresh function directly on the scanner
+                        loop = asyncio.get_event_loop()
+                        await loop.run_in_executor(None, refresh_scanner, scanner)
+                        logger.info("Background database refresh completed at %s", datetime.now())
+                    except Exception as e:
+                        logger.error("Error in background refresh: %s", e)
+                    await asyncio.sleep(timer_delay)
+
+            app.on_startup(lambda: asyncio.create_task(background_refresh()))
+            logger.info("Background timer registered (will start on app startup)")
+
         self.refresh_table()
 
     @staticmethod

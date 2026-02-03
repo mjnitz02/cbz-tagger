@@ -4,19 +4,37 @@ import os
 from nicegui import app
 from nicegui import ui
 
-from cbz_tagger.container.base_container import BaseContainer
+from cbz_tagger.database.file_scanner import FileScanner
 from cbz_tagger.gui.simple_gui import SimpleGui
 
 logger = logging.getLogger()
 
 
-class GuiContainer(BaseContainer):
+class GuiContainer:
     NICEGUI_DEBUG = False
+    config_path: str
+    scan_path: str
+    storage_path: str
+    timer_delay: int
+    scanner: FileScanner
 
     def __init__(self, config_path, scan_path, storage_path, timer_delay, environment=None):
-        super().__init__(config_path, scan_path, storage_path, timer_delay, environment=environment)
+        self.config_path = config_path
+        self.scan_path = scan_path
+        self.storage_path = storage_path
+        self.timer_delay = timer_delay
+        self.scanner = FileScanner(
+            config_path=self.config_path,
+            scan_path=self.scan_path,
+            storage_path=self.storage_path,
+            environment=environment,
+        )
         # Disable automatic adding of series
         self.scanner.add_missing = False
+
+    def run(self):
+        self._info()
+        self._run()
 
     def _info(self):
         logger.info("Container running in GUI mode.")
