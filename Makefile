@@ -63,6 +63,17 @@ build-docker:
 run-docker:
 	docker-compose up --build
 
+run:
+	export TIMER_MODE=true; \
+	export TIMER_DELAY=600; \
+	export GUI_MODE=true; \
+	export LOG_LEVEL=INFO; \
+	CONFIG_PATH=~/Downloads/cbz_tagger/config; \
+	SCAN_PATH=~/Downloads/cbz_tagger/scan; \
+	STORAGE_PATH=~/Downloads/cbz_tagger/storage; \
+	mkdir -p $$CONFIG_PATH $$SCAN_PATH $$STORAGE_PATH; \
+	uv run python run.py
+
 clean-git:
 	chmod +x ./scripts/clean_git.sh
 	./scripts/clean_git.sh

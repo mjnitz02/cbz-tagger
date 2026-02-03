@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 
 from cbz_tagger.entities.volume_entity import VolumeEntity
@@ -124,7 +126,9 @@ def test_volume_entity_get_volume_for_chapter_with_no_volume_map():
     assert "-1" == entity.get_volume("10")
 
 
-def test_volume_entity_from_url(requests_mock, volume_request_response):
+@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=0.1)
+@patch("cbz_tagger.entities.base_entity.time.sleep")
+def test_volume_entity_from_url(mock_sleep, mock_random, requests_mock, volume_request_response):
     requests_mock.get(
         f"{VolumeEntity.base_url}/manga/831b12b8-2d0e-4397-8719-1efee4c32f40/aggregate",
         json=volume_request_response,

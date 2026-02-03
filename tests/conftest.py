@@ -3,7 +3,7 @@ import shutil
 
 import pytest
 
-from cbz_tagger.container.container import get_environment_variables
+from cbz_tagger.common.env import AppEnv
 from cbz_tagger.database.file_scanner import FileScanner
 
 
@@ -57,13 +57,11 @@ def integration_scanner(config_path, scan_path, storage_path):
         os.makedirs(scan_path, exist_ok=True)
         os.makedirs(storage_path, exist_ok=True)
 
-        env_vars = get_environment_variables()
-
         scanner = FileScanner(
             config_path=config_path,
             scan_path=scan_path,
             storage_path=storage_path,
-            environment=env_vars["environment"],
+            environment=AppEnv().get_user_environment(),
         )
 
         yield scanner

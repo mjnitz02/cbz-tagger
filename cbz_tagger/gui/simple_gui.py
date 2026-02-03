@@ -2,6 +2,8 @@ import asyncio
 import logging
 from datetime import datetime
 
+from nicegui import app
+from nicegui import context
 from nicegui import ui
 
 from cbz_tagger.common.enums import Emoji
@@ -12,6 +14,11 @@ from cbz_tagger.database.file_scanner import FileScanner
 from cbz_tagger.entities.metadata_entity import MetadataEntity
 
 logger = logging.getLogger()
+
+if "background_timer_started" not in app.storage.general:
+    app.storage.general["background_timer_started"] = False
+if "scanning_state" not in app.storage.general:
+    app.storage.general["scanning_state"] = False
 
 
 def refresh_scanner(scanner: FileScanner) -> FileScanner:
@@ -35,7 +42,13 @@ def add_new_to_scanner(
 
 
 def notify_and_log(msg: str):
-    ui.notify(msg)
+    try:
+        # Only show UI notification if we're in a valid client context
+        if context.client:
+            ui.notify(msg)
+    except RuntimeError:
+        # Context is not available (e.g., background task, deleted element)
+        pass
     logger.info("%s %s", datetime.now(), msg)
 
 
@@ -170,7 +183,7 @@ def series_table() -> ui.table:
     return table
 
 
-def ui_logger() -> ui.html:
+def ui_logger() -> FileLogReader:
     env = AppEnv()
     log_reader = FileLogReader(env.LOG_PATH)
 
@@ -201,7 +214,7 @@ def ui_logger() -> ui.html:
     # Set up timer to refresh logs every 2 seconds
     ui.timer(2.0, refresh_logs)
 
-    return log_display
+    return log_reader
 
 
 class SimpleGui:
@@ -209,7 +222,6 @@ class SimpleGui:
         logger.debug("Starting GUI")
         self.env = AppEnv()
         self.first_scan = True
-        self.scanning_state = False
         self.scanner: FileScanner = scanner
         self.gui_elements = {}
 
@@ -353,8 +365,31 @@ class SimpleGui:
 
     def initialize(self):
         logger.info("proxy_url: %s", self.env.PROXY_URL)
-        logger.info("UI scan timer started with delay: %s", self.env.TIMER_DELAY)
-        self.gui_elements["timer_scanner"] = ui.timer(self.env.TIMER_DELAY, self.refresh_database)
+
+        # Set up background timer that runs even when no clients are connected
+        # Only register once, regardless of how many clients connect
+        if not app.storage.general["background_timer_started"]:
+            logger.info("UI scan timer started with delay: %s", self.env.TIMER_DELAY)
+            app.storage.general["background_timer_started"] = True
+            scanner = self.scanner
+            timer_delay = self.env.TIMER_DELAY
+
+            async def background_refresh():
+                # Skip first run
+                await asyncio.sleep(timer_delay)
+                while True:
+                    try:
+                        # Call the refresh function directly on the scanner
+                        loop = asyncio.get_event_loop()
+                        await loop.run_in_executor(None, refresh_scanner, scanner)
+                        logger.info("Background database refresh completed at %s", datetime.now())
+                    except Exception as e:
+                        logger.error("Error in background refresh: %s", e)
+                    await asyncio.sleep(timer_delay)
+
+            app.on_startup(lambda: asyncio.create_task(background_refresh()))
+            logger.info("Background timer registered (will start on app startup)")
+
         self.refresh_table()
 
     @staticmethod
@@ -466,16 +501,16 @@ class SimpleGui:
         logger.debug("Series GUI Refreshed")
 
     def can_use_database(self):
-        if self.scanning_state:
+        if app.storage.general["scanning_state"]:
             notify_and_log("Database currently in use, please wait...")
             return False
         return True
 
     def lock_database(self):
-        self.scanning_state = True
+        app.storage.general["scanning_state"] = True
 
     def unlock_database(self):
-        self.scanning_state = False
+        app.storage.general["scanning_state"] = False
 
     @database_operation_async
     async def add_new_series(self):

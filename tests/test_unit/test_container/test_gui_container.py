@@ -1,5 +1,5 @@
-from cbz_tagger.container.gui_container import GuiContainer
+from cbz_tagger.container import Container
 
 
 def test_nicegui_reload_disabled():
-    assert not GuiContainer.NICEGUI_DEBUG
+    assert not Container.NICEGUI_DEBUG

@@ -1,4 +1,7 @@
 import os
+import re
+from datetime import datetime
+from datetime import timedelta
 from unittest.mock import patch
 
 import pytest
@@ -7,6 +10,45 @@ from cbz_tagger.common.enums import Plugins
 from cbz_tagger.common.enums import Urls
 from cbz_tagger.entities.chapter_entity import ChapterEntity
 from cbz_tagger.entities.chapter_plugins.kal import ChapterPluginKAL
+
+
+@pytest.mark.parametrize(
+    "input_str, min_delta, max_delta",
+    [
+        ("5 years ago", timedelta(days=365 * 5), timedelta(days=365 * 5 + 1)),
+        ("1 year ago", timedelta(days=365), timedelta(days=366)),
+        ("9 months ago", timedelta(days=30 * 9), timedelta(days=30 * 9 + 1)),
+        ("2 months ago", timedelta(days=60), timedelta(days=61)),
+        ("18 minutes ago", timedelta(minutes=18), timedelta(minutes=19)),
+        ("2 days ago", timedelta(days=2), timedelta(days=3)),
+        ("1 day ago", timedelta(days=1), timedelta(days=2)),
+    ],
+)
+def test_get_approximate_date_valid(input_str, min_delta, max_delta):
+    result = ChapterPluginKAL.get_approximate_date(input_str)
+    assert result is not None
+    # Check ISO 8601 format
+    assert re.match(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.*", result)
+    # Check that the date is within expected range
+    dt = datetime.fromisoformat(result)
+    now = datetime.now().astimezone()
+    delta = now - dt
+    assert min_delta <= delta <= max_delta
+
+
+@pytest.mark.parametrize(
+    "input_str",
+    [
+        "invalid string",
+        "ago",
+        "",
+        "5 centuries ago",
+        "2 weeks ago",
+    ],
+)
+def test_get_approximate_date_invalid(input_str):
+    result = ChapterPluginKAL.get_approximate_date(input_str)
+    assert result is None
 
 
 @pytest.fixture
@@ -79,53 +121,36 @@ def test_parse_info_feed(mock_sleep, mock_random, chapter_entity):
     _ = chapter_entity
     result = ChapterPluginKAL.parse_info_feed("example_manga")
 
-    assert result == [
-        {
-            "id": "example_manga-example-chapter-5",
-            "type": "kal",
-            "attributes": {
-                "title": "Chapter 5",
-                "url": f"https://{Urls.KAL}/manga/example/chapter-5",
-                "chapter": "5",
-                "translatedLanguage": "en",
-                "pages": -1,
-                "volume": None,
-                "createdAt": None,
-                "updatedAt": None,
-            },
-            "relationships": [{"type": "scanlation_group", "id": None}],
-        },
-        {
-            "id": "example_manga-example-chapter-3.1",
-            "type": "kal",
-            "attributes": {
-                "title": "Chapter 3.1",
-                "url": f"https://{Urls.KAL}/manga/example/chapter-3.1",
-                "chapter": "3.1",
-                "translatedLanguage": "en",
-                "pages": -1,
-                "volume": None,
-                "createdAt": None,
-                "updatedAt": None,
-            },
-            "relationships": [{"type": "scanlation_group", "id": None}],
-        },
-        {
-            "id": "example_manga-example-chapter-1",
-            "type": "kal",
-            "attributes": {
-                "title": "Chapter 1",
-                "url": f"https://{Urls.KAL}/manga/example/chapter-1",
-                "chapter": "1",
-                "translatedLanguage": "en",
-                "pages": -1,
-                "volume": None,
-                "createdAt": None,
-                "updatedAt": None,
-            },
-            "relationships": [{"type": "scanlation_group", "id": None}],
-        },
-    ]
+    assert len(result) == 3
+    for chapter, expected_id, expected_chapter, expected_url in zip(
+        result,
+        [
+            "example_manga-example-chapter-5",
+            "example_manga-example-chapter-3.1",
+            "example_manga-example-chapter-1",
+        ],
+        ["5", "3.1", "1"],
+        [
+            f"https://{Urls.KAL}/manga/example/chapter-5",
+            f"https://{Urls.KAL}/manga/example/chapter-3.1",
+            f"https://{Urls.KAL}/manga/example/chapter-1",
+        ],
+        strict=True,
+    ):
+        assert chapter["id"] == expected_id
+        assert chapter["type"] == "kal"
+        attrs = chapter["attributes"]
+        assert attrs["title"] == f"Chapter {expected_chapter}"
+        assert attrs["url"] == expected_url
+        assert attrs["chapter"] == expected_chapter
+        assert attrs["translatedLanguage"] == "en"
+        assert attrs["pages"] == -1
+        assert attrs["volume"] is None
+        # Accept None or any non-empty string for createdAt/updatedAt
+        for key in ("createdAt", "updatedAt"):
+            val = attrs[key]
+            assert val is None or (isinstance(val, str) and val)
+        assert chapter["relationships"] == [{"type": "scanlation_group", "id": None}]
 
 
 @patch("cbz_tagger.entities.base_entity.random.uniform", return_value=0.1)
