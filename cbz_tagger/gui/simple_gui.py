@@ -3,6 +3,7 @@ import logging
 from datetime import datetime
 
 from nicegui import app
+from nicegui import context
 from nicegui import ui
 
 from cbz_tagger.common.enums import Emoji
@@ -14,8 +15,10 @@ from cbz_tagger.entities.metadata_entity import MetadataEntity
 
 logger = logging.getLogger()
 
-# Flag to ensure background timer is only started once
-_background_timer_started = False
+if "background_timer_started" not in app.storage.general:
+    app.storage.general["background_timer_started"] = False
+if "scanning_state" not in app.storage.general:
+    app.storage.general["scanning_state"] = False
 
 
 def refresh_scanner(scanner: FileScanner) -> FileScanner:
@@ -39,7 +42,13 @@ def add_new_to_scanner(
 
 
 def notify_and_log(msg: str):
-    ui.notify(msg)
+    try:
+        # Only show UI notification if we're in a valid client context
+        if context.client:
+            ui.notify(msg)
+    except RuntimeError:
+        # Context is not available (e.g., background task, deleted element)
+        pass
     logger.info("%s %s", datetime.now(), msg)
 
 
@@ -213,7 +222,6 @@ class SimpleGui:
         logger.debug("Starting GUI")
         self.env = AppEnv()
         self.first_scan = True
-        self.scanning_state = False
         self.scanner: FileScanner = scanner
         self.gui_elements = {}
 
@@ -356,15 +364,13 @@ class SimpleGui:
         logger.info("Log file cleared. %s", datetime.now())
 
     def initialize(self):
-        global _background_timer_started
-
         logger.info("proxy_url: %s", self.env.PROXY_URL)
 
         # Set up background timer that runs even when no clients are connected
         # Only register once, regardless of how many clients connect
-        if not _background_timer_started:
+        if not app.storage.general["background_timer_started"]:
             logger.info("UI scan timer started with delay: %s", self.env.TIMER_DELAY)
-            _background_timer_started = True
+            app.storage.general["background_timer_started"] = True
             scanner = self.scanner
             timer_delay = self.env.TIMER_DELAY
 
@@ -495,16 +501,16 @@ class SimpleGui:
         logger.debug("Series GUI Refreshed")
 
     def can_use_database(self):
-        if self.scanning_state:
+        if app.storage.general["scanning_state"]:
             notify_and_log("Database currently in use, please wait...")
             return False
         return True
 
     def lock_database(self):
-        self.scanning_state = True
+        app.storage.general["scanning_state"] = True
 
     def unlock_database(self):
-        self.scanning_state = False
+        app.storage.general["scanning_state"] = False
 
     @database_operation_async
     async def add_new_series(self):

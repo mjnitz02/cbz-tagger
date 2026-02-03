@@ -10,7 +10,7 @@
             "console": "integratedTerminal",
             "env": {
                 "TIMER_MODE": "true",
-                "TIMER_DELAY": "600",
+                "TIMER_DELAY": "25",
                 "GUI_MODE": "true",
                 "LOG_LEVEL": "INFO",
                 "CONFIG_PATH": "${env:HOME}/Downloads/cbz_tagger/config",

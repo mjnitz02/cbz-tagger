@@ -67,7 +67,7 @@ class ChapterPluginKAL(HtmlChapterPluginEntity):
             chapter_title = chapter_title_elem.text
 
             item_time = item_content.find_all("time")
-            if len(item_time) > 0:
+            if len(item_time) == 0:
                 chapter_updated = None  # KAL may not provide chapter dates
             else:
                 item_time_str = item_time[0].text.strip()
