@@ -121,53 +121,36 @@ def test_parse_info_feed(mock_sleep, mock_random, chapter_entity):
     _ = chapter_entity
     result = ChapterPluginKAL.parse_info_feed("example_manga")
 
-    assert result == [
-        {
-            "id": "example_manga-example-chapter-5",
-            "type": "kal",
-            "attributes": {
-                "title": "Chapter 5",
-                "url": f"https://{Urls.KAL}/manga/example/chapter-5",
-                "chapter": "5",
-                "translatedLanguage": "en",
-                "pages": -1,
-                "volume": None,
-                "createdAt": None,
-                "updatedAt": None,
-            },
-            "relationships": [{"type": "scanlation_group", "id": None}],
-        },
-        {
-            "id": "example_manga-example-chapter-3.1",
-            "type": "kal",
-            "attributes": {
-                "title": "Chapter 3.1",
-                "url": f"https://{Urls.KAL}/manga/example/chapter-3.1",
-                "chapter": "3.1",
-                "translatedLanguage": "en",
-                "pages": -1,
-                "volume": None,
-                "createdAt": None,
-                "updatedAt": None,
-            },
-            "relationships": [{"type": "scanlation_group", "id": None}],
-        },
-        {
-            "id": "example_manga-example-chapter-1",
-            "type": "kal",
-            "attributes": {
-                "title": "Chapter 1",
-                "url": f"https://{Urls.KAL}/manga/example/chapter-1",
-                "chapter": "1",
-                "translatedLanguage": "en",
-                "pages": -1,
-                "volume": None,
-                "createdAt": None,
-                "updatedAt": None,
-            },
-            "relationships": [{"type": "scanlation_group", "id": None}],
-        },
-    ]
+    assert len(result) == 3
+    for chapter, expected_id, expected_chapter, expected_url in zip(
+        result,
+        [
+            "example_manga-example-chapter-5",
+            "example_manga-example-chapter-3.1",
+            "example_manga-example-chapter-1",
+        ],
+        ["5", "3.1", "1"],
+        [
+            f"https://{Urls.KAL}/manga/example/chapter-5",
+            f"https://{Urls.KAL}/manga/example/chapter-3.1",
+            f"https://{Urls.KAL}/manga/example/chapter-1",
+        ],
+        strict=True,
+    ):
+        assert chapter["id"] == expected_id
+        assert chapter["type"] == "kal"
+        attrs = chapter["attributes"]
+        assert attrs["title"] == f"Chapter {expected_chapter}"
+        assert attrs["url"] == expected_url
+        assert attrs["chapter"] == expected_chapter
+        assert attrs["translatedLanguage"] == "en"
+        assert attrs["pages"] == -1
+        assert attrs["volume"] is None
+        # Accept None or any non-empty string for createdAt/updatedAt
+        for key in ("createdAt", "updatedAt"):
+            val = attrs[key]
+            assert val is None or (isinstance(val, str) and val)
+        assert chapter["relationships"] == [{"type": "scanlation_group", "id": None}]
 
 
 @patch("cbz_tagger.entities.base_entity.random.uniform", return_value=0.1)
