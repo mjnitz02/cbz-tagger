@@ -2,7 +2,6 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
-
 from cbz_tagger.gui.functions import add_new_to_scanner
 from cbz_tagger.gui.functions import notify_and_log
 from cbz_tagger.gui.functions import refresh_scanner
