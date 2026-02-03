@@ -41,7 +41,7 @@ class Container:
     def run_gui(self):
         logger.info("Container running in GUI mode.")
         logger.info("Timer Monitoring with %s(s) delay: %s", self.timer_delay, self.scan_path)
-        SimpleGui(self.scanner)
+        SimpleGui()
         root_path = os.path.dirname(os.path.abspath(__file__))
         static_path = os.path.join(root_path, "static")
         app.add_static_files("/static", static_path)

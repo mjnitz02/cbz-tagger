@@ -4,15 +4,20 @@ import os
 from collections import deque
 from datetime import datetime
 
+import httpx
 from nicegui import app
 from nicegui import context
+from nicegui import run
 from nicegui import ui
 
 from cbz_tagger.common.enums import Emoji
 from cbz_tagger.common.enums import Plugins
 from cbz_tagger.common.env import AppEnv
-from cbz_tagger.database.file_scanner import FileScanner
 from cbz_tagger.entities.metadata_entity import MetadataEntity
+from cbz_tagger.gui import api
+
+# Register the API router with the NiceGUI app
+app.include_router(api.router)
 
 logger = logging.getLogger()
 
@@ -56,26 +61,6 @@ class FileLogReader:
                     f.truncate(0)
             except Exception:  # pylint: disable=broad-except
                 pass
-
-
-def refresh_scanner(scanner: FileScanner) -> FileScanner:
-    scanner.run()
-    return scanner
-
-
-def add_new_to_scanner(
-    scanner: FileScanner, entity_name: str, entity_id: str, backend: str, enable_tracking: bool, mark_all_tracked: bool
-) -> FileScanner:
-    scanner.entity_database.add_entity(
-        entity_name,
-        entity_id,
-        manga_name=None,
-        backend=backend,
-        update=True,
-        track=enable_tracking,
-        mark_as_tracked=mark_all_tracked,
-    )
-    return scanner
 
 
 def notify_and_log(msg: str):
@@ -255,11 +240,11 @@ def ui_logger() -> FileLogReader:
 
 
 class SimpleGui:
-    def __init__(self, scanner):
+    def __init__(self):
         logger.debug("Starting GUI")
         self.env = AppEnv()
         self.first_scan = True
-        self.scanner: FileScanner = scanner
+        self.api_base_url = "http://localhost:8080"  # NiceGUI default port
         self.gui_elements = {}
 
         self.meta_entries = []
@@ -408,17 +393,18 @@ class SimpleGui:
         if not app.storage.general["background_timer_started"]:
             logger.info("UI scan timer started with delay: %s", self.env.TIMER_DELAY)
             app.storage.general["background_timer_started"] = True
-            scanner = self.scanner
             timer_delay = self.env.TIMER_DELAY
+            api_base_url = self.api_base_url
 
             async def background_refresh():
                 # Skip first run
                 await asyncio.sleep(timer_delay)
                 while True:
                     try:
-                        # Call the refresh function directly on the scanner
-                        loop = asyncio.get_event_loop()
-                        await loop.run_in_executor(None, refresh_scanner, scanner)
+                        # Call the refresh API endpoint
+                        async with httpx.AsyncClient() as client:
+                            response = await client.post(f"{api_base_url}/api/scanner/refresh", timeout=None)
+                            response.raise_for_status()
                         logger.info("Background database refresh completed at %s", datetime.now())
                     except Exception as e:
                         logger.error("Error in background refresh: %s", e)
@@ -426,40 +412,7 @@ class SimpleGui:
 
             app.on_startup(lambda: asyncio.create_task(background_refresh()))
             logger.info("Background timer registered (will start on app startup)")
-
-        self.refresh_table()
-
-    @staticmethod
-    def database_operation(func):
-        def wrapper(self):
-            if self.can_use_database():
-                self.lock_database()
-            else:
-                return
-            try:
-                func(self)
-            finally:
-                self.unlock_database()
-                self.refresh_table()
-
-        return wrapper
-
-    @staticmethod
-    def database_operation_async(func):
-        async def wrapper(self):
-            if self.can_use_database():
-                self.lock_database()
-            else:
-                return
-            self.scanner.reload_scanner()
-            try:
-                await func(self)
-                self.scanner.reload_scanner()
-                self.refresh_table()
-            finally:
-                self.unlock_database()
-
-        return wrapper
+        # self.refresh_table()
 
     def toggle(self, column: str) -> None:
         column_index = [e["label"] for e in self.gui_elements["table_series"].columns].index(column)
@@ -491,9 +444,14 @@ class SimpleGui:
         self.gui_elements["selector_add_name"].options = self.meta_entries[entity_index].all_titles
         self.gui_elements["selector_add_name"].value = self.meta_entries[entity_index].all_titles[0]
 
-    def refresh_manage_series(self):
-        self.scanner.reload_scanner()
-        self.manage_series_ids = list(self.scanner.entity_database.entity_map.items())
+    async def refresh_manage_series(self):
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{self.api_base_url}/api/scanner/series")
+            response.raise_for_status()
+            data = response.json()
+            series_list = data["series"]
+
+        self.manage_series_ids = [(s["name"], s["entity_id"]) for s in series_list]
         self.manage_series_names = [f"{name} ({entity_id})" for name, entity_id in self.manage_series_ids]
         if len(self.manage_series_names) == 0:
             self.gui_elements["selector_manage_series"].options = ["Please refresh series list"]
@@ -506,17 +464,22 @@ class SimpleGui:
             self.gui_elements["manage_chapter_delete"].enable()
         self.gui_elements["selector_manage_series"].value = self.gui_elements["selector_manage_series"].options[0]
 
-    def refresh_manage_series_chapters(self):
+    async def refresh_manage_series_chapters(self):
         if len(self.manage_series_ids) == 0:
             return
 
         entity_index = self.manage_series_names.index(self.gui_elements["selector_manage_series"].value)
         selected_series_name, selected_series_id = self.manage_series_ids[entity_index]
 
-        chapters = self.scanner.entity_database.chapters[selected_series_id]
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{self.api_base_url}/api/scanner/series/{selected_series_id}/chapters")
+            response.raise_for_status()
+            data = response.json()
+            chapters = data["chapters"]
+
         self.manage_chapter_ids = [
-            (selected_series_id, selected_series_name, chapter.entity_id, f"Chapter {chapter.chapter_number}")
-            for chapter in (chapters if chapters is not None else [])
+            (selected_series_id, selected_series_name, chapter["entity_id"], f"Chapter {chapter['chapter_number']}")
+            for chapter in chapters
         ]
         self.manage_chapter_names = [chapter_name for _, _, _, chapter_name in self.manage_chapter_ids]
         if len(self.manage_chapter_ids) == 0:
@@ -527,8 +490,15 @@ class SimpleGui:
 
     def refresh_table(self):
         logger.debug("Refreshing series table")
-        self.scanner.reload_scanner()
-        state = self.scanner.to_state()
+
+        def fetch_state():
+            with httpx.Client() as client:
+                response = client.get(f"{self.api_base_url}/api/scanner/state", timeout=30)
+                response.raise_for_status()
+                return response.json()["state"]
+
+        state = fetch_state()
+
         formatted_state = []
         for item in state:
             if len(item["entity_name"]) > 50:
@@ -537,19 +507,6 @@ class SimpleGui:
         self.gui_elements["table_series"].rows = formatted_state
         logger.debug("Series GUI Refreshed")
 
-    def can_use_database(self):
-        if app.storage.general["scanning_state"]:
-            notify_and_log("Database currently in use, please wait...")
-            return False
-        return True
-
-    def lock_database(self):
-        app.storage.general["scanning_state"] = True
-
-    def unlock_database(self):
-        app.storage.general["scanning_state"] = False
-
-    @database_operation_async
     async def add_new_series(self):
         self.gui_elements["spinner_add"].set_visibility(True)
         self.gui_elements["spinner_add_label"].set_visibility(True)
@@ -575,12 +532,27 @@ class SimpleGui:
         enable_tracking = self.gui_elements["radio_add_mark_all_tracked"].value != "Disable Tracking"
 
         notify_and_log("Adding new series... please wait")
-        loop = asyncio.get_event_loop()
-        self.scanner = await loop.run_in_executor(
-            None, add_new_to_scanner, self.scanner, entity_name, entity_id, backend, enable_tracking, mark_all_tracked
-        )
-
-        notify_and_log("New series added!")
+        try:
+            async with httpx.AsyncClient(timeout=None) as client:
+                response = await client.post(
+                    f"{self.api_base_url}/api/scanner/add-series",
+                    json={
+                        "entity_name": entity_name,
+                        "entity_id": entity_id,
+                        "backend": backend,
+                        "enable_tracking": enable_tracking,
+                        "mark_all_tracked": mark_all_tracked,
+                    },
+                )
+                response.raise_for_status()
+            notify_and_log("New series added!")
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 409:
+                notify_and_log("Scanner is busy. Please wait and try again.")
+                self.gui_elements["spinner_add"].set_visibility(False)
+                self.gui_elements["spinner_add_label"].set_visibility(False)
+                return
+            raise
 
         # Reset the Add New Series form
         self.gui_elements["spinner_add"].set_visibility(False)
@@ -595,18 +567,29 @@ class SimpleGui:
         self.gui_elements["selector_add_backend"].value = Plugins.MDX
         self.gui_elements["input_box_add_backend"].value = ""
         self.gui_elements["radio_add_mark_all_tracked"].value = "No"
+        self.refresh_table()
 
-    @database_operation
-    def delete_series(self):
+    async def delete_series(self):
         entity_index = self.manage_series_names.index(self.gui_elements["selector_manage_series"].value)
         entity_name_to_remove, entity_id_to_remove = self.manage_series_ids[entity_index]
         logger.info("Removing %s from the database...", entity_name_to_remove)
-        self.scanner.entity_database.delete_entity_id(entity_id_to_remove, entity_name_to_remove)
-        notify_and_log(f"Removed {entity_name_to_remove} from the database")
-        self.refresh_manage_series()
+        try:
+            async with httpx.AsyncClient(timeout=None) as client:
+                response = await client.delete(
+                    f"{self.api_base_url}/api/scanner/series/{entity_id_to_remove}",
+                    params={"entity_name": entity_name_to_remove},
+                )
+                response.raise_for_status()
+            notify_and_log(f"Removed {entity_name_to_remove} from the database")
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 409:
+                notify_and_log("Scanner is busy. Please wait and try again.")
+                return
+            raise
+        await self.refresh_manage_series()
+        self.refresh_table()
 
-    @database_operation
-    def delete_chapter_tracking(self):
+    async def delete_chapter_tracking(self):
         entity_index = self.manage_chapter_names.index(self.gui_elements["selector_manage_chapters"].value)
         entity_id, entity_name, chapter_id, chapter_name = self.manage_chapter_ids[entity_index]
         logger.info(
@@ -616,10 +599,18 @@ class SimpleGui:
             entity_name,
             entity_id,
         )
-        self.scanner.entity_database.delete_chapter_entity_id_from_downloaded_chapters(entity_id, chapter_id)
-        notify_and_log(f"Removed tracked status for {chapter_name} from {entity_name}")
+        try:
+            async with httpx.AsyncClient(timeout=None) as client:
+                response = await client.delete(f"{self.api_base_url}/api/scanner/chapter/{entity_id}/{chapter_id}")
+                response.raise_for_status()
+            notify_and_log(f"Removed tracked status for {chapter_name} from {entity_name}")
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 409:
+                notify_and_log("Scanner is busy. Please wait and try again.")
+                return
+            raise
+        self.refresh_table()
 
-    @database_operation_async
     async def refresh_database(self):
         if self.first_scan:
             self.first_scan = False
@@ -627,12 +618,28 @@ class SimpleGui:
             return
         notify_and_log("Refreshing database... please wait")
 
-        loop = asyncio.get_event_loop()
-        self.scanner = await loop.run_in_executor(None, refresh_scanner, self.scanner)
+        try:
+            async with httpx.AsyncClient(timeout=None) as client:
+                response = await client.post(f"{self.api_base_url}/api/scanner/refresh")
+                response.raise_for_status()
+            notify_and_log("Series Database Refreshed")
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 409:
+                notify_and_log("Scanner is busy. Please wait and try again.")
+                return
+            raise
+        self.refresh_table()
 
-        notify_and_log("Series Database Refreshed")
-
-    @database_operation
-    def clean_orphaned_files(self):
+    async def clean_orphaned_files(self):
         notify_and_log("Removing orphaned files...")
-        self.scanner.entity_database.remove_orphaned_covers()
+        try:
+            async with httpx.AsyncClient(timeout=None) as client:
+                response = await client.post(f"{self.api_base_url}/api/scanner/clean-orphaned")
+                response.raise_for_status()
+            notify_and_log("Orphaned files removed successfully")
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 409:
+                notify_and_log("Scanner is busy. Please wait and try again.")
+                return
+            raise
+        self.refresh_table()
