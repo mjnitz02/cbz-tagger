@@ -63,6 +63,21 @@ build-docker:
 run-docker:
 	docker-compose up --build
 
+dev:
+	@echo "Starting CBZ Tagger development servers..."
+	@export LOG_LEVEL=INFO; \
+	export CONFIG_PATH=~/Downloads/cbz_tagger/config; \
+	export SCAN_PATH=~/Downloads/cbz_tagger/scan; \
+	export STORAGE_PATH=~/Downloads/cbz_tagger/storage; \
+	mkdir -p $$CONFIG_PATH $$SCAN_PATH $$STORAGE_PATH; \
+	echo "Starting FastAPI backend on port 8000..."; \
+	uv run python -m cbz_tagger.web.server & \
+	API_PID=$$!; \
+	sleep 2; \
+	echo "Starting NiceGUI frontend on port 8080..."; \
+	uv run python -m cbz_tagger.gui.server || kill $$API_PID; \
+	kill $$API_PID 2>/dev/null || true
+
 run:
 	export TIMER_MODE=true; \
 	export TIMER_DELAY=600; \

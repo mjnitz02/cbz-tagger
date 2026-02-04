@@ -1,11 +1,9 @@
-import asyncio
 import logging
 import os
 from collections import deque
 from datetime import datetime
 
 import httpx
-from nicegui import app
 from nicegui import context
 from nicegui import run
 from nicegui import ui
@@ -13,18 +11,8 @@ from nicegui import ui
 from cbz_tagger.common.enums import Emoji
 from cbz_tagger.common.enums import Plugins
 from cbz_tagger.common.env import AppEnv
-from cbz_tagger.entities.metadata_entity import MetadataEntity
-from cbz_tagger.gui import api
-
-# Register the API router with the NiceGUI app
-app.include_router(api.router)
 
 logger = logging.getLogger()
-
-if "background_timer_started" not in app.storage.general:
-    app.storage.general["background_timer_started"] = False
-if "scanning_state" not in app.storage.general:
-    app.storage.general["scanning_state"] = False
 
 
 class FileLogReader:
@@ -61,6 +49,40 @@ class FileLogReader:
                     f.truncate(0)
             except Exception:  # pylint: disable=broad-except
                 pass
+
+
+def ui_logger() -> FileLogReader:
+    env = AppEnv()
+    log_reader = FileLogReader(env.LOG_PATH)
+
+    # Create HTML element with pre tag for log display
+    log_display = (
+        ui.html("", sanitize=False)
+        .classes("w-full")
+        .style(
+            "height: 70vh; overflow-y: auto; background-color: #1e1e1e; color: #d4d4d4; "
+            "padding: 10px; border-radius: 5px; font-family: 'Courier New', monospace; "
+            "font-size: 12px; white-space: pre-wrap; word-wrap: break-word;"
+        )
+    )
+
+    # Function to refresh log display
+    def refresh_logs():
+        log_content = log_reader.read_last_lines(max_lines=1000)
+        # Escape HTML to prevent injection
+        log_content = log_content.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        log_display.content = f"<pre style='margin: 0;'>{log_content}</pre>"
+        # Auto-scroll to bottom
+        # Logic is broken currently
+        # ui.run_javascript(f'getElement({log_display.id}).scrollTop = getElement({log_display.id}).scrollHeight')
+
+    # Initial load
+    refresh_logs()
+
+    # Set up timer to refresh logs every 2 seconds
+    ui.timer(2.0, refresh_logs)
+
+    return log_reader
 
 
 def notify_and_log(msg: str):
@@ -205,45 +227,11 @@ def series_table() -> ui.table:
     return table
 
 
-def ui_logger() -> FileLogReader:
-    env = AppEnv()
-    log_reader = FileLogReader(env.LOG_PATH)
-
-    # Create HTML element with pre tag for log display
-    log_display = (
-        ui.html("", sanitize=False)
-        .classes("w-full")
-        .style(
-            "height: 70vh; overflow-y: auto; background-color: #1e1e1e; color: #d4d4d4; "
-            "padding: 10px; border-radius: 5px; font-family: 'Courier New', monospace; "
-            "font-size: 12px; white-space: pre-wrap; word-wrap: break-word;"
-        )
-    )
-
-    # Function to refresh log display
-    def refresh_logs():
-        log_content = log_reader.read_last_lines(max_lines=1000)
-        # Escape HTML to prevent injection
-        log_content = log_content.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-        log_display.content = f"<pre style='margin: 0;'>{log_content}</pre>"
-        # Auto-scroll to bottom
-        # Logic is broken currently
-        # ui.run_javascript(f'getElement({log_display.id}).scrollTop = getElement({log_display.id}).scrollHeight')
-
-    # Initial load
-    refresh_logs()
-
-    # Set up timer to refresh logs every 2 seconds
-    ui.timer(2.0, refresh_logs)
-
-    return log_reader
-
-
 class SimpleGui:
     def __init__(self):
         logger.debug("Starting GUI")
         self.env = AppEnv()
-        self.api_base_url = "http://localhost:8080"  # NiceGUI default port
+        self.api_base_url = "http://localhost:8000"  # FastAPI backend port
         self.gui_elements = {}
 
         self.meta_entries = []
@@ -385,33 +373,8 @@ class SimpleGui:
         logger.info("Log file cleared. %s", datetime.now())
 
     def initialize(self):
-        logger.info("proxy_url: %s", self.env.PROXY_URL)
-
-        # Set up background timer that runs even when no clients are connected
-        # Only register once, regardless of how many clients connect
-        if not app.storage.general["background_timer_started"]:
-            logger.info("UI scan timer started with delay: %s", self.env.TIMER_DELAY)
-            app.storage.general["background_timer_started"] = True
-            timer_delay = self.env.TIMER_DELAY
-            api_base_url = self.api_base_url
-
-            async def background_refresh():
-                # Skip first run
-                await asyncio.sleep(timer_delay)
-                while True:
-                    try:
-                        # Call the refresh API endpoint
-                        async with httpx.AsyncClient() as client:
-                            response = await client.post(f"{api_base_url}/api/scanner/refresh", timeout=None)
-                            response.raise_for_status()
-                        logger.info("Background database refresh completed at %s", datetime.now())
-                    except Exception as e:
-                        logger.error("Error in background refresh: %s", e)
-                    await asyncio.sleep(timer_delay)
-
-            app.on_startup(lambda: asyncio.create_task(background_refresh()))
-            logger.info("Background timer registered (will start on app startup)")
-        # await self.refresh_table()
+        """Initialize the GUI. Background tasks are handled by the FastAPI server."""
+        logger.info("NiceGUI initialized. API base URL: %s", self.api_base_url)
 
     def toggle(self, column: str) -> None:
         column_index = [e["label"] for e in self.gui_elements["table_series"].columns].index(column)
@@ -421,27 +384,39 @@ class SimpleGui:
         column["headerClasses"] = "" if visible else "hidden"
         self.gui_elements["table_series"].update()
 
-    def refresh_series_search(self):
+    async def refresh_series_search(self):
         search_term = self.gui_elements["input_box_add_series"].value
         if len(search_term) == 0:
             notify_and_log("Please enter a name to search for")
             return
 
-        self.meta_entries = MetadataEntity.from_server_url(query_params={"title": search_term})
-        self.meta_choices = list(
-            f"{manga.title} ({manga.alt_title}) - {manga.created_at.year} - {manga.age_rating}"
-            for manga in self.meta_entries
-        )
-        self.gui_elements["selector_add_series"].options = self.meta_choices
-        self.gui_elements["selector_add_series"].value = self.meta_choices[0]
-        self.gui_elements["add_new"].enable()
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"{self.api_base_url}/api/scanner/search-series", params={"title": search_term}
+                )
+                response.raise_for_status()
+                data = response.json()
+                results = data["results"]
+
+            # Store the raw results for later use
+            self.meta_entries = results
+            # Extract display names for the dropdown
+            self.meta_choices = [result["display_name"] for result in results]
+
+            self.gui_elements["selector_add_series"].options = self.meta_choices
+            self.gui_elements["selector_add_series"].value = self.meta_choices[0]
+            self.gui_elements["add_new"].enable()
+        except httpx.HTTPError as e:
+            notify_and_log(f"Error searching for series: {e}")
 
     def refresh_series_names(self):
         if len(self.meta_entries) == 0:
             return
         entity_index = self.meta_choices.index(self.gui_elements["selector_add_series"].value)
-        self.gui_elements["selector_add_name"].options = self.meta_entries[entity_index].all_titles
-        self.gui_elements["selector_add_name"].value = self.meta_entries[entity_index].all_titles[0]
+        all_titles = self.meta_entries[entity_index]["all_titles"]
+        self.gui_elements["selector_add_name"].options = all_titles
+        self.gui_elements["selector_add_name"].value = all_titles[0]
 
     async def refresh_manage_series(self):
         async with httpx.AsyncClient() as client:
@@ -512,7 +487,7 @@ class SimpleGui:
         self.gui_elements["add_new"].disable()
         entity_index = self.meta_choices.index(self.gui_elements["selector_add_series"].value)
         entity = self.meta_entries[entity_index]
-        entity_id = entity.entity_id
+        entity_id = entity["entity_id"]
         entity_name = self.gui_elements["selector_add_name"].value
         if (
             self.gui_elements["selector_add_backend"].value != Plugins.MDX
