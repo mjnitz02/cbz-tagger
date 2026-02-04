@@ -4,7 +4,6 @@ import logging
 import os
 
 # Import gui module to register pages and setup UI configuration
-from collections import deque
 from datetime import datetime
 
 import httpx
@@ -15,47 +14,12 @@ from nicegui import ui
 from cbz_tagger.gui.enums import EmojiNamespace
 from cbz_tagger.gui.enums import EnvNamespace
 from cbz_tagger.gui.enums import PluginsNamespace
+from cbz_tagger.gui.file_log_reader import FileLogReader
 
 logger = logging.getLogger(__name__)
 
 
-class FileLogReader:
-    """A utility class for reading log files."""
-
-    def __init__(self, log_file_path: str) -> None:
-        self.log_file_path = log_file_path
-
-    def read_last_lines(self, max_lines: int = 1000) -> str:
-        """Read the last N lines from the log file.
-
-        Args:
-            max_lines: Maximum number of lines to read from the end of the file
-
-        Returns:
-            String containing the last N lines of the log file
-        """
-        if not os.path.exists(self.log_file_path):
-            return ""
-
-        try:
-            with open(self.log_file_path, encoding="utf-8") as f:
-                # Use deque to efficiently keep only the last N lines
-                lines = deque(f, maxlen=max_lines)
-                return "".join(lines)
-        except Exception:  # pylint: disable=broad-except
-            return f"Error reading log file: {self.log_file_path}"
-
-    def clear_log_file(self) -> None:
-        """Clear the contents of the log file."""
-        if os.path.exists(self.log_file_path):
-            try:
-                with open(self.log_file_path, "w", encoding="utf-8") as f:
-                    f.truncate(0)
-            except Exception:  # pylint: disable=broad-except
-                pass
-
-
-class SimpleGui:
+class UiState:
     Emoji: EmojiNamespace
     Plugins: PluginsNamespace
     env: EnvNamespace
@@ -588,14 +552,14 @@ class SimpleGui:
 
 
 # Global GUI instance for page functions to access
-gui_instance: SimpleGui | None = None
+gui_instance: UiState | None = None
 
 
-def get_gui_instance() -> SimpleGui:
+def get_gui_instance() -> UiState:
     """Get or create the global GUI instance."""
     global gui_instance
     if gui_instance is None:
-        gui_instance = SimpleGui()
+        gui_instance = UiState()
     return gui_instance
 
 
@@ -648,7 +612,9 @@ def add_series():
         ui.markdown("#### Add Series")
         ui.separator()
 
-        gui.gui_elements["add_search"] = ui.button("Search for New Series", on_click=gui.refresh_series_search)
+        gui.gui_elements["add_search"] = ui.chip(
+            "Search for New Series", icon="search", color="primary", on_click=gui.refresh_series_search
+        )
         gui.gui_elements["input_box_add_series"] = ui.input(
             "Please enter the name of a series to search for", placeholder="Series Name"
         ).classes("w-2/3")
@@ -677,7 +643,9 @@ def add_series():
             ui.radio(["Yes", "No", "Disable Tracking"], value="No").classes("w-2/3").props("inline")
         )
         with ui.row():
-            gui.gui_elements["add_new"] = ui.button("Add New Series", on_click=gui.add_new_series)
+            gui.gui_elements["add_new"] = ui.chip(
+                "Add New Series", icon="add", color="green", on_click=gui.add_new_series
+            )
             gui.gui_elements["add_new"].disable()
             gui.gui_elements["spinner_add"] = ui.spinner()
             gui.gui_elements["spinner_add"].set_visibility(False)
@@ -712,18 +680,22 @@ def manage_page():
         ).classes("w-2/3")
 
         with ui.row():
-            gui.gui_elements["manage_chapter_delete"] = ui.button(
-                "Refresh Series List", on_click=gui.refresh_manage_series
+            gui.gui_elements["manage_chapter_delete"] = ui.chip(
+                "Refresh Series List", icon="refresh", color="primary", on_click=gui.refresh_manage_series
             )
-            gui.gui_elements["manage_series_delete"] = ui.button("Delete Selected Series", on_click=gui.delete_series)
+            gui.gui_elements["manage_series_delete"] = ui.chip(
+                "Delete Selected Series", icon="delete", color="red", on_click=gui.delete_series
+            )
             gui.gui_elements["manage_series_delete"].disable()
-            gui.gui_elements["manage_chapter_delete"] = ui.button(
-                "Reset Tracked Chapter", on_click=gui.delete_chapter_tracking
+            gui.gui_elements["manage_chapter_delete"] = ui.chip(
+                "Reset Tracked Chapter", icon="restart_alt", color="orange", on_click=gui.delete_chapter_tracking
             )
             gui.gui_elements["manage_chapter_delete"].disable()
 
         with ui.row():
-            gui.gui_elements["delete_clean"] = ui.button("Clean Orphaned Files", on_click=gui.clean_orphaned_files)
+            gui.gui_elements["delete_clean"] = ui.chip(
+                "Clean Orphaned Files", icon="cleaning_services", color="orange", on_click=gui.clean_orphaned_files
+            )
 
 
 @ui.page("/config")
