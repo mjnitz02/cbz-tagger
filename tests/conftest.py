@@ -1,10 +1,27 @@
 import os
 import shutil
+import tempfile
 
 import pytest
 
+# Set up test environment variables BEFORE importing cbz_tagger modules
+# This prevents cbz_tagger/__init__.py from trying to create directories in /config
+_TEST_TEMP_DIR = tempfile.mkdtemp(prefix="cbz_tagger_test_")
+os.environ.setdefault("CONFIG_PATH", os.path.join(_TEST_TEMP_DIR, "config"))
+os.environ.setdefault("SCAN_PATH", os.path.join(_TEST_TEMP_DIR, "scan"))
+os.environ.setdefault("STORAGE_PATH", os.path.join(_TEST_TEMP_DIR, "storage"))
+os.environ.setdefault("LOG_PATH", os.path.join(_TEST_TEMP_DIR, "config", "logs", "cbz_tagger.log"))
+
 from cbz_tagger.common.env import AppEnv
 from cbz_tagger.database.file_scanner import FileScanner
+
+
+@pytest.fixture(scope="session", autouse=True)
+def cleanup_test_temp_dir():
+    """Clean up the temporary test directory after all tests complete."""
+    yield
+    if os.path.exists(_TEST_TEMP_DIR):
+        shutil.rmtree(_TEST_TEMP_DIR, ignore_errors=True)
 
 
 @pytest.fixture
