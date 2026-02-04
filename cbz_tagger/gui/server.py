@@ -95,20 +95,28 @@ class UiState:
             ui.button("Series", on_click=lambda: ui.navigate.to("/series")).classes(button_class)
             ui.button("Add Series", on_click=lambda: ui.navigate.to("/add_series")).classes(button_class)
             ui.button("Manage Series", on_click=lambda: ui.navigate.to("/manage_series")).classes(button_class)
-            ui.button("Config", on_click=lambda: ui.navigate.to("/config")).classes(button_class)
-            ui.button("Log", on_click=lambda: ui.navigate.to("/log")).classes(button_class)
-            ui.button("Refresh Table", on_click=self.refresh_table).classes(button_class)
-            ui.button("Refresh Database", on_click=self.refresh_database).classes(button_class)
             ui.space()
+            ui.button("Logs", on_click=lambda: ui.navigate.to("/log"), color="#767676").classes(button_class)
+            ui.button("Server Config", on_click=lambda: ui.navigate.to("/config")).classes(button_class)
+            ui.button("Refresh Table", on_click=self.refresh_table, color="#008aac").classes(button_class)
+            ui.button("Refresh Database", on_click=self.refresh_database, color="#00a59d").classes(button_class)
+            ui.label("")
             ui.label(f"Version: {self.env.VERSION}").classes("text-xs text-gray-400 w-full text-center")
-            ui.link("GitHub", "https://github.com/mjnitz02/cbz-tagger").classes(
-                "w-full text-center text-xs text-gray-400"
-            ).props("icon=code")
+            with ui.link(target="https://github.com/mjnitz02/cbz-tagger").classes("w-full no-underline"):
+                with ui.row().classes("w-full justify-center items-center"):
+                    ui.icon("code").classes("text-gray-400 text-sm")
+                    ui.label("GitHub").classes("text-xs text-gray-400")
 
         with ui.header().classes(replace="row items-center"):
             # pylint: disable=unnecessary-lambda
             ui.button(on_click=lambda: left_drawer.toggle(), icon="menu").props("flat color=white")
-            ui.html("<h5><strong>CBZ Tagger</strong></h5>", sanitize=False)
+            ui.html(
+                '<span style="cursor:pointer; font-size:1.25rem;" '
+                'class="text-weight-medium" '
+                "onclick=\"window.location.href='/series'\">"
+                "CBZ Tagger</span>",
+                sanitize=False,
+            )
 
     def series_table(self) -> ui.table:
         columns = [
