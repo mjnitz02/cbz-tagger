@@ -27,7 +27,7 @@ def main():
         "cbz_tagger.web.api:app",
         host="0.0.0.0",
         port=8000,
-        reload=True,  # Enable auto-reload for development
+        reload=env.DEBUG_MODE,  # Enable auto-reload for development
         log_level=env.LOG_LEVEL,
     )
 

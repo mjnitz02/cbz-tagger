@@ -30,7 +30,7 @@ def main():
     root_path = os.path.dirname(os.path.abspath(__file__))
     static_path = os.path.join(root_path, "static")
     app.add_static_files("/static", static_path)
-    ui.run(reload=False, favicon=os.path.join(static_path, "favicon.ico"))
+    ui.run(reload=env.DEBUG_MODE, favicon=os.path.join(static_path, "favicon.ico"))
 
 
 if __name__ == "__main__":

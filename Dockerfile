@@ -14,6 +14,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 RUN apk update && apk upgrade
 
 ### CBZ Tagger ###
+WORKDIR /app
 COPY . /app
 COPY pyproject.toml ./
 COPY uv.lock ./

@@ -1,6 +1,9 @@
 #!/bin/sh
 set -e
 
+# Change to the app directory
+cd /app
+
 echo "Starting CBZ Tagger servers..."
 echo "Config path: $CONFIG_PATH"
 echo "Scan path: $SCAN_PATH"

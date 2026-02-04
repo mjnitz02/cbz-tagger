@@ -66,6 +66,7 @@ run-docker:
 dev:
 	@echo "Starting CBZ Tagger development servers..."
 	@export LOG_LEVEL=INFO; \
+	export DEBUG_MODE=true; \
 	export TIMER_MODE=true; \
 	export TIMER_DELAY=35; \
 	export CONFIG_PATH=~/Downloads/cbz_tagger/config; \
