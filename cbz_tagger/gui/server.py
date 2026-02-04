@@ -21,9 +21,6 @@ def main():
     logging.basicConfig(level=env.LOG_LEVEL)
 
     logger.info("Starting CBZ Tagger NiceGUI server...")
-    logger.info("Config path: %s", env.CONFIG_PATH)
-    logger.info("Scan path: %s", env.SCAN_PATH)
-    logger.info("Storage path: %s", env.STORAGE_PATH)
 
     # Run the server
     SimpleGui()
@@ -33,5 +30,5 @@ def main():
     ui.run(reload=env.DEBUG_MODE, favicon=os.path.join(static_path, "favicon.ico"))
 
 
-if __name__ == "__main__":
+if __name__ in {"__main__", "__mp_main__"}:
     main()

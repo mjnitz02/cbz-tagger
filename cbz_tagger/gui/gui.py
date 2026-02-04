@@ -5,10 +5,7 @@ from datetime import datetime
 
 import httpx
 from nicegui import context
-from nicegui import run
 from nicegui import ui
-
-from cbz_tagger.common.env import AppEnv
 
 logger = logging.getLogger()
 
@@ -52,6 +49,29 @@ class PluginsNamespace:
         return self._all
 
 
+class EnvNamespace:
+    """Namespace for AppEnv configuration fetched from the API."""
+
+    VERSION: str
+    CONTAINER_MODE: str
+    PUID: int | str
+    PGID: int | str
+    DEBUG_MODE: bool
+    UMASK: str
+    CONFIG_PATH: str
+    SCAN_PATH: str
+    STORAGE_PATH: str
+    LOG_PATH: str
+    TIMER_DELAY: int
+    PROXY_URL: str | None
+    DELAY_PER_REQUEST: float
+    LOG_LEVEL: int
+
+    def __init__(self, data: dict[str, str | int | float | bool | None]) -> None:
+        for key, value in data.items():
+            setattr(self, key, value)
+
+
 class FileLogReader:
     """A utility class for reading log files."""
 
@@ -88,40 +108,6 @@ class FileLogReader:
                 pass
 
 
-def ui_logger() -> FileLogReader:
-    env = AppEnv()
-    log_reader = FileLogReader(env.LOG_PATH)
-
-    # Create HTML element with pre tag for log display
-    log_display = (
-        ui.html("", sanitize=False)
-        .classes("w-full")
-        .style(
-            "height: 70vh; overflow-y: auto; background-color: #1e1e1e; color: #d4d4d4; "
-            "padding: 10px; border-radius: 5px; font-family: 'Courier New', monospace; "
-            "font-size: 12px; white-space: pre-wrap; word-wrap: break-word;"
-        )
-    )
-
-    # Function to refresh log display
-    def refresh_logs():
-        log_content = log_reader.read_last_lines(max_lines=1000)
-        # Escape HTML to prevent injection
-        log_content = log_content.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-        log_display.content = f"<pre style='margin: 0;'>{log_content}</pre>"
-        # Auto-scroll to bottom
-        # Logic is broken currently
-        # ui.run_javascript(f'getElement({log_display.id}).scrollTop = getElement({log_display.id}).scrollHeight')
-
-    # Initial load
-    refresh_logs()
-
-    # Set up timer to refresh logs every 2 seconds
-    ui.timer(2.0, refresh_logs)
-
-    return log_reader
-
-
 def notify_and_log(msg: str):
     try:
         # Only show UI notification if we're in a valid client context
@@ -131,39 +117,6 @@ def notify_and_log(msg: str):
         # Context is not available (e.g., background task, deleted element)
         pass
     logger.info("%s %s", datetime.now(), msg)
-
-
-def config_table() -> ui.table:
-    env = AppEnv()
-    columns = [
-        {
-            "name": "property",
-            "label": "property",
-            "field": "property",
-            "align": "left",
-        },
-        {
-            "name": "value",
-            "label": "value",
-            "field": "value",
-            "align": "left",
-        },
-    ]
-    return ui.table(
-        columns=columns,
-        rows=[
-            {"property": "container_mode", "value": env.CONTAINER_MODE},
-            {"property": "config_path", "value": env.CONFIG_PATH},
-            {"property": "scan_path", "value": env.SCAN_PATH},
-            {"property": "storage_path", "value": env.STORAGE_PATH},
-            {"property": "timer_delay", "value": env.TIMER_DELAY},
-            {"property": "proxy_url", "value": env.PROXY_URL},
-            {"property": "PUID", "value": env.PUID},
-            {"property": "PGID", "value": env.PGID},
-            {"property": "UMASK", "value": env.UMASK},
-            {"property": "LOG_LEVEL", "value": env.LOG_LEVEL},
-        ],
-    )
 
 
 def series_table() -> ui.table:
@@ -267,10 +220,10 @@ def series_table() -> ui.table:
 class SimpleGui:
     Emoji: EmojiNamespace
     Plugins: PluginsNamespace
+    env: EnvNamespace
 
     def __init__(self):
         logger.debug("Starting GUI")
-        self.env = AppEnv()
         self.api_base_url = "http://localhost:8000"  # FastAPI backend port
         self.gui_elements = {}
 
@@ -283,12 +236,11 @@ class SimpleGui:
 
         # Fetch enums from the API backend
         self._fetch_enums_from_api()
-
-        self.initialize_gui()
         self.initialize()
+        self.refresh_table()
 
     def _fetch_enums_from_api(self) -> None:
-        """Fetch Emoji and Plugins enums from the FastAPI backend."""
+        """Fetch Emoji, Plugins, and Env configuration from the FastAPI backend."""
         try:
             with httpx.Client() as client:
                 # Fetch Emoji enum
@@ -301,16 +253,27 @@ class SimpleGui:
                 plugins_response.raise_for_status()
                 plugins_data = plugins_response.json()
 
+                # Fetch Env configuration
+                env_response = client.get(f"{self.api_base_url}/api/enums/env", timeout=5)
+                env_response.raise_for_status()
+                env_data = env_response.json()
+
                 # Create namespace objects using the module-level classes
                 self.Emoji = EmojiNamespace(emoji_data)
                 self.Plugins = PluginsNamespace(plugins_data)
+                self.env = EnvNamespace(env_data)
 
-                logger.debug("Successfully fetched enums from API")
+                logger.debug("Successfully fetched enums and configuration from API")
         except Exception as e:
             logger.error("Failed to fetch enums from API: %s", e)
             raise RuntimeError(f"Cannot start GUI without API backend. Error: {e}") from e
 
-    def initialize_gui(self):
+    def clear_log(self):
+        self.gui_elements["logger"].clear_log_file()
+        logger.info("Log file cleared. %s", datetime.now())
+
+    def initialize(self):
+        """Initialize the GUI. Background tasks are handled by the FastAPI server."""
         ui.add_head_html('<link rel="apple-touch-icon" href="static/apple-touch-icon.png">')
         ui.page_title("CBZ Tagger")
         ui.colors(primary="#2F4F4F")
@@ -428,19 +391,75 @@ class SimpleGui:
 
             with ui.tab_panel("Config"):
                 ui.label("Server Configuration")
-                self.gui_elements["table_config"] = config_table()
+                self.gui_elements["table_config"] = self.config_table()
             with ui.tab_panel("Log"):
                 ui.label("Server Logs")
-                self.gui_elements["logger"] = ui_logger()
+                self.gui_elements["logger"] = self.ui_logger()
                 ui.chip("Clear", icon="delete", color="red", on_click=self.clear_log)
-
-    def clear_log(self):
-        self.gui_elements["logger"].clear_log_file()
-        logger.info("Log file cleared. %s", datetime.now())
-
-    def initialize(self):
-        """Initialize the GUI. Background tasks are handled by the FastAPI server."""
         logger.info("NiceGUI initialized. API base URL: %s", self.api_base_url)
+
+    def config_table(self) -> ui.table:
+        columns = [
+            {
+                "name": "property",
+                "label": "property",
+                "field": "property",
+                "align": "left",
+            },
+            {
+                "name": "value",
+                "label": "value",
+                "field": "value",
+                "align": "left",
+            },
+        ]
+        return ui.table(
+            columns=columns,
+            rows=[
+                {"property": "container_mode", "value": self.env.CONTAINER_MODE},
+                {"property": "config_path", "value": self.env.CONFIG_PATH},
+                {"property": "scan_path", "value": self.env.SCAN_PATH},
+                {"property": "storage_path", "value": self.env.STORAGE_PATH},
+                {"property": "timer_delay", "value": self.env.TIMER_DELAY},
+                {"property": "proxy_url", "value": self.env.PROXY_URL},
+                {"property": "PUID", "value": self.env.PUID},
+                {"property": "PGID", "value": self.env.PGID},
+                {"property": "UMASK", "value": self.env.UMASK},
+                {"property": "LOG_LEVEL", "value": self.env.LOG_LEVEL},
+            ],
+        )
+
+    def ui_logger(self) -> FileLogReader:
+        log_reader = FileLogReader(self.env.LOG_PATH)
+
+        # Create HTML element with pre tag for log display
+        log_display = (
+            ui.html("", sanitize=False)
+            .classes("w-full")
+            .style(
+                "height: 70vh; overflow-y: auto; background-color: #1e1e1e; color: #d4d4d4; "
+                "padding: 10px; border-radius: 5px; font-family: 'Courier New', monospace; "
+                "font-size: 12px; white-space: pre-wrap; word-wrap: break-word;"
+            )
+        )
+
+        # Function to refresh log display
+        def refresh_logs():
+            log_content = log_reader.read_last_lines(max_lines=1000)
+            # Escape HTML to prevent injection
+            log_content = log_content.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+            log_display.content = f"<pre style='margin: 0;'>{log_content}</pre>"
+            # Auto-scroll to bottom
+            # Logic is broken currently
+            # ui.run_javascript(f'getElement({log_display.id}).scrollTop = getElement({log_display.id}).scrollHeight')
+
+        # Initial load
+        refresh_logs()
+
+        # Set up timer to refresh logs every 2 seconds
+        ui.timer(2.0, refresh_logs)
+
+        return log_reader
 
     def toggle(self, column: str) -> None:
         column_index = [e["label"] for e in self.gui_elements["table_series"].columns].index(column)
@@ -528,16 +547,14 @@ class SimpleGui:
         self.gui_elements["selector_manage_chapters"].options = self.manage_chapter_names
         self.gui_elements["selector_manage_chapters"].value = self.manage_chapter_names[0]
 
-    async def refresh_table(self):
+    def refresh_table(self):
+        """Refresh the series table with current data from the API."""
         logger.debug("Refreshing series table")
 
-        def fetch_state():
-            with httpx.Client() as client:
-                response = client.get(f"{self.api_base_url}/api/scanner/state", timeout=30)
-                response.raise_for_status()
-                return response.json()["state"]
-
-        state = await run.io_bound(fetch_state)
+        with httpx.Client() as client:
+            response = client.get(f"{self.api_base_url}/api/scanner/state", timeout=30)
+            response.raise_for_status()
+            state = response.json()["state"]
 
         formatted_state = []
         for item in state:
@@ -607,7 +624,7 @@ class SimpleGui:
         self.gui_elements["selector_add_backend"].value = self.Plugins.MDX
         self.gui_elements["input_box_add_backend"].value = ""
         self.gui_elements["radio_add_mark_all_tracked"].value = "No"
-        await self.refresh_table()
+        self.refresh_table()
 
     async def delete_series(self):
         entity_index = self.manage_series_names.index(self.gui_elements["selector_manage_series"].value)
@@ -627,7 +644,7 @@ class SimpleGui:
                 return
             raise
         await self.refresh_manage_series()
-        await self.refresh_table()
+        self.refresh_table()
 
     async def delete_chapter_tracking(self):
         entity_index = self.manage_chapter_names.index(self.gui_elements["selector_manage_chapters"].value)
@@ -649,7 +666,7 @@ class SimpleGui:
                 notify_and_log("Scanner is busy. Please wait and try again.")
                 return
             raise
-        await self.refresh_table()
+        self.refresh_table()
 
     async def refresh_database(self):
         notify_and_log("Refreshing database... please wait")
@@ -664,7 +681,7 @@ class SimpleGui:
                 notify_and_log("Scanner is busy. Please wait and try again.")
                 return
             raise
-        await self.refresh_table()
+        self.refresh_table()
 
     async def clean_orphaned_files(self):
         notify_and_log("Removing orphaned files...")
@@ -678,4 +695,4 @@ class SimpleGui:
                 notify_and_log("Scanner is busy. Please wait and try again.")
                 return
             raise
-        await self.refresh_table()
+        self.refresh_table()

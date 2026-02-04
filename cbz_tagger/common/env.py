@@ -58,3 +58,22 @@ class AppEnv:
             "PGID": self.PGID,
             "UMASK": self.UMASK,
         }
+
+    def to_api(self):
+        """Return all environment variables as a dictionary for the API."""
+        return {
+            "VERSION": self.VERSION,
+            "CONTAINER_MODE": self.CONTAINER_MODE,
+            "PUID": self.PUID,
+            "PGID": self.PGID,
+            "DEBUG_MODE": self.DEBUG_MODE,
+            "UMASK": self.UMASK,
+            "CONFIG_PATH": self.CONFIG_PATH,
+            "SCAN_PATH": self.SCAN_PATH,
+            "STORAGE_PATH": self.STORAGE_PATH,
+            "LOG_PATH": self.LOG_PATH,
+            "TIMER_DELAY": self.TIMER_DELAY,
+            "PROXY_URL": self.PROXY_URL,
+            "DELAY_PER_REQUEST": self.DELAY_PER_REQUEST,
+            "LOG_LEVEL": self.LOG_LEVEL,
+        }

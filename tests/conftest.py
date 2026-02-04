@@ -12,8 +12,8 @@ os.environ.setdefault("SCAN_PATH", os.path.join(_TEST_TEMP_DIR, "scan"))
 os.environ.setdefault("STORAGE_PATH", os.path.join(_TEST_TEMP_DIR, "storage"))
 os.environ.setdefault("LOG_PATH", os.path.join(_TEST_TEMP_DIR, "config", "logs", "cbz_tagger.log"))
 
-from cbz_tagger.common.env import AppEnv
-from cbz_tagger.database.file_scanner import FileScanner
+from cbz_tagger.common.env import AppEnv  # noqa: E402
+from cbz_tagger.database.file_scanner import FileScanner  # noqa: E402
 
 
 @pytest.fixture(scope="session", autouse=True)

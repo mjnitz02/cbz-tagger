@@ -320,3 +320,9 @@ async def get_emoji_enum():
 async def get_plugins_enum():
     """Get the Plugins enum values and list."""
     return Plugins.to_api()
+
+
+@app.get("/api/enums/env")
+async def get_env_config():
+    """Get the AppEnv configuration values."""
+    return env.to_api()
