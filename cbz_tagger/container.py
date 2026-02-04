@@ -2,12 +2,10 @@ import logging
 import os
 import time
 
-from nicegui import app
-from nicegui import ui
-
 from cbz_tagger.common.env import AppEnv
 from cbz_tagger.database.file_scanner import FileScanner
-from cbz_tagger.gui.gui import SimpleGui
+
+# from cbz_tagger.gui.gui import SimpleGui
 
 logger = logging.getLogger(__name__)
 
@@ -38,14 +36,14 @@ class Container:
         # Disable automatic adding of series
         self.scanner.add_missing = False
 
-    def run_gui(self):
-        logger.info("Container running in GUI mode.")
-        logger.info("Timer Monitoring with %s(s) delay: %s", self.timer_delay, self.scan_path)
-        SimpleGui()
-        root_path = os.path.dirname(os.path.abspath(__file__))
-        static_path = os.path.join(root_path, "static")
-        app.add_static_files("/static", static_path)
-        ui.run(reload=self.NICEGUI_DEBUG, favicon=os.path.join(static_path, "favicon.ico"))
+    # def run_gui(self):
+    #     logger.info("Container running in GUI mode.")
+    #     logger.info("Timer Monitoring with %s(s) delay: %s", self.timer_delay, self.scan_path)
+    #     SimpleGui()
+    #     root_path = os.path.dirname(os.path.abspath(__file__))
+    #     static_path = os.path.join(root_path, "static")
+    #     app.add_static_files("/static", static_path)
+    #     ui.run(reload=self.NICEGUI_DEBUG, favicon=os.path.join(static_path, "favicon.ico"))
 
     def run_timer(self):
         logger.info("Container running in Timer Monitoring mode.")
