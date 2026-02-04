@@ -1,7 +1,7 @@
 ---
 version: 2
 updates:
-  - package-ecosystem: pip  # For Python dependencies (works with uv and pyproject.toml)
+  - package-ecosystem: uv  # For Python dependencies (works with uv and pyproject.toml)
     directory: /  # Location of your pyproject.toml
     schedule:
       interval: weekly
