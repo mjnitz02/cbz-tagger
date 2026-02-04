@@ -38,7 +38,7 @@ class Plugins:
         MDX: f"https://{Urls.MDX}/title/",
         CMK: f"https://{Urls.CMK_TITLE}/comic/",
         WBC: f"https://{Urls.WBC}/series/",
-        KAL: f"https://{Urls.WBC}/manga/",
+        KAL: f"https://{Urls.KAL}/manga/",
     }
 
     # Plugin registry - populated by @Plugins.register() decorator
