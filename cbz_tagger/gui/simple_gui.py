@@ -243,7 +243,6 @@ class SimpleGui:
     def __init__(self):
         logger.debug("Starting GUI")
         self.env = AppEnv()
-        self.first_scan = True
         self.api_base_url = "http://localhost:8080"  # NiceGUI default port
         self.gui_elements = {}
 
@@ -412,7 +411,7 @@ class SimpleGui:
 
             app.on_startup(lambda: asyncio.create_task(background_refresh()))
             logger.info("Background timer registered (will start on app startup)")
-        # self.refresh_table()
+        # await self.refresh_table()
 
     def toggle(self, column: str) -> None:
         column_index = [e["label"] for e in self.gui_elements["table_series"].columns].index(column)
@@ -488,7 +487,7 @@ class SimpleGui:
         self.gui_elements["selector_manage_chapters"].options = self.manage_chapter_names
         self.gui_elements["selector_manage_chapters"].value = self.manage_chapter_names[0]
 
-    def refresh_table(self):
+    async def refresh_table(self):
         logger.debug("Refreshing series table")
 
         def fetch_state():
@@ -497,7 +496,7 @@ class SimpleGui:
                 response.raise_for_status()
                 return response.json()["state"]
 
-        state = fetch_state()
+        state = await run.io_bound(fetch_state)
 
         formatted_state = []
         for item in state:
@@ -567,7 +566,7 @@ class SimpleGui:
         self.gui_elements["selector_add_backend"].value = Plugins.MDX
         self.gui_elements["input_box_add_backend"].value = ""
         self.gui_elements["radio_add_mark_all_tracked"].value = "No"
-        self.refresh_table()
+        await self.refresh_table()
 
     async def delete_series(self):
         entity_index = self.manage_series_names.index(self.gui_elements["selector_manage_series"].value)
@@ -587,7 +586,7 @@ class SimpleGui:
                 return
             raise
         await self.refresh_manage_series()
-        self.refresh_table()
+        await self.refresh_table()
 
     async def delete_chapter_tracking(self):
         entity_index = self.manage_chapter_names.index(self.gui_elements["selector_manage_chapters"].value)
@@ -609,13 +608,9 @@ class SimpleGui:
                 notify_and_log("Scanner is busy. Please wait and try again.")
                 return
             raise
-        self.refresh_table()
+        await self.refresh_table()
 
     async def refresh_database(self):
-        if self.first_scan:
-            self.first_scan = False
-            logger.debug("Timer setup scan triggered. Skipping startup run.")
-            return
         notify_and_log("Refreshing database... please wait")
 
         try:
@@ -628,7 +623,7 @@ class SimpleGui:
                 notify_and_log("Scanner is busy. Please wait and try again.")
                 return
             raise
-        self.refresh_table()
+        await self.refresh_table()
 
     async def clean_orphaned_files(self):
         notify_and_log("Removing orphaned files...")
@@ -642,4 +637,4 @@ class SimpleGui:
                 notify_and_log("Scanner is busy. Please wait and try again.")
                 return
             raise
-        self.refresh_table()
+        await self.refresh_table()
