@@ -1,220 +1,16 @@
 import logging
-import os
-from collections import deque
 from datetime import datetime
 
 import httpx
 from nicegui import context
 from nicegui import ui
 
+from cbz_tagger.gui.enums import EmojiNamespace
+from cbz_tagger.gui.enums import EnvNamespace
+from cbz_tagger.gui.enums import PluginsNamespace
+from cbz_tagger.gui.file_log_reader import FileLogReader
+
 logger = logging.getLogger()
-
-
-class EmojiNamespace:
-    """Namespace for Emoji constants fetched from the API."""
-
-    CIRCLE_GREEN: str
-    CIRCLE_YELLOW: str
-    CIRCLE_RED: str
-    CIRCLE_BROWN: str
-    CHECK_GREEN: str
-    QUESTION_MARK: str
-    SQUARE_GREEN: str
-    SQUARE_RED: str
-    SQUARE_ORANGE: str
-
-    def __init__(self, data: dict[str, str]) -> None:
-        for key, value in data.items():
-            setattr(self, key, value)
-
-
-class PluginsNamespace:
-    """Namespace for Plugins constants and methods fetched from the API."""
-
-    MDX: str
-    CMK: str
-    WBC: str
-    KAL: str
-    _all: list[str]
-
-    def __init__(self, data: dict[str, str | list[str]]) -> None:
-        all_plugins = data.pop("all", [])
-        if isinstance(all_plugins, list):
-            self._all = all_plugins
-        for key, value in data.items():
-            if isinstance(value, str):
-                setattr(self, key, value)
-
-    def all(self) -> list[str]:
-        return self._all
-
-
-class EnvNamespace:
-    """Namespace for AppEnv configuration fetched from the API."""
-
-    VERSION: str
-    CONTAINER_MODE: str
-    PUID: int | str
-    PGID: int | str
-    DEBUG_MODE: bool
-    UMASK: str
-    CONFIG_PATH: str
-    SCAN_PATH: str
-    STORAGE_PATH: str
-    LOG_PATH: str
-    TIMER_DELAY: int
-    PROXY_URL: str | None
-    DELAY_PER_REQUEST: float
-    LOG_LEVEL: int
-
-    def __init__(self, data: dict[str, str | int | float | bool | None]) -> None:
-        for key, value in data.items():
-            setattr(self, key, value)
-
-
-class FileLogReader:
-    """A utility class for reading log files."""
-
-    def __init__(self, log_file_path: str) -> None:
-        self.log_file_path = log_file_path
-
-    def read_last_lines(self, max_lines: int = 1000) -> str:
-        """Read the last N lines from the log file.
-
-        Args:
-            max_lines: Maximum number of lines to read from the end of the file
-
-        Returns:
-            String containing the last N lines of the log file
-        """
-        if not os.path.exists(self.log_file_path):
-            return ""
-
-        try:
-            with open(self.log_file_path, encoding="utf-8") as f:
-                # Use deque to efficiently keep only the last N lines
-                lines = deque(f, maxlen=max_lines)
-                return "".join(lines)
-        except Exception:  # pylint: disable=broad-except
-            return f"Error reading log file: {self.log_file_path}"
-
-    def clear_log_file(self) -> None:
-        """Clear the contents of the log file."""
-        if os.path.exists(self.log_file_path):
-            try:
-                with open(self.log_file_path, "w", encoding="utf-8") as f:
-                    f.truncate(0)
-            except Exception:  # pylint: disable=broad-except
-                pass
-
-
-def notify_and_log(msg: str):
-    try:
-        # Only show UI notification if we're in a valid client context
-        if context.client:
-            ui.notify(msg)
-    except RuntimeError:
-        # Context is not available (e.g., background task, deleted element)
-        pass
-    logger.info("%s %s", datetime.now(), msg)
-
-
-def series_table() -> ui.table:
-    columns = [
-        {
-            "name": "entity_name",
-            "label": "Entity Name",
-            "field": "entity_name",
-            "required": True,
-            "align": "left",
-        },
-        {
-            "name": "entity_id",
-            "label": "Entity ID",
-            "field": "entity_id",
-            "required": True,
-            "align": "left",
-            "sortable": True,
-            "classes": "hidden",
-            "headerClasses": "hidden",
-        },
-        {"name": "status", "label": "Status", "field": "status", "sortable": True},
-        {
-            "name": "tracked",
-            "label": "Tracked",
-            "field": "tracked",
-            "sortable": True,
-        },
-        {"name": "latest_chapter", "label": "Chapter", "field": "latest_chapter", "sortable": True},
-        {
-            "name": "latest_chapter_date",
-            "label": "Chapter Updated",
-            "field": "latest_chapter_date",
-            "sortable": True,
-        },
-        {
-            "name": "updated",
-            "label": "Metadata Updated",
-            "field": "updated",
-            "sortable": True,
-            "classes": "hidden",
-            "headerClasses": "hidden",
-        },
-        {
-            "name": "plugin",
-            "label": "Plugin",
-            "field": "plugin",
-            "sortable": True,
-            "classes": "hidden",
-            "headerClasses": "hidden",
-        },
-    ]
-    table = ui.table(columns=columns, rows=[], row_key="entity_name").classes("table-auto").props("flat dense")
-    table.add_slot(
-        "body-cell-entity_name",
-        """
-        <q-td :props="props">
-            <a :href="props.value.link">{{ props.value.name }}</a>
-        </q-td>
-        """,
-    )
-    table.add_slot(
-        "body-cell-updated",
-        """
-        <q-td :props="props">
-            <q-badge
-                :color="
-                Date.parse(props.value) > Date.now() - (45 * 86400000) ? 'green' :
-                    Date.parse(props.value) > Date.now() - (90 * 86400000) ? 'orange' : 'red'
-            ">
-                {{ new Date(props.value).toISOString().substring(0, 16) }}
-            </q-badge>
-        </q-td>
-    """,
-    )
-    table.add_slot(
-        "body-cell-latest_chapter_date",
-        """
-        <q-td :props="props">
-            <q-badge
-                :color="
-                Date.parse(props.value) > Date.now() - (45 * 86400000) ? 'green' :
-                    Date.parse(props.value) > Date.now() - (90 * 86400000) ? 'orange' : 'red'
-            ">
-                {{ new Date(props.value).toISOString().substring(0, 16) }}
-            </q-badge>
-        </q-td>
-    """,
-    )
-    table.add_slot(
-        "body-cell-plugin",
-        """
-        <q-td :props="props">
-            <a :href="props.value.link">{{ props.value.name }}</a>
-        </q-td>
-        """,
-    )
-    return table
 
 
 class SimpleGui:
@@ -268,6 +64,17 @@ class SimpleGui:
             logger.error("Failed to fetch enums from API: %s", e)
             raise RuntimeError(f"Cannot start GUI without API backend. Error: {e}") from e
 
+    @staticmethod
+    def notify_and_log(msg: str):
+        try:
+            # Only show UI notification if we're in a valid client context
+            if context.client:
+                ui.notify(msg)
+        except RuntimeError:
+            # Context is not available (e.g., background task, deleted element)
+            pass
+        logger.info("%s %s", datetime.now(), msg)
+
     def clear_log(self):
         self.gui_elements["logger"].clear_log_file()
         logger.info("Log file cleared. %s", datetime.now())
@@ -302,7 +109,7 @@ class SimpleGui:
                         ui.switch(
                             table_columns, value=False, on_change=lambda e, column=table_columns: self.toggle(column)
                         )
-                self.gui_elements["table_series"] = series_table()
+                self.gui_elements["table_series"] = self.series_table()
                 with ui.row():
                     ui.label(f"{self.Emoji.CHECK_GREEN} Completed")
                     ui.label(f"{self.Emoji.CIRCLE_GREEN} Ongoing/Tracked")
@@ -398,6 +205,103 @@ class SimpleGui:
                 ui.chip("Clear", icon="delete", color="red", on_click=self.clear_log)
         logger.info("NiceGUI initialized. API base URL: %s", self.api_base_url)
 
+    def series_table(self) -> ui.table:
+        columns = [
+            {
+                "name": "entity_name",
+                "label": "Entity Name",
+                "field": "entity_name",
+                "required": True,
+                "align": "left",
+            },
+            {
+                "name": "entity_id",
+                "label": "Entity ID",
+                "field": "entity_id",
+                "required": True,
+                "align": "left",
+                "sortable": True,
+                "classes": "hidden",
+                "headerClasses": "hidden",
+            },
+            {"name": "status", "label": "Status", "field": "status", "sortable": True},
+            {
+                "name": "tracked",
+                "label": "Tracked",
+                "field": "tracked",
+                "sortable": True,
+            },
+            {"name": "latest_chapter", "label": "Chapter", "field": "latest_chapter", "sortable": True},
+            {
+                "name": "latest_chapter_date",
+                "label": "Chapter Updated",
+                "field": "latest_chapter_date",
+                "sortable": True,
+            },
+            {
+                "name": "updated",
+                "label": "Metadata Updated",
+                "field": "updated",
+                "sortable": True,
+                "classes": "hidden",
+                "headerClasses": "hidden",
+            },
+            {
+                "name": "plugin",
+                "label": "Plugin",
+                "field": "plugin",
+                "sortable": True,
+                "classes": "hidden",
+                "headerClasses": "hidden",
+            },
+        ]
+        table = ui.table(columns=columns, rows=[], row_key="entity_name").classes("table-auto").props("flat dense")
+        table.add_slot(
+            "body-cell-entity_name",
+            """
+            <q-td :props="props">
+                <a :href="props.value.link">{{ props.value.name }}</a>
+            </q-td>
+            """,
+        )
+        table.add_slot(
+            "body-cell-updated",
+            """
+            <q-td :props="props">
+                <q-badge
+                    :color="
+                    Date.parse(props.value) > Date.now() - (45 * 86400000) ? 'green' :
+                        Date.parse(props.value) > Date.now() - (90 * 86400000) ? 'orange' : 'red'
+                ">
+                    {{ new Date(props.value).toISOString().substring(0, 16) }}
+                </q-badge>
+            </q-td>
+        """,
+        )
+        table.add_slot(
+            "body-cell-latest_chapter_date",
+            """
+            <q-td :props="props">
+                <q-badge
+                    :color="
+                    Date.parse(props.value) > Date.now() - (45 * 86400000) ? 'green' :
+                        Date.parse(props.value) > Date.now() - (90 * 86400000) ? 'orange' : 'red'
+                ">
+                    {{ new Date(props.value).toISOString().substring(0, 16) }}
+                </q-badge>
+            </q-td>
+        """,
+        )
+        table.add_slot(
+            "body-cell-plugin",
+            """
+            <q-td :props="props">
+                <a :href="props.value.link">{{ props.value.name }}</a>
+            </q-td>
+            """,
+        )
+        return table
+
     def config_table(self) -> ui.table:
         columns = [
             {
@@ -472,7 +376,7 @@ class SimpleGui:
     async def refresh_series_search(self):
         search_term = self.gui_elements["input_box_add_series"].value
         if len(search_term) == 0:
-            notify_and_log("Please enter a name to search for")
+            self.notify_and_log("Please enter a name to search for")
             return
 
         try:
@@ -493,7 +397,7 @@ class SimpleGui:
             self.gui_elements["selector_add_series"].value = self.meta_choices[0]
             self.gui_elements["add_new"].enable()
         except httpx.HTTPError as e:
-            notify_and_log(f"Error searching for series: {e}")
+            self.notify_and_log(f"Error searching for series: {e}")
 
     def refresh_series_names(self):
         if len(self.meta_entries) == 0:
@@ -576,7 +480,7 @@ class SimpleGui:
             self.gui_elements["selector_add_backend"].value != self.Plugins.MDX
             and len(self.gui_elements["input_box_add_backend"].value) == 0
         ):
-            notify_and_log("Please enter a backend id for non-MDX backends")
+            self.notify_and_log("Please enter a backend id for non-MDX backends")
             return
         if self.gui_elements["selector_add_backend"].value != self.Plugins.MDX:
             backend = {
@@ -588,7 +492,7 @@ class SimpleGui:
         mark_all_tracked = self.gui_elements["radio_add_mark_all_tracked"].value == "Yes"
         enable_tracking = self.gui_elements["radio_add_mark_all_tracked"].value != "Disable Tracking"
 
-        notify_and_log("Adding new series... please wait")
+        self.notify_and_log("Adding new series... please wait")
         try:
             async with httpx.AsyncClient(timeout=None) as client:
                 response = await client.post(
@@ -602,10 +506,10 @@ class SimpleGui:
                     },
                 )
                 response.raise_for_status()
-            notify_and_log("New series added!")
+            self.notify_and_log("New series added!")
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 409:
-                notify_and_log("Scanner is busy. Please wait and try again.")
+                self.notify_and_log("Scanner is busy. Please wait and try again.")
                 self.gui_elements["spinner_add"].set_visibility(False)
                 self.gui_elements["spinner_add_label"].set_visibility(False)
                 return
@@ -637,10 +541,10 @@ class SimpleGui:
                     params={"entity_name": entity_name_to_remove},
                 )
                 response.raise_for_status()
-            notify_and_log(f"Removed {entity_name_to_remove} from the database")
+            self.notify_and_log(f"Removed {entity_name_to_remove} from the database")
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 409:
-                notify_and_log("Scanner is busy. Please wait and try again.")
+                self.notify_and_log("Scanner is busy. Please wait and try again.")
                 return
             raise
         await self.refresh_manage_series()
@@ -660,39 +564,39 @@ class SimpleGui:
             async with httpx.AsyncClient(timeout=None) as client:
                 response = await client.delete(f"{self.api_base_url}/api/scanner/chapter/{entity_id}/{chapter_id}")
                 response.raise_for_status()
-            notify_and_log(f"Removed tracked status for {chapter_name} from {entity_name}")
+            self.notify_and_log(f"Removed tracked status for {chapter_name} from {entity_name}")
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 409:
-                notify_and_log("Scanner is busy. Please wait and try again.")
+                self.notify_and_log("Scanner is busy. Please wait and try again.")
                 return
             raise
         self.refresh_table()
 
     async def refresh_database(self):
-        notify_and_log("Refreshing database... please wait")
+        self.notify_and_log("Refreshing database... please wait")
 
         try:
             async with httpx.AsyncClient(timeout=None) as client:
                 response = await client.post(f"{self.api_base_url}/api/scanner/refresh")
                 response.raise_for_status()
-            notify_and_log("Series Database Refreshed")
+            self.notify_and_log("Series Database Refreshed")
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 409:
-                notify_and_log("Scanner is busy. Please wait and try again.")
+                self.notify_and_log("Scanner is busy. Please wait and try again.")
                 return
             raise
         self.refresh_table()
 
     async def clean_orphaned_files(self):
-        notify_and_log("Removing orphaned files...")
+        self.notify_and_log("Removing orphaned files...")
         try:
             async with httpx.AsyncClient(timeout=None) as client:
                 response = await client.post(f"{self.api_base_url}/api/scanner/clean-orphaned")
                 response.raise_for_status()
-            notify_and_log("Orphaned files removed successfully")
+            self.notify_and_log("Orphaned files removed successfully")
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 409:
-                notify_and_log("Scanner is busy. Please wait and try again.")
+                self.notify_and_log("Scanner is busy. Please wait and try again.")
                 return
             raise
         self.refresh_table()
