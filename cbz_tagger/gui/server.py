@@ -90,7 +90,7 @@ class UiState:
 
     def create_navigation_bar(self):
         """Create the navigation bar and left drawer for all pages."""
-        with ui.left_drawer().style("background-color: #bfd9d9").props("width=225") as left_drawer:
+        with ui.left_drawer().style("background-color: #23272e").props("width=225") as left_drawer:
             button_class = "w-full mb-1"
             ui.button("Series", on_click=lambda: ui.navigate.to("/series")).classes(button_class)
             ui.button("Add Series", on_click=lambda: ui.navigate.to("/add_series")).classes(button_class)
@@ -99,10 +99,16 @@ class UiState:
             ui.button("Log", on_click=lambda: ui.navigate.to("/log")).classes(button_class)
             ui.button("Refresh Table", on_click=self.refresh_table).classes(button_class)
             ui.button("Refresh Database", on_click=self.refresh_database).classes(button_class)
+            ui.space()
+            ui.label(f"Version: {self.env.VERSION}").classes("text-xs text-gray-400 w-full text-center")
+            ui.link("GitHub", "https://github.com/mjnitz02/cbz-tagger").classes(
+                "w-full text-center text-xs text-gray-400"
+            ).props("icon=code")
+
         with ui.header().classes(replace="row items-center"):
             # pylint: disable=unnecessary-lambda
             ui.button(on_click=lambda: left_drawer.toggle(), icon="menu").props("flat color=white")
-            ui.html(f"<h5><strong>CBZ Tagger {self.env.VERSION}</strong></h5>", sanitize=False)
+            ui.html("<h5><strong>CBZ Tagger</strong></h5>", sanitize=False)
 
     def series_table(self) -> ui.table:
         columns = [
@@ -557,6 +563,14 @@ gui_instance: UiState | None = None
 
 def get_gui_instance() -> UiState:
     """Get or create the global GUI instance."""
+
+    # Setup UI configuration on startup
+    ui.add_head_html('<link rel="apple-touch-icon" href="static/apple-touch-icon.png">')
+    ui.colors(primary="#535353")
+    udark = ui.dark_mode()
+    udark.enable()
+
+    # Global variable to hold the GUI instance
     global gui_instance
     if gui_instance is None:
         gui_instance = UiState()
@@ -691,8 +705,6 @@ def manage_page():
                 "Reset Tracked Chapter", icon="restart_alt", color="orange", on_click=gui.delete_chapter_tracking
             )
             gui.gui_elements["manage_chapter_delete"].disable()
-
-        with ui.row():
             gui.gui_elements["delete_clean"] = ui.chip(
                 "Clean Orphaned Files", icon="cleaning_services", color="orange", on_click=gui.clean_orphaned_files
             )
@@ -721,12 +733,6 @@ def log_page():
         ui.chip("Clear", icon="delete", color="red", on_click=gui.clear_log)
 
 
-def setup_ui_config():
-    """Setup UI configuration on startup."""
-    ui.add_head_html('<link rel="apple-touch-icon" href="static/apple-touch-icon.png">')
-    ui.colors(primary="#2F4F4F")
-
-
 def main():
     """Run the FastAPI server."""
     if os.getenv("LOG_LEVEL") is None:
@@ -738,9 +744,6 @@ def main():
 
     logging.basicConfig(level=LOG_LEVEL)
     logger.info("Starting CBZ Tagger NiceGUI server...")
-
-    # Setup UI configuration on startup
-    app.on_startup(setup_ui_config)
 
     # Run the server
     root_path = os.path.dirname(os.path.abspath(__file__))
