@@ -9,6 +9,8 @@ from fastapi import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from cbz_tagger.common.enums import Emoji
+from cbz_tagger.common.enums import Plugins
 from cbz_tagger.common.env import AppEnv
 from cbz_tagger.database.file_scanner import FileScanner
 from cbz_tagger.entities.metadata_entity import MetadataEntity
@@ -306,3 +308,15 @@ async def clean_orphaned_files():
     """Clean orphaned files."""
     await run_scanner_operation(clean_orphaned_files_operation)
     return {"message": "Orphaned files cleaned successfully"}
+
+
+@app.get("/api/enums/emoji")
+async def get_emoji_enum():
+    """Get the Emoji enum values."""
+    return Emoji.to_api()
+
+
+@app.get("/api/enums/plugins")
+async def get_plugins_enum():
+    """Get the Plugins enum values and list."""
+    return Plugins.to_api()

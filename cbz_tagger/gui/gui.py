@@ -8,11 +8,48 @@ from nicegui import context
 from nicegui import run
 from nicegui import ui
 
-from cbz_tagger.common.enums import Emoji
-from cbz_tagger.common.enums import Plugins
 from cbz_tagger.common.env import AppEnv
 
 logger = logging.getLogger()
+
+
+class EmojiNamespace:
+    """Namespace for Emoji constants fetched from the API."""
+
+    CIRCLE_GREEN: str
+    CIRCLE_YELLOW: str
+    CIRCLE_RED: str
+    CIRCLE_BROWN: str
+    CHECK_GREEN: str
+    QUESTION_MARK: str
+    SQUARE_GREEN: str
+    SQUARE_RED: str
+    SQUARE_ORANGE: str
+
+    def __init__(self, data: dict[str, str]) -> None:
+        for key, value in data.items():
+            setattr(self, key, value)
+
+
+class PluginsNamespace:
+    """Namespace for Plugins constants and methods fetched from the API."""
+
+    MDX: str
+    CMK: str
+    WBC: str
+    KAL: str
+    _all: list[str]
+
+    def __init__(self, data: dict[str, str | list[str]]) -> None:
+        all_plugins = data.pop("all", [])
+        if isinstance(all_plugins, list):
+            self._all = all_plugins
+        for key, value in data.items():
+            if isinstance(value, str):
+                setattr(self, key, value)
+
+    def all(self) -> list[str]:
+        return self._all
 
 
 class FileLogReader:
@@ -228,6 +265,9 @@ def series_table() -> ui.table:
 
 
 class SimpleGui:
+    Emoji: EmojiNamespace
+    Plugins: PluginsNamespace
+
     def __init__(self):
         logger.debug("Starting GUI")
         self.env = AppEnv()
@@ -241,8 +281,34 @@ class SimpleGui:
         self.manage_chapter_names = []
         self.manage_chapter_ids = []
 
+        # Fetch enums from the API backend
+        self._fetch_enums_from_api()
+
         self.initialize_gui()
         self.initialize()
+
+    def _fetch_enums_from_api(self) -> None:
+        """Fetch Emoji and Plugins enums from the FastAPI backend."""
+        try:
+            with httpx.Client() as client:
+                # Fetch Emoji enum
+                emoji_response = client.get(f"{self.api_base_url}/api/enums/emoji", timeout=5)
+                emoji_response.raise_for_status()
+                emoji_data = emoji_response.json()
+
+                # Fetch Plugins enum
+                plugins_response = client.get(f"{self.api_base_url}/api/enums/plugins", timeout=5)
+                plugins_response.raise_for_status()
+                plugins_data = plugins_response.json()
+
+                # Create namespace objects using the module-level classes
+                self.Emoji = EmojiNamespace(emoji_data)
+                self.Plugins = PluginsNamespace(plugins_data)
+
+                logger.debug("Successfully fetched enums from API")
+        except Exception as e:
+            logger.error("Failed to fetch enums from API: %s", e)
+            raise RuntimeError(f"Cannot start GUI without API backend. Error: {e}") from e
 
     def initialize_gui(self):
         ui.add_head_html('<link rel="apple-touch-icon" href="static/apple-touch-icon.png">')
@@ -275,16 +341,16 @@ class SimpleGui:
                         )
                 self.gui_elements["table_series"] = series_table()
                 with ui.row():
-                    ui.label(f"{Emoji.CHECK_GREEN} Completed")
-                    ui.label(f"{Emoji.CIRCLE_GREEN} Ongoing/Tracked")
-                    ui.label(f"{Emoji.CIRCLE_BROWN} Not Tracked")
-                    ui.label(f"{Emoji.CIRCLE_YELLOW} Hiatus")
-                    ui.label(f"{Emoji.CIRCLE_RED} Cancelled")
+                    ui.label(f"{self.Emoji.CHECK_GREEN} Completed")
+                    ui.label(f"{self.Emoji.CIRCLE_GREEN} Ongoing/Tracked")
+                    ui.label(f"{self.Emoji.CIRCLE_BROWN} Not Tracked")
+                    ui.label(f"{self.Emoji.CIRCLE_YELLOW} Hiatus")
+                    ui.label(f"{self.Emoji.CIRCLE_RED} Cancelled")
                 with ui.row():
-                    ui.label(f"{Emoji.SQUARE_GREEN} Updated < 45d")
-                    ui.label(f"{Emoji.SQUARE_ORANGE} Updated 45 - 90d")
-                    ui.label(f"{Emoji.SQUARE_RED} Updated > 90d")
-                    ui.label(f"{Emoji.QUESTION_MARK} Unknown")
+                    ui.label(f"{self.Emoji.SQUARE_GREEN} Updated < 45d")
+                    ui.label(f"{self.Emoji.SQUARE_ORANGE} Updated 45 - 90d")
+                    ui.label(f"{self.Emoji.SQUARE_RED} Updated > 90d")
+                    ui.label(f"{self.Emoji.QUESTION_MARK} Unknown")
             with ui.tab_panel("Manage"):
                 ui.separator()
                 ui.markdown("#### Add Series")
@@ -309,7 +375,7 @@ class SimpleGui:
                     value="Please search for a series",
                 ).classes("w-2/3")
                 self.gui_elements["selector_add_backend"] = ui.select(
-                    label="Select a series backend (Default: MDX)", options=Plugins.all(), value=Plugins.MDX
+                    label="Select a series backend (Default: MDX)", options=self.Plugins.all(), value=self.Plugins.MDX
                 ).classes("w-2/3")
                 self.gui_elements["input_box_add_backend"] = ui.input(
                     "Backend id for the series (Only for non-MDX backends)",
@@ -490,12 +556,12 @@ class SimpleGui:
         entity_id = entity["entity_id"]
         entity_name = self.gui_elements["selector_add_name"].value
         if (
-            self.gui_elements["selector_add_backend"].value != Plugins.MDX
+            self.gui_elements["selector_add_backend"].value != self.Plugins.MDX
             and len(self.gui_elements["input_box_add_backend"].value) == 0
         ):
             notify_and_log("Please enter a backend id for non-MDX backends")
             return
-        if self.gui_elements["selector_add_backend"].value != Plugins.MDX:
+        if self.gui_elements["selector_add_backend"].value != self.Plugins.MDX:
             backend = {
                 "plugin_type": self.gui_elements["selector_add_backend"].value,
                 "plugin_id": self.gui_elements["input_box_add_backend"].value,
@@ -538,7 +604,7 @@ class SimpleGui:
         self.gui_elements["selector_add_series"].value = self.gui_elements["selector_add_series"].options[0]
         self.gui_elements["selector_add_name"].options = ["Please refresh series list"]
         self.gui_elements["selector_add_name"].value = self.gui_elements["selector_add_name"].options[0]
-        self.gui_elements["selector_add_backend"].value = Plugins.MDX
+        self.gui_elements["selector_add_backend"].value = self.Plugins.MDX
         self.gui_elements["input_box_add_backend"].value = ""
         self.gui_elements["radio_add_mark_all_tracked"].value = "No"
         await self.refresh_table()
