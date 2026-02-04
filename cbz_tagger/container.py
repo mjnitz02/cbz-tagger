@@ -7,7 +7,7 @@ from nicegui import ui
 
 from cbz_tagger.common.env import AppEnv
 from cbz_tagger.database.file_scanner import FileScanner
-from cbz_tagger.gui.simple_gui import SimpleGui
+from cbz_tagger.gui.gui import SimpleGui
 
 logger = logging.getLogger(__name__)
 

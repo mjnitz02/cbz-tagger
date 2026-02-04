@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
-from cbz_tagger.gui.simple_gui import config_table
+from cbz_tagger.gui.gui import config_table
 
 
 @patch("cbz_tagger.gui.simple_gui.AppEnv")

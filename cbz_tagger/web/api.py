@@ -33,7 +33,7 @@ _app_state = {"scanning_state": False, "background_timer_started": False}
 async def lifespan(_: FastAPI):
     """Manage application lifespan events."""
     # Startup: Initialize background tasks
-    if not _app_state["background_timer_started"] and hasattr(env, "TIMER_MODE") and env.TIMER_MODE:
+    if not _app_state["background_timer_started"]:
         timer_delay = env.TIMER_DELAY
         logger.info("Starting background scanner timer with delay: %s seconds", timer_delay)
         _app_state["background_timer_started"] = True

@@ -3,9 +3,9 @@ from unittest.mock import patch
 
 import pytest
 
-from cbz_tagger.gui.simple_gui import add_new_to_scanner
-from cbz_tagger.gui.simple_gui import notify_and_log
-from cbz_tagger.gui.simple_gui import refresh_scanner
+from cbz_tagger.gui.gui import add_new_to_scanner
+from cbz_tagger.gui.gui import notify_and_log
+from cbz_tagger.gui.gui import refresh_scanner
 
 
 def test_refresh_scanner():
