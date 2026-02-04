@@ -113,11 +113,12 @@ class UiState:
     def series_table(self) -> ui.table:
         columns = [
             {
-                "name": "entity_name",
+                "name": "entity_ui_name",
                 "label": "Entity Name",
-                "field": "entity_name",
+                "field": "entity_ui_name",
                 "required": True,
                 "align": "left",
+                "sortable": True,
             },
             {
                 "name": "entity_id",
@@ -152,20 +153,20 @@ class UiState:
                 "headerClasses": "hidden",
             },
             {
-                "name": "plugin",
+                "name": "plugin_ui_name",
                 "label": "Plugin",
-                "field": "plugin",
+                "field": "plugin_ui_name",
                 "sortable": True,
                 "classes": "hidden",
                 "headerClasses": "hidden",
             },
         ]
-        table = ui.table(columns=columns, rows=[], row_key="entity_name").classes("table-auto").props("flat dense")
+        table = ui.table(columns=columns, rows=[], row_key="entity_ui_name").classes("table-auto").props("flat dense")
         table.add_slot(
-            "body-cell-entity_name",
+            "body-cell-entity_ui_name",
             """
             <q-td :props="props">
-                <a :href="props.value.link">{{ props.value.name }}</a>
+                <a :href="props.row.entity_name.link">{{ props.row.entity_name.name }}</a>
             </q-td>
             """,
         )
@@ -198,10 +199,10 @@ class UiState:
         """,
         )
         table.add_slot(
-            "body-cell-plugin",
+            "body-cell-plugin_ui_name",
             """
             <q-td :props="props">
-                <a :href="props.value.link">{{ props.value.name }}</a>
+                <a :href="props.row.plugin.link">{{ props.row.plugin.name }}</a>
             </q-td>
             """,
         )
@@ -400,8 +401,8 @@ class UiState:
 
         formatted_state = []
         for item in state:
-            if len(item["entity_name"]) > 50:
-                item["entity_name"] = item["entity_name"][:50] + "..."
+            item["entity_ui_name"] = item["entity_name"]["name"] if item.get("entity_name") else ""
+            item["plugin_ui_name"] = item["plugin"]["name"] if item.get("plugin") else ""
             formatted_state.append(item)
 
         # Update UI only if client is still valid
@@ -622,9 +623,7 @@ def add_series():
     gui.create_navigation_bar()
 
     with ui.column().classes("w-full p-4"):
-        ui.separator()
         ui.markdown("#### Add Series")
-        ui.separator()
 
         gui.gui_elements["add_search"] = ui.chip(
             "Search for New Series", icon="search", color="primary", on_click=gui.refresh_series_search
@@ -675,9 +674,7 @@ def manage_page():
     gui.create_navigation_bar()
 
     with ui.column().classes("w-full p-4"):
-        ui.separator()
         ui.markdown("#### Manage Series")
-        ui.separator()
 
         gui.gui_elements["selector_manage_series"] = ui.select(
             label="Select a series (type to filter)",
@@ -718,6 +715,7 @@ def config_page():
     gui.create_navigation_bar()
 
     with ui.column().classes("w-full p-4"):
+        ui.markdown("#### Server Configuration")
         gui.gui_elements["table_config"] = gui.config_table()
 
 
