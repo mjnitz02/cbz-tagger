@@ -268,8 +268,9 @@ class UiState:
             log_content = log_content.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
             log_display.content = f"<pre style='margin: 0;'>{log_content}</pre>"
             # Auto-scroll to bottom
-            # Logic is broken currently
-            # ui.run_javascript(f'getElement({log_display.id}).scrollTop = getElement({log_display.id}).scrollHeight')
+            ui.run_javascript(
+                f"setTimeout(() => {{ const el = document.getElementById('c{log_display.id}'); if(el) el.scrollTop = el.scrollHeight; }}, 50);"
+            )
 
         # Initial load
         refresh_logs()
