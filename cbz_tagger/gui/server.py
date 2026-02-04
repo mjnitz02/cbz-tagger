@@ -70,6 +70,17 @@ class UiState:
             raise RuntimeError(f"Cannot start GUI without API backend. Error: {e}") from e
 
     @staticmethod
+    def is_mobile_client() -> bool:
+        """Detect if the current client is a mobile device."""
+        try:
+            if context.client and context.client.request:
+                user_agent = context.client.request.headers.get("user-agent", "").lower()
+                return any(x in user_agent for x in ["mobile", "iphone", "ipad", "android", "safari"])
+        except (RuntimeError, AttributeError):
+            pass
+        return False
+
+    @staticmethod
     def notify_and_log(msg: str):
         try:
             # Only show UI notification if we're in a valid client context
@@ -117,6 +128,23 @@ class UiState:
                 "CBZ Tagger</span>",
                 sanitize=False,
             )
+            # Add connection status indicator (helpful for mobile users)
+            ui.space()
+            connection_indicator = ui.icon("wifi").classes("text-white").props("size=sm")
+            connection_indicator.tooltip("Connection status")
+
+            # Update connection status icon
+            def update_connection_status():
+                try:
+                    if context.client and context.client.has_socket_connection:
+                        connection_indicator.name = "wifi"
+                    else:
+                        connection_indicator.name = "wifi_off"
+                except (RuntimeError, AttributeError):
+                    connection_indicator.name = "wifi_off"
+
+            # Check connection status periodically
+            ui.timer(3.0, update_connection_status)
 
     def series_table(self) -> ui.table:
         columns = [
@@ -267,17 +295,18 @@ class UiState:
             # Escape HTML to prevent injection
             log_content = log_content.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
             log_display.content = f"<pre style='margin: 0;'>{log_content}</pre>"
-            # Auto-scroll to bottom
+            # Auto-scroll to bottom - simplified for better mobile performance
             scroll_cmd = (
-                f"{{ const el = document.getElementById('c{log_display.id}'); if(el) el.scrollTop = el.scrollHeight; }}"
+                f"const el = document.getElementById('c{log_display.id}'); if(el) el.scrollTop = el.scrollHeight;"
             )
-            ui.run_javascript(f"setTimeout(() => {scroll_cmd}, 50);")
+            ui.run_javascript(scroll_cmd)
 
         # Initial load
         refresh_logs()
 
-        # Set up timer to refresh logs every 2 seconds
-        ui.timer(2.0, refresh_logs)
+        # Use longer refresh interval on mobile for better performance
+        refresh_interval = 5.0 if self.is_mobile_client() else 2.0
+        ui.timer(refresh_interval, refresh_logs)
 
         return log_reader
 
@@ -577,6 +606,13 @@ def get_gui_instance() -> UiState:
 
     # Setup UI configuration on startup
     ui.add_head_html('<link rel="apple-touch-icon" href="static/apple-touch-icon.png">')
+    # Add mobile viewport configuration for better mobile Safari handling
+    ui.add_head_html(
+        '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">'
+    )
+    # Improve touch responsiveness on iOS
+    ui.add_head_html('<meta name="apple-mobile-web-app-capable" content="yes">')
+    ui.add_head_html('<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">')
     ui.colors(primary="#535353")
     udark = ui.dark_mode()
     udark.enable()
@@ -757,7 +793,12 @@ def main():
     root_path = os.path.dirname(os.path.abspath(__file__))
     static_path = os.path.join(root_path, "static")
     app.add_static_files("/static", static_path)
-    ui.run(reload=False, favicon=os.path.join(static_path, "favicon.ico"))
+    ui.run(
+        reload=False,
+        favicon=os.path.join(static_path, "favicon.ico"),
+        reconnect_timeout=10.0,  # Increase WebSocket reconnect timeout for mobile Safari
+        binding_refresh_interval=0.3,  # Reduce update frequency to improve mobile performance
+    )
 
 
 if __name__ in {"__main__", "__mp_main__"}:
