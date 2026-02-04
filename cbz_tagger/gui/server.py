@@ -13,12 +13,14 @@ logger = logging.getLogger(__name__)
 
 def main():
     """Run the FastAPI server."""
-    # env = AppEnv()
+    if os.getenv("LOG_LEVEL") is None:
+        LOG_LEVEL = logging.INFO
+    else:
+        LOG_LEVEL = os.getenv("LOG_LEVEL")
 
     # Configure logging
 
-    logging.basicConfig(level=logging.INFO)
-
+    logging.basicConfig(level=LOG_LEVEL)
     logger.info("Starting CBZ Tagger NiceGUI server...")
 
     # Run the server
