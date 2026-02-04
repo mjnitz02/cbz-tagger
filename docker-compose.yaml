@@ -2,7 +2,9 @@
 services:
   cbz_tagger:
     build: .
-    ports: [8080:8080]
+    ports:
+      - 8080:8080  # NiceGUI frontend
+      - 8000:8000  # FastAPI backend
     environment:
       - TIMER_MODE=true
       - TIMER_DELAY=60
