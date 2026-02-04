@@ -14,6 +14,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 RUN apk update && apk upgrade
 
 ### CBZ Tagger ###
+WORKDIR /app
 COPY . /app
 COPY pyproject.toml ./
 COPY uv.lock ./
@@ -30,9 +31,10 @@ RUN echo "Adding aliases to container" && \
     for cmd in auto manual refresh add remove delete; do \
         echo -e '#!/bin/sh\nuv run /app/run.py --'$cmd > /usr/bin/$cmd && \
         chmod +x /usr/bin/$cmd; \
-    done
+    done && \
+    chmod +x /app/docker-entrypoint.sh
 
 # Define volume mappings
 VOLUME /config /scan /storage
 
-ENTRYPOINT ["uv", "run", "/app/run.py", "--entrymode"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]

@@ -45,6 +45,16 @@ class Plugins:
     _REGISTRY: dict[str, type["ChapterPluginEntity"]] = {}
 
     @classmethod
+    def to_api(cls):
+        return {
+            "MDX": Plugins.MDX,
+            "CMK": Plugins.CMK,
+            "WBC": Plugins.WBC,
+            "KAL": Plugins.KAL,
+            "all": Plugins.all(),
+        }
+
+    @classmethod
     def all(cls):
         return [cls.MDX, cls.WBC, cls.KAL]
 
@@ -101,6 +111,20 @@ class Emoji:
     SQUARE_GREEN = "🟩"
     SQUARE_RED = "🟥"
     SQUARE_ORANGE = "🟧"
+
+    @classmethod
+    def to_api(cls):
+        return {
+            "CIRCLE_GREEN": cls.CIRCLE_GREEN,
+            "CIRCLE_YELLOW": cls.CIRCLE_YELLOW,
+            "CIRCLE_RED": cls.CIRCLE_RED,
+            "CIRCLE_BROWN": cls.CIRCLE_BROWN,
+            "CHECK_GREEN": cls.CHECK_GREEN,
+            "QUESTION_MARK": cls.QUESTION_MARK,
+            "SQUARE_GREEN": cls.SQUARE_GREEN,
+            "SQUARE_RED": cls.SQUARE_RED,
+            "SQUARE_ORANGE": cls.SQUARE_ORANGE,
+        }
 
 
 IgnoredTags = {
