@@ -86,7 +86,7 @@ class UiState:
 
     def initialize(self):
         """Initialize the GUI. Background tasks are handled by the FastAPI server."""
-        logger.info("NiceGUI initialized. API base URL: %s", self.api_base_url)
+        logger.debug("NiceGUI initialized. API base URL: %s", self.api_base_url)
 
     def create_navigation_bar(self):
         """Create the navigation bar and left drawer for all pages."""
