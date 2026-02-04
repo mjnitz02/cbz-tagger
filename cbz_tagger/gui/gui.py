@@ -70,7 +70,6 @@ class SimpleGui:
         # Fetch enums from the API backend
         self._fetch_enums_from_api()
         self.initialize()
-        self.refresh_table()
 
     def _fetch_enums_from_api(self) -> None:
         """Fetch Emoji, Plugins, and Env configuration from the FastAPI backend."""
@@ -118,129 +117,29 @@ class SimpleGui:
 
     def initialize(self):
         """Initialize the GUI. Background tasks are handled by the FastAPI server."""
-        ui.add_head_html('<link rel="apple-touch-icon" href="static/apple-touch-icon.png">')
-        ui.page_title("CBZ Tagger")
-        ui.colors(primary="#2F4F4F")
+        logger.info("NiceGUI initialized. API base URL: %s", self.api_base_url)
 
+    def create_navigation_bar(self, left_drawer=None):
+        """Create the navigation bar for all pages."""
+        with ui.header().classes(replace="row items-center"):
+            if left_drawer:
+                # pylint: disable=unnecessary-lambda
+                ui.button(on_click=lambda: left_drawer.toggle(), icon="menu").props("flat color=white")
+            ui.html(f"<h5><strong>CBZ Tagger {self.env.VERSION}</strong></h5>", sanitize=False)
+            ui.space()
+            with ui.row():
+                ui.link("Series", "/series").classes("text-white")
+                ui.link("Manage", "/manage").classes("text-white")
+                ui.link("Config", "/config").classes("text-white")
+                ui.link("Log", "/log").classes("text-white")
+            ui.space()
+
+    def create_left_drawer(self):
+        """Create the left drawer with common actions."""
         with ui.left_drawer().style("background-color: #bfd9d9").props("width=225") as left_drawer:
             ui.button("Refresh Table", on_click=self.refresh_table)
             ui.button("Refresh Database", on_click=self.refresh_database)
-
-        with ui.header().classes(replace="row items-center"):
-            # pylint: disable=unnecessary-lambda
-            ui.button(on_click=lambda: left_drawer.toggle(), icon="menu").props("flat color=white")
-            ui.html(f"<h5><strong>CBZ Tagger {self.env.VERSION}</strong></h5>", sanitize=False)
-            ui.space()
-            with ui.tabs() as tabs:
-                ui.tab("Series")
-                ui.tab("Manage")
-                ui.tab("Config")
-                ui.tab("Log")
-            ui.space()
-
-        with ui.tab_panels(tabs, value="Series").classes("w-full"):
-            with ui.tab_panel("Series"):
-                with ui.row():
-                    for table_columns in ["Entity ID", "Metadata Updated", "Plugin"]:
-                        # noinspection PyUnresolvedReferences
-                        ui.switch(
-                            table_columns, value=False, on_change=lambda e, column=table_columns: self.toggle(column)
-                        )
-                self.gui_elements["table_series"] = self.series_table()
-                with ui.row():
-                    ui.label(f"{self.Emoji.CHECK_GREEN} Completed")
-                    ui.label(f"{self.Emoji.CIRCLE_GREEN} Ongoing/Tracked")
-                    ui.label(f"{self.Emoji.CIRCLE_BROWN} Not Tracked")
-                    ui.label(f"{self.Emoji.CIRCLE_YELLOW} Hiatus")
-                    ui.label(f"{self.Emoji.CIRCLE_RED} Cancelled")
-                with ui.row():
-                    ui.label(f"{self.Emoji.SQUARE_GREEN} Updated < 45d")
-                    ui.label(f"{self.Emoji.SQUARE_ORANGE} Updated 45 - 90d")
-                    ui.label(f"{self.Emoji.SQUARE_RED} Updated > 90d")
-                    ui.label(f"{self.Emoji.QUESTION_MARK} Unknown")
-            with ui.tab_panel("Manage"):
-                ui.separator()
-                ui.markdown("#### Add Series")
-                ui.separator()
-                self.gui_elements["add_search"] = ui.button(
-                    "Search for New Series", on_click=self.refresh_series_search
-                )
-                self.gui_elements["input_box_add_series"] = ui.input(
-                    "Please enter the name of a series to search for", placeholder="Series Name"
-                ).classes("w-2/3")
-                self.gui_elements["selector_add_series"] = ui.select(
-                    label="Select a series (type to filter)",
-                    options=["Please search for a series"],
-                    with_input=True,
-                    value="Please search for a series",
-                    on_change=self.refresh_series_names,
-                ).classes("w-2/3")
-                self.gui_elements["selector_add_name"] = ui.select(
-                    label="Select the name of the series (type to filter)",
-                    options=["Please search for a series"],
-                    with_input=True,
-                    value="Please search for a series",
-                ).classes("w-2/3")
-                self.gui_elements["selector_add_backend"] = ui.select(
-                    label="Select a series backend (Default: MDX)", options=self.Plugins.all(), value=self.Plugins.MDX
-                ).classes("w-2/3")
-                self.gui_elements["input_box_add_backend"] = ui.input(
-                    "Backend id for the series (Only for non-MDX backends)",
-                    placeholder="Enter the backend id for the series",
-                ).classes("w-2/3")
-                ui.label("Mark all chapters as tracked?")
-                self.gui_elements["radio_add_mark_all_tracked"] = (
-                    ui.radio(["Yes", "No", "Disable Tracking"], value="No").classes("w-2/3").props("inline")
-                )
-                with ui.row():
-                    self.gui_elements["add_new"] = ui.button("Add New Series", on_click=self.add_new_series)
-                    self.gui_elements["add_new"].disable()
-                    self.gui_elements["spinner_add"] = ui.spinner()
-                    self.gui_elements["spinner_add"].set_visibility(False)
-                    self.gui_elements["spinner_add_label"] = ui.label("Adding new series...")
-                    self.gui_elements["spinner_add_label"].set_visibility(False)
-
-                ui.separator()
-                ui.markdown("#### Manage Series")
-                ui.separator()
-                self.gui_elements["selector_manage_series"] = ui.select(
-                    label="Select a series (type to filter)",
-                    options=["Please refresh series list"],
-                    with_input=True,
-                    value="Please refresh series list",
-                    on_change=self.refresh_manage_series_chapters,
-                ).classes("w-2/3")
-                self.gui_elements["selector_manage_chapters"] = ui.select(
-                    label="Select a chapter (type to filter)",
-                    options=["Please select a series first"],
-                    with_input=True,
-                    value="Please select a series first",
-                ).classes("w-2/3")
-                with ui.row():
-                    self.gui_elements["manage_chapter_delete"] = ui.button(
-                        "Refresh Series List", on_click=self.refresh_manage_series
-                    )
-                    self.gui_elements["manage_series_delete"] = ui.button(
-                        "Delete Selected Series", on_click=self.delete_series
-                    )
-                    self.gui_elements["manage_series_delete"].disable()
-                    self.gui_elements["manage_chapter_delete"] = ui.button(
-                        "Reset Tracked Chapter", on_click=self.delete_chapter_tracking
-                    )
-                    self.gui_elements["manage_chapter_delete"].disable()
-                with ui.row():
-                    self.gui_elements["delete_clean"] = ui.button(
-                        "Clean Orphaned Files", on_click=self.clean_orphaned_files
-                    )
-
-            with ui.tab_panel("Config"):
-                ui.label("Server Configuration")
-                self.gui_elements["table_config"] = self.config_table()
-            with ui.tab_panel("Log"):
-                ui.label("Server Logs")
-                self.gui_elements["logger"] = self.ui_logger()
-                ui.chip("Clear", icon="delete", color="red", on_click=self.clear_log)
-        logger.info("NiceGUI initialized. API base URL: %s", self.api_base_url)
+        return left_drawer
 
     def series_table(self) -> ui.table:
         columns = [
@@ -637,3 +536,172 @@ class SimpleGui:
                 return
             raise
         self.refresh_table()
+
+
+# Global GUI instance for page functions to access
+gui_instance: SimpleGui | None = None
+
+
+def setup_ui():
+    """Setup global UI configuration. Must be called before ui.run()."""
+    ui.add_head_html('<link rel="apple-touch-icon" href="static/apple-touch-icon.png">')
+    ui.colors(primary="#2F4F4F")
+
+
+def get_gui_instance() -> SimpleGui:
+    """Get or create the global GUI instance."""
+    global gui_instance
+    if gui_instance is None:
+        gui_instance = SimpleGui()
+    return gui_instance
+
+
+@ui.page("/")
+def index_page():
+    """Root page that redirects to the Series page."""
+    ui.navigate.to("/series")
+
+
+@ui.page("/series")
+def series_page():
+    """Series page showing the main series table."""
+    gui = get_gui_instance()
+    ui.page_title("CBZ Tagger - Series")
+
+    left_drawer = gui.create_left_drawer()
+    gui.create_navigation_bar(left_drawer)
+
+    with ui.column().classes("w-full p-4"):
+        with ui.row():
+            for table_columns in ["Entity ID", "Metadata Updated", "Plugin"]:
+                ui.switch(table_columns, value=False, on_change=lambda _, column=table_columns: gui.toggle(column))
+
+        gui.gui_elements["table_series"] = gui.series_table()
+
+        with ui.row():
+            ui.label(f"{gui.Emoji.CHECK_GREEN} Completed")
+            ui.label(f"{gui.Emoji.CIRCLE_GREEN} Ongoing/Tracked")
+            ui.label(f"{gui.Emoji.CIRCLE_BROWN} Not Tracked")
+            ui.label(f"{gui.Emoji.CIRCLE_YELLOW} Hiatus")
+            ui.label(f"{gui.Emoji.CIRCLE_RED} Cancelled")
+
+        with ui.row():
+            ui.label(f"{gui.Emoji.SQUARE_GREEN} Updated < 45d")
+            ui.label(f"{gui.Emoji.SQUARE_ORANGE} Updated 45 - 90d")
+            ui.label(f"{gui.Emoji.SQUARE_RED} Updated > 90d")
+            ui.label(f"{gui.Emoji.QUESTION_MARK} Unknown")
+
+    # Initial table refresh
+    gui.refresh_table()
+
+
+@ui.page("/manage")
+def manage_page():
+    """Manage page for adding and removing series/chapters."""
+    gui = get_gui_instance()
+    ui.page_title("CBZ Tagger - Manage")
+
+    left_drawer = gui.create_left_drawer()
+    gui.create_navigation_bar(left_drawer)
+
+    with ui.column().classes("w-full p-4"):
+        ui.separator()
+        ui.markdown("#### Add Series")
+        ui.separator()
+
+        gui.gui_elements["add_search"] = ui.button("Search for New Series", on_click=gui.refresh_series_search)
+        gui.gui_elements["input_box_add_series"] = ui.input(
+            "Please enter the name of a series to search for", placeholder="Series Name"
+        ).classes("w-2/3")
+        gui.gui_elements["selector_add_series"] = ui.select(
+            label="Select a series (type to filter)",
+            options=["Please search for a series"],
+            with_input=True,
+            value="Please search for a series",
+            on_change=gui.refresh_series_names,
+        ).classes("w-2/3")
+        gui.gui_elements["selector_add_name"] = ui.select(
+            label="Select the name of the series (type to filter)",
+            options=["Please search for a series"],
+            with_input=True,
+            value="Please search for a series",
+        ).classes("w-2/3")
+        gui.gui_elements["selector_add_backend"] = ui.select(
+            label="Select a series backend (Default: MDX)", options=gui.Plugins.all(), value=gui.Plugins.MDX
+        ).classes("w-2/3")
+        gui.gui_elements["input_box_add_backend"] = ui.input(
+            "Backend id for the series (Only for non-MDX backends)",
+            placeholder="Enter the backend id for the series",
+        ).classes("w-2/3")
+        ui.label("Mark all chapters as tracked?")
+        gui.gui_elements["radio_add_mark_all_tracked"] = (
+            ui.radio(["Yes", "No", "Disable Tracking"], value="No").classes("w-2/3").props("inline")
+        )
+        with ui.row():
+            gui.gui_elements["add_new"] = ui.button("Add New Series", on_click=gui.add_new_series)
+            gui.gui_elements["add_new"].disable()
+            gui.gui_elements["spinner_add"] = ui.spinner()
+            gui.gui_elements["spinner_add"].set_visibility(False)
+            gui.gui_elements["spinner_add_label"] = ui.label("Adding new series...")
+            gui.gui_elements["spinner_add_label"].set_visibility(False)
+
+        ui.separator()
+        ui.markdown("#### Manage Series")
+        ui.separator()
+
+        gui.gui_elements["selector_manage_series"] = ui.select(
+            label="Select a series (type to filter)",
+            options=["Please refresh series list"],
+            with_input=True,
+            value="Please refresh series list",
+            on_change=gui.refresh_manage_series_chapters,
+        ).classes("w-2/3")
+        gui.gui_elements["selector_manage_chapters"] = ui.select(
+            label="Select a chapter (type to filter)",
+            options=["Please select a series first"],
+            with_input=True,
+            value="Please select a series first",
+        ).classes("w-2/3")
+
+        with ui.row():
+            gui.gui_elements["manage_chapter_delete"] = ui.button(
+                "Refresh Series List", on_click=gui.refresh_manage_series
+            )
+            gui.gui_elements["manage_series_delete"] = ui.button("Delete Selected Series", on_click=gui.delete_series)
+            gui.gui_elements["manage_series_delete"].disable()
+            gui.gui_elements["manage_chapter_delete"] = ui.button(
+                "Reset Tracked Chapter", on_click=gui.delete_chapter_tracking
+            )
+            gui.gui_elements["manage_chapter_delete"].disable()
+
+        with ui.row():
+            gui.gui_elements["delete_clean"] = ui.button("Clean Orphaned Files", on_click=gui.clean_orphaned_files)
+
+
+@ui.page("/config")
+def config_page():
+    """Configuration page showing server settings."""
+    gui = get_gui_instance()
+    ui.page_title("CBZ Tagger - Config")
+
+    left_drawer = gui.create_left_drawer()
+    gui.create_navigation_bar(left_drawer)
+
+    with ui.column().classes("w-full p-4"):
+        ui.label("Server Configuration")
+        gui.gui_elements["table_config"] = gui.config_table()
+
+
+@ui.page("/log")
+def log_page():
+    """Log page showing server logs."""
+    gui = get_gui_instance()
+    ui.page_title("CBZ Tagger - Log")
+
+    left_drawer = gui.create_left_drawer()
+    gui.create_navigation_bar(left_drawer)
+
+    with ui.column().classes("w-full p-4"):
+        ui.label("Server Logs")
+        gui.gui_elements["logger"] = gui.ui_logger()
+        ui.chip("Clear", icon="delete", color="red", on_click=gui.clear_log)

@@ -6,7 +6,7 @@ import os
 from nicegui import app
 from nicegui import ui
 
-from cbz_tagger.gui.gui import SimpleGui
+from cbz_tagger.gui.gui import setup_ui
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +23,10 @@ def main():
     logging.basicConfig(level=LOG_LEVEL)
     logger.info("Starting CBZ Tagger NiceGUI server...")
 
+    # Setup global UI configuration
+    setup_ui()
+
     # Run the server
-    SimpleGui()
     root_path = os.path.dirname(os.path.abspath(__file__))
     static_path = os.path.join(root_path, "static")
     app.add_static_files("/static", static_path)
