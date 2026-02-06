@@ -151,7 +151,7 @@ requires-dist = [
     { name = "beautifulsoup4", specifier = ">=4.14.0" },
     { name = "cloudscraper", specifier = ">=1.2.71" },
     { name = "httpx", specifier = ">=0.28.1" },
-    { name = "nicegui", specifier = ">=3.6.0" },
+    { name = "nicegui", specifier = ">=3.7.1" },
     { name = "pillow", specifier = ">=11.3.0" },
     { name = "pre-commit", specifier = ">=4.2.0" },
     { name = "pydantic", specifier = ">=2.12.5" },
