@@ -23,11 +23,17 @@ def test_get_entity_cover_image_path(mock_cbz_entity):
 
 @mock.patch("os.chown")
 @mock.patch("os.makedirs")
-def test_get_entity_write_path(mock_os_makedirs, mock_os_chown, mock_cbz_entity):
+@mock.patch("os.path.exists")
+def test_get_entity_write_path(mock_os_path_exists, mock_os_makedirs, mock_os_chown, mock_cbz_entity):
+    target_dir = os.path.join("/storage_path", "series name")
+    # Simulate the real-world case: the mounted storage path already exists,
+    # only the new series subdirectory does not.
+    mock_os_path_exists.side_effect = lambda path: path != target_dir
+
     actual = mock_cbz_entity.get_entity_write_path("series name", "1")
     assert actual == "/storage_path/series name/series name - Chapter 001.cbz"
-    mock_os_makedirs.assert_called_once_with(os.path.join("/storage_path", "series name"))
-    mock_os_chown.assert_called_once_with(os.path.join("/storage_path", "series name"), mock.ANY, mock.ANY)
+    mock_os_makedirs.assert_called_once_with(target_dir, exist_ok=True)
+    mock_os_chown.assert_called_once_with(target_dir, mock.ANY, mock.ANY)
 
     actual = mock_cbz_entity.get_entity_write_path("series name", "10")
     assert actual == "/storage_path/series name/series name - Chapter 010.cbz"
