@@ -18,6 +18,7 @@ class ChapterPluginEntity(BaseEntity):
     """
 
     PLUGIN_TYPE: str = ""  # Must be set by subclasses
+    BASE_URL: str = ""  # Must be set by subclasses; used to set API endpoints and construct chapter URLs
     TITLE_URL: str = ""  # Must be set by subclasses; used to construct entity links
     ResponseBuilder = ChapterResponseBuilder
 
