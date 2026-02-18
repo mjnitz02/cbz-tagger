@@ -130,13 +130,13 @@ class EntityDB:
             if entity_metadata is None:
                 continue  # Skip entities without metadata
             latest_chapter = self.chapters.get_latest_chapter(entity_id)
-            plugin_type = self.entity_chapter_plugin.get(entity_id, {}).get("plugin_type", Plugins.MDX)
+            plugin_type = self.entity_chapter_plugin.get(entity_id, {}).get("plugin_type", Plugins.DEFAULT)
             plugin_id = self.entity_chapter_plugin.get(entity_id, {}).get("plugin_id", entity_id)
             state.append(
                 {
                     "entity_name": {
                         "name": entity_name if len(entity_name) < 51 else f"{entity_name[:50]}...",
-                        "link": f"{Plugins.TITLE_URLS[Plugins.MDX]}{entity_id}",
+                        "link": f"{Plugins.TITLE_URLS[Plugins.DEFAULT]}{entity_id}",
                     },
                     "entity_id": entity_id,
                     "updated": entity_metadata.updated,

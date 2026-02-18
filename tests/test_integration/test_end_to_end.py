@@ -2,7 +2,6 @@ from unittest import mock
 
 import pytest
 
-from cbz_tagger.common.enums import Plugins
 from cbz_tagger.entities.chapter_entity import ChapterEntity
 from cbz_tagger.entities.cover_entity import CoverEntity
 from cbz_tagger.entities.metadata_entity import MetadataEntity
@@ -102,7 +101,7 @@ def test_end_to_end_live_wbc(
 @pytest.mark.skip("Debugging only")
 @pytest.mark.parametrize(
     "entity_id,plugin_type,plugin_id",
-    [("", Plugins.WBC, "")],
+    [("", "wbc", "")],
 )
 def test_entity_retrievals(
     entity_id,

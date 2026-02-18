@@ -19,10 +19,7 @@ class EmojiNamespace:
 class PluginsNamespace:
     """Namespace for Plugins constants and methods fetched from the API."""
 
-    MDX: str
-    CMK: str
-    WBC: str
-    KAL: str
+    DEFAULT: str
     _all: list[str]
 
     def __init__(self, data: dict[str, str | list[str]]) -> None:

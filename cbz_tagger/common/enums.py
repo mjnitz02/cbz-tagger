@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from cbz_tagger.entities.chapter_plugins.plugin import ChapterPluginEntity
 
-APPLICATION_MAJOR_VERSION = 3
+APPLICATION_MAJOR_VERSION = 4
 
 
 class Mode:
@@ -22,24 +22,11 @@ class ContainerMode:
 
 class Urls:
     MDX = base64.b64decode("bWFuZ2FkZXgub3Jn").decode("utf-8")
-    CMK = base64.b64decode("YXBpLmNvbWljay5mdW4=").decode("utf-8")
-    CMK_TITLE = base64.b64decode("Y29taWNrLmlv").decode("utf-8")
-    WBC = base64.b64decode("d2VlYmNlbnRyYWwuY29t").decode("utf-8")
-    KAL = base64.b64decode("a2FsaXNjYW4uaW8=").decode("utf-8")
 
 
 class Plugins:
-    MDX = "mdx"
-    CMK = "cmk"
-    WBC = "wbc"
-    KAL = "kal"
-
-    TITLE_URLS = {
-        MDX: f"https://{Urls.MDX}/title/",
-        CMK: f"https://{Urls.CMK_TITLE}/comic/",
-        WBC: f"https://{Urls.WBC}/series/",
-        KAL: f"https://{Urls.KAL}/manga/",
-    }
+    DEFAULT = "mdx"
+    TITLE_URLS = {}
 
     # Plugin registry - populated by @Plugins.register() decorator
     _REGISTRY: dict[str, type["ChapterPluginEntity"]] = {}
@@ -47,16 +34,13 @@ class Plugins:
     @classmethod
     def to_api(cls):
         return {
-            "MDX": Plugins.MDX,
-            "CMK": Plugins.CMK,
-            "WBC": Plugins.WBC,
-            "KAL": Plugins.KAL,
-            "all": Plugins.all(),
+            "DEFAULT": cls.DEFAULT,
+            "all": cls.all(),
         }
 
     @classmethod
     def all(cls):
-        return [cls.MDX, cls.WBC, cls.KAL]
+        return list(cls._REGISTRY.keys())
 
     @classmethod
     def register(cls, plugin_type: str):
@@ -71,6 +55,8 @@ class Plugins:
 
         def decorator(plugin_cls: type["ChapterPluginEntity"]) -> type["ChapterPluginEntity"]:
             cls._REGISTRY[plugin_type] = plugin_cls
+            if plugin_cls.TITLE_URL:
+                cls.TITLE_URLS[plugin_type] = plugin_cls.TITLE_URL
             return plugin_cls
 
         return decorator
@@ -80,7 +66,7 @@ class Plugins:
         """Get a registered plugin class by type.
 
         Args:
-            plugin_type: The plugin type constant (e.g., Plugins.MDX)
+            plugin_type: The plugin type constant (e.g., Plugins.DEFAULT)
 
         Returns:
             The plugin class

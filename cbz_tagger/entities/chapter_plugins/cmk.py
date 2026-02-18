@@ -1,18 +1,20 @@
+import base64
 import logging
 import time
 from typing import Any
 
 from cbz_tagger.common.enums import Plugins
-from cbz_tagger.common.enums import Urls
 from cbz_tagger.entities.chapter_plugins.plugin import ChapterPluginEntity
 
 logger = logging.getLogger()
 
 
-@Plugins.register(Plugins.CMK)
+@Plugins.register("cmk")
 class ChapterPluginCMK(ChapterPluginEntity):
-    PLUGIN_TYPE = Plugins.CMK
-    entity_url = f"https://{Urls.CMK}/"
+    PLUGIN_TYPE = "cmk"
+    BASE_URL = base64.b64decode("YXBpLmNvbWljay5mdW4=").decode("utf-8")
+    TITLE_URL = f"https://{BASE_URL}/comic/"
+    entity_url = f"https://{BASE_URL}/"
 
     @classmethod
     def get_chapter_page_items(cls, page_url: str) -> tuple[list[Any], int]:

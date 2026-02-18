@@ -9,7 +9,7 @@ from cbz_tagger.entities.chapter_plugins.plugin import ChapterPluginEntity
 logger = logging.getLogger()
 
 
-@Plugins.register(Plugins.MDX)
+@Plugins.register("mdx")
 class ChapterPluginMDX(ChapterPluginEntity):
     """MangaDex chapter plugin.
 
@@ -17,9 +17,11 @@ class ChapterPluginMDX(ChapterPluginEntity):
     so it doesn't use the ResponseBuilder for parse_info_feed.
     """
 
-    PLUGIN_TYPE = Plugins.MDX
-    entity_url: str = f"https://api.{Urls.MDX}/manga"
-    download_url: str = f"https://api.{Urls.MDX}/at-home/server"
+    PLUGIN_TYPE = "mdx"
+    BASE_URL = Urls.MDX
+    TITLE_URL = f"https://{BASE_URL}/title/"
+    entity_url: str = f"https://api.{BASE_URL}/manga"
+    download_url: str = f"https://api.{BASE_URL}/at-home/server"
     quality = "data"
 
     @classmethod

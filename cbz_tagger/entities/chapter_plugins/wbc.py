@@ -1,17 +1,19 @@
+import base64
 import re
 from typing import Any
 
 from bs4.element import Tag
 
 from cbz_tagger.common.enums import Plugins
-from cbz_tagger.common.enums import Urls
 from cbz_tagger.entities.chapter_plugins.html_plugin import HtmlChapterPluginEntity
 
 
-@Plugins.register(Plugins.WBC)
+@Plugins.register("wbc")
 class ChapterPluginWBC(HtmlChapterPluginEntity):
-    PLUGIN_TYPE = Plugins.WBC
-    entity_url = f"https://{Urls.WBC}/"
+    PLUGIN_TYPE = "wbc"
+    BASE_URL = base64.b64decode("d2VlYmNlbnRyYWwuY29t").decode("utf-8")
+    TITLE_URL = f"https://{BASE_URL}/series/"
+    entity_url = f"https://{BASE_URL}/"
 
     @classmethod
     def parse_info_feed(cls, entity_id: str) -> list[Any]:

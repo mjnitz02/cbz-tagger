@@ -6,8 +6,6 @@ from unittest.mock import patch
 
 import pytest
 
-from cbz_tagger.common.enums import Plugins
-from cbz_tagger.common.enums import Urls
 from cbz_tagger.entities.chapter_entity import ChapterEntity
 from cbz_tagger.entities.chapter_plugins.kal import ChapterPluginKAL
 
@@ -66,7 +64,7 @@ def kal_chapter_response(tests_fixtures_path):
 @pytest.fixture
 def chapter_entity(requests_mock, kal_series_response, kal_chapter_response):
     requests_mock.get(
-        f"https://{Urls.KAL}/manga/example_manga",
+        f"https://{ChapterPluginKAL.BASE_URL}/manga/example_manga",
         text=kal_series_response,
     )
     requests_mock.get(
@@ -84,7 +82,7 @@ def chapter_entity(requests_mock, kal_series_response, kal_chapter_response):
                 "url": "http://kal.example.com/chapter",
             },
             "relationships": [{"type": "scanlation_group", "id": "group_id"}],
-            "type": Plugins.KAL,
+            "type": ChapterPluginKAL.PLUGIN_TYPE,
         },
     )
 
@@ -96,23 +94,23 @@ def test_get_chapter_url(chapter_entity):
 
 def test_from_server_url_no_plugin_id(chapter_entity):
     with pytest.raises(EnvironmentError, match="plugin_id not provided"):
-        chapter_entity.from_server_url({"ids[]": ["example_manga"]}, plugin_type=Plugins.CMK)
+        chapter_entity.from_server_url({"ids[]": ["example_manga"]}, plugin_type=ChapterPluginKAL.PLUGIN_TYPE)
 
 
 @patch("cbz_tagger.entities.base_entity.random.uniform", return_value=0.1)
 @patch("cbz_tagger.entities.base_entity.time.sleep")
 def test_from_server_url(mock_sleep, mock_random, chapter_entity):
     result = chapter_entity.from_server_url(
-        {"ids[]": ["example_manga"]}, plugin_type=Plugins.KAL, plugin_id="example_manga"
+        {"ids[]": ["example_manga"]}, plugin_type=ChapterPluginKAL.PLUGIN_TYPE, plugin_id="example_manga"
     )
 
     assert len(result) == 3
     assert result[0].entity_id == "example_manga-example-chapter-5"
-    assert result[0].get_chapter_url() == f"https://{Urls.KAL}/manga/example/chapter-5"
+    assert result[0].get_chapter_url() == f"https://{ChapterPluginKAL.BASE_URL}/manga/example/chapter-5"
     assert result[1].entity_id == "example_manga-example-chapter-3.1"
-    assert result[1].get_chapter_url() == f"https://{Urls.KAL}/manga/example/chapter-3.1"
+    assert result[1].get_chapter_url() == f"https://{ChapterPluginKAL.BASE_URL}/manga/example/chapter-3.1"
     assert result[2].entity_id == "example_manga-example-chapter-1"
-    assert result[2].get_chapter_url() == f"https://{Urls.KAL}/manga/example/chapter-1"
+    assert result[2].get_chapter_url() == f"https://{ChapterPluginKAL.BASE_URL}/manga/example/chapter-1"
 
 
 @patch("cbz_tagger.entities.base_entity.random.uniform", return_value=0.1)
@@ -131,9 +129,9 @@ def test_parse_info_feed(mock_sleep, mock_random, chapter_entity):
         ],
         ["5", "3.1", "1"],
         [
-            f"https://{Urls.KAL}/manga/example/chapter-5",
-            f"https://{Urls.KAL}/manga/example/chapter-3.1",
-            f"https://{Urls.KAL}/manga/example/chapter-1",
+            f"https://{ChapterPluginKAL.BASE_URL}/manga/example/chapter-5",
+            f"https://{ChapterPluginKAL.BASE_URL}/manga/example/chapter-3.1",
+            f"https://{ChapterPluginKAL.BASE_URL}/manga/example/chapter-1",
         ],
         strict=True,
     ):
