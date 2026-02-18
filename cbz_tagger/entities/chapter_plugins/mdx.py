@@ -19,10 +19,9 @@ class ChapterPluginMDX(ChapterPluginEntity):
 
     PLUGIN_TYPE = "mdx"
     BASE_URL = Urls.MDX
-    TITLE_URL = f"https://{Urls.MDX}/title/"
-    entity_url: str = f"https://api.{Urls.MDX}/manga"
-    download_url: str = f"https://api.{Urls.MDX}/at-home/server"
-    quality = "data"
+    TITLE_URL = f"https://{BASE_URL}/title/"
+    entity_url: str = f"https://api.{BASE_URL}/manga"
+    download_url: str = f"https://api.{BASE_URL}/at-home/server"
 
     @classmethod
     def fetch_chapters(cls, entity_id: str) -> list:
