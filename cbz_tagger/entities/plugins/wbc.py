@@ -5,7 +5,7 @@ from typing import Any
 from bs4.element import Tag
 
 from cbz_tagger.common.enums import Plugins
-from cbz_tagger.entities.plugins.plugin import ChapterPluginEntity
+from cbz_tagger.entities.plugins.plugin_entity import ChapterPluginEntity
 
 
 @Plugins.register("wbc")

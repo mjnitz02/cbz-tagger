@@ -2,7 +2,7 @@ import base64
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from cbz_tagger.entities.plugins.plugin import ChapterPluginEntity
+    from cbz_tagger.entities.plugins.plugin_entity import ChapterPluginEntity
 
 APPLICATION_MAJOR_VERSION = 4
 

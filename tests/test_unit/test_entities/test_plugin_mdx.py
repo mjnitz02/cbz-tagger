@@ -102,8 +102,8 @@ def test_cover_entity_can_store_and_load(cover_request_content, check_entity_for
 
 
 @patch("cbz_tagger.entities.plugins.mdx.ChapterPluginMDX.request_with_retry")
-@patch("cbz_tagger.entities.plugins.plugin.Image.open")
-@patch("cbz_tagger.entities.plugins.plugin.os.path.exists", return_value=False)
+@patch("cbz_tagger.entities.plugins.plugin_entity.Image.open")
+@patch("cbz_tagger.entities.plugins.plugin_entity.os.path.exists", return_value=False)
 @patch("cbz_tagger.entities.chapter_entity.ChapterEntity.download_file")
 def test_download_chapter(mock_download_file, mock_path_exists, mock_image_open, mock_requests_get, chapter_entity):
     _ = mock_path_exists
@@ -126,7 +126,7 @@ def test_download_chapter(mock_download_file, mock_path_exists, mock_image_open,
 
 
 @patch("cbz_tagger.entities.plugins.mdx.ChapterPluginMDX.request_with_retry")
-@patch("cbz_tagger.entities.plugins.plugin.os.path.exists", return_value=False)
+@patch("cbz_tagger.entities.plugins.plugin_entity.os.path.exists", return_value=False)
 @patch("cbz_tagger.entities.chapter_entity.ChapterEntity.download_file")
 def test_download_chapter_raises_environment_error(
     mock_download_file, mock_path_exists, mock_requests_get, chapter_entity
