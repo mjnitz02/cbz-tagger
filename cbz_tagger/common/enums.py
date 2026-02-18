@@ -47,9 +47,11 @@ class Plugins:
         """Decorator to register a plugin class.
 
         Usage:
-            @Plugins.register(Plugins.ABC)
+            @Plugins.register("abc")  # Registers the plugin with type "abc"
             class ChapterPluginABC(ChapterPluginEntity):
-                PLUGIN_TYPE = Plugins.ABC
+                # Plugin implementation...
+                BASE_URL = "http://abc.com"
+                TITLE_URL = "http://abc.com/title/"
                 ...
         """
 
