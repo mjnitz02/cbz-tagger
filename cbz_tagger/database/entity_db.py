@@ -10,12 +10,12 @@ from zipfile import ZIP_DEFLATED
 from zipfile import ZipFile
 
 from cbz_tagger.common.enums import Emoji
-from cbz_tagger.common.enums import Plugins
 from cbz_tagger.common.enums import Urls
-from cbz_tagger.common.permissions import make_directory_with_ownership
-from cbz_tagger.common.permissions import set_file_ownership
 from cbz_tagger.common.input import InputEntity
 from cbz_tagger.common.input import console_selector
+from cbz_tagger.common.permissions import make_directory_with_ownership
+from cbz_tagger.common.permissions import set_file_ownership
+from cbz_tagger.common.Plugins import Plugins
 from cbz_tagger.database.author_entity_db import AuthorEntityDB
 from cbz_tagger.database.chapter_entity_db import ChapterEntityDB
 from cbz_tagger.database.cover_entity_db import CoverEntityDB

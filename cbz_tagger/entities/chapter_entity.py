@@ -3,7 +3,7 @@ from typing import Any
 
 # Import plugins to trigger registration
 import cbz_tagger.entities.plugins  # noqa: F401
-from cbz_tagger.common.enums import Plugins
+from cbz_tagger.common.Plugins import Plugins
 from cbz_tagger.entities.plugins.plugin_entity import ChapterPluginEntity
 
 logger = logging.getLogger()

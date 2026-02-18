@@ -1,4 +1,4 @@
-from cbz_tagger.common.enums import Plugins
+from cbz_tagger.common.Plugins import Plugins
 from cbz_tagger.entities.metadata_entity import MetadataEntity
 
 
