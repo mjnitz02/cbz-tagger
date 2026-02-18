@@ -5,11 +5,11 @@ from typing import Any
 from bs4.element import Tag
 
 from cbz_tagger.common.enums import Plugins
-from cbz_tagger.entities.chapter_plugins.html_plugin import HtmlChapterPluginEntity
+from cbz_tagger.entities.chapter_plugins.plugin import ChapterPluginEntity
 
 
 @Plugins.register("wbc")
-class ChapterPluginWBC(HtmlChapterPluginEntity):
+class ChapterPluginWBC(ChapterPluginEntity):
     PLUGIN_TYPE = "wbc"
     BASE_URL = base64.b64decode("d2VlYmNlbnRyYWwuY29t").decode("utf-8")
     TITLE_URL = f"https://{BASE_URL}/series/"

@@ -7,11 +7,11 @@ from typing import Any
 from bs4.element import Tag
 
 from cbz_tagger.common.enums import Plugins
-from cbz_tagger.entities.chapter_plugins.html_plugin import HtmlChapterPluginEntity
+from cbz_tagger.entities.chapter_plugins.plugin import ChapterPluginEntity
 
 
 @Plugins.register("kal")
-class ChapterPluginKAL(HtmlChapterPluginEntity):
+class ChapterPluginKAL(ChapterPluginEntity):
     PLUGIN_TYPE = "kal"
     BASE_URL = base64.b64decode("a2FsaXNjYW4uaW8=").decode("utf-8")
     TITLE_URL = f"https://{BASE_URL}/manga/"
