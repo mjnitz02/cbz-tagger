@@ -8,8 +8,8 @@ from typing import Any
 from PIL import Image
 from PIL import ImageFile
 
-from cbz_tagger.common.enums_plugin import ChapterData
-from cbz_tagger.common.enums_plugin import ChapterResponseBuilder
+from cbz_tagger.common.enums import ChapterData
+from cbz_tagger.common.enums import ChapterResponseBuilder
 from cbz_tagger.common.html_scraper import HtmlScraper
 from cbz_tagger.entities.base_entity import BaseEntity
 
