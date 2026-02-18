@@ -82,7 +82,7 @@ def test_chapter_entity_with_triple_decimal_chapter(chapter_request_content):
 def test_chapter_from_url(mock_sleep, mock_random, chapter_request_response):
     with mock.patch("cbz_tagger.entities.chapter_plugins.mdx.ChapterPluginMDX.unpaginate_request") as mock_request:
         mock_request.return_value = chapter_request_response["data"]
-        entities = ChapterEntity.from_server_url(plugin_id="1361d404-d03c-4fd9-97b4-2c297914b098")
+        entities = ChapterEntity.from_server_url(query_params={"ids[]": ["1361d404-d03c-4fd9-97b4-2c297914b098"]})
         # This test will see the english cover
         assert len(entities) == 4
         assert entities[0].entity_id == "1361d404-d03c-4fd9-97b4-2c297914b098"
