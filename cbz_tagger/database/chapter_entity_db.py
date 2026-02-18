@@ -90,7 +90,11 @@ class ChapterEntityDB(BaseEntityDB[list[ChapterEntity]]):
 
         latest_chapter = None
         for chapter in chapters:
-            if latest_chapter is None or chapter.chapter_number > latest_chapter.chapter_number:
+            if latest_chapter is None or (
+                chapter.chapter_number is not None
+                and latest_chapter.chapter_number is not None
+                and chapter.chapter_number > latest_chapter.chapter_number
+            ):
                 latest_chapter = chapter
         return latest_chapter
 
