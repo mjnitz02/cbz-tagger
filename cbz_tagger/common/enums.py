@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from cbz_tagger.entities.chapter_plugins.plugin import ChapterPluginEntity
 
-APPLICATION_MAJOR_VERSION = 3
+APPLICATION_MAJOR_VERSION = 4
 
 
 class Mode:
@@ -26,11 +26,6 @@ class Urls:
 
 class Plugins:
     DEFAULT = "mdx"
-    MDX = "mdx"
-    CMK = "cmk"
-    WBC = "wbc"
-    KAL = "kal"
-
     TITLE_URLS = {}
 
     # Plugin registry - populated by @Plugins.register() decorator
@@ -40,12 +35,12 @@ class Plugins:
     def to_api(cls):
         return {
             "DEFAULT": cls.DEFAULT,
-            "all": Plugins.all(),
+            "all": cls.all(),
         }
 
     @classmethod
     def all(cls):
-        return [cls.MDX, cls.WBC, cls.KAL]
+        return list(cls._REGISTRY.keys())
 
     @classmethod
     def register(cls, plugin_type: str):
