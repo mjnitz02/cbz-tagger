@@ -1,0 +1,53 @@
+---
+name: Auto Bump Version on PR
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize]
+permissions:
+  contents: write
+jobs:
+  auto-bump-version:
+    name: Auto Bump Patch Version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - name: Check and bump version
+        run: |-
+          # Get the version from the current branch
+          CURRENT_VERSION=$(grep -E '^version = ' pyproject.toml | sed 's/version = "//' | sed 's/"//')
+
+          # Get the version from the target branch (main)
+          git checkout origin/main -- pyproject.toml
+          MAIN_VERSION=$(grep -E '^version = ' pyproject.toml | sed 's/version = "//' | sed 's/"//')
+
+          # Restore the current branch version
+          git checkout HEAD -- pyproject.toml
+          echo "Current branch version: $CURRENT_VERSION"
+          echo "Main branch version: $MAIN_VERSION"
+          if [ "$CURRENT_VERSION" != "$MAIN_VERSION" ]; then
+            echo "Version already updated from $MAIN_VERSION to $CURRENT_VERSION. Nothing to do."
+            exit 0
+          fi
+
+          # Bump the patch version
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$MAIN_VERSION"
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}"
+          echo "Bumping version from $MAIN_VERSION to $NEW_VERSION"
+
+          # Update pyproject.toml
+          sed -i "s/^version = \"${MAIN_VERSION}\"/version = \"${NEW_VERSION}\"/" pyproject.toml
+
+          # Update uv.lock (cbz-tagger package entry)
+          sed -i '/^\[\[package\]\]/{N;N;s/name = "cbz-tagger"\nversion = "'"${MAIN_VERSION}"'"/name = "cbz-tagger"\nversion = "'"${NEW_VERSION}"'"/}' uv.lock
+
+          # Commit and push
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pyproject.toml uv.lock
+          git commit -m "Bump version"
+          git push
