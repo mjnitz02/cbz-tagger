@@ -12,6 +12,7 @@ logger = logging.getLogger()
 @Plugins.register(Plugins.CMK)
 class ChapterPluginCMK(ChapterPluginEntity):
     PLUGIN_TYPE = Plugins.CMK
+    TITLE_URL = f"https://{Urls.CMK_TITLE}/comic/"
     entity_url = f"https://{Urls.CMK}/"
 
     @classmethod

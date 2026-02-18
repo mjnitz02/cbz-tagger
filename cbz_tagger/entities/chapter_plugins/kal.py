@@ -13,6 +13,7 @@ from cbz_tagger.entities.chapter_plugins.html_plugin import HtmlChapterPluginEnt
 @Plugins.register(Plugins.KAL)
 class ChapterPluginKAL(HtmlChapterPluginEntity):
     PLUGIN_TYPE = Plugins.KAL
+    TITLE_URL = f"https://{Urls.KAL}/manga/"
     entity_url = f"https://{Urls.KAL}"
 
     @staticmethod

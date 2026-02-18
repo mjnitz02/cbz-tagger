@@ -11,6 +11,7 @@ from cbz_tagger.entities.chapter_plugins.html_plugin import HtmlChapterPluginEnt
 @Plugins.register(Plugins.WBC)
 class ChapterPluginWBC(HtmlChapterPluginEntity):
     PLUGIN_TYPE = Plugins.WBC
+    TITLE_URL = f"https://{Urls.WBC}/series/"
     entity_url = f"https://{Urls.WBC}/"
 
     @classmethod

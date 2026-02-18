@@ -36,9 +36,6 @@ class Plugins:
 
     TITLE_URLS = {
         MDX: f"https://{Urls.MDX}/title/",
-        CMK: f"https://{Urls.CMK_TITLE}/comic/",
-        WBC: f"https://{Urls.WBC}/series/",
-        KAL: f"https://{Urls.KAL}/manga/",
     }
 
     # Plugin registry - populated by @Plugins.register() decorator
@@ -71,6 +68,8 @@ class Plugins:
 
         def decorator(plugin_cls: type["ChapterPluginEntity"]) -> type["ChapterPluginEntity"]:
             cls._REGISTRY[plugin_type] = plugin_cls
+            if plugin_cls.TITLE_URL:
+                cls.TITLE_URLS[plugin_type] = plugin_cls.TITLE_URL
             return plugin_cls
 
         return decorator
