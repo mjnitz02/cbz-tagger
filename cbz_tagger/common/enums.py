@@ -5,28 +5,34 @@ from pydantic import BaseModel
 APPLICATION_MAJOR_VERSION = 4
 
 
+IgnoredTags = {
+    "ddefd648-5140-4e5f-ba18-4eca4071d19b",
+    "2d1f5d56-a1e5-4d0d-a961-2193588b08ec",
+}
+
+
 class Urls:
-    MDX = base64.b64decode("bWFuZ2FkZXgub3Jn").decode("utf-8")
+    MDX: str = base64.b64decode("bWFuZ2FkZXgub3Jn").decode("utf-8")
 
 
 class Status:
-    ONGOING = "ongoing"
-    COMPLETED = "completed"
-    HIATUS = "hiatus"
-    CANCELLED = "cancelled"
-    DROPPED = "dropped"
+    ONGOING: str = "ongoing"
+    COMPLETED: str = "completed"
+    HIATUS: str = "hiatus"
+    CANCELLED: str = "cancelled"
+    DROPPED: str = "dropped"
 
 
 class Emoji:
-    CIRCLE_GREEN = "🟢"
-    CIRCLE_YELLOW = "🟡"
-    CIRCLE_RED = "🔴"
-    CIRCLE_BROWN = "🟤"
-    CHECK_GREEN = "✅"
-    QUESTION_MARK = "❓"
-    SQUARE_GREEN = "🟩"
-    SQUARE_RED = "🟥"
-    SQUARE_ORANGE = "🟧"
+    CIRCLE_GREEN: str = "🟢"
+    CIRCLE_YELLOW: str = "🟡"
+    CIRCLE_RED: str = "🔴"
+    CIRCLE_BROWN: str = "🟤"
+    CHECK_GREEN: str = "✅"
+    QUESTION_MARK: str = "❓"
+    SQUARE_GREEN: str = "🟩"
+    SQUARE_RED: str = "🟥"
+    SQUARE_ORANGE: str = "🟧"
 
     @classmethod
     def to_api(cls):
@@ -41,12 +47,6 @@ class Emoji:
             "SQUARE_RED": cls.SQUARE_RED,
             "SQUARE_ORANGE": cls.SQUARE_ORANGE,
         }
-
-
-IgnoredTags = {
-    "ddefd648-5140-4e5f-ba18-4eca4071d19b",
-    "2d1f5d56-a1e5-4d0d-a961-2193588b08ec",
-}
 
 
 class ChapterData(BaseModel):
