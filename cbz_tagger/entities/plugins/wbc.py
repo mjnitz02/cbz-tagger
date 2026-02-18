@@ -10,7 +10,6 @@ from cbz_tagger.entities.plugins.plugin_entity import ChapterPluginEntity
 
 @Plugins.register("wbc")
 class ChapterPluginWBC(ChapterPluginEntity):
-    PLUGIN_TYPE = "wbc"
     BASE_URL = base64.b64decode("d2VlYmNlbnRyYWwuY29t").decode("utf-8")
     TITLE_URL = f"https://{BASE_URL}/series/"
     entity_url = f"https://{BASE_URL}/"

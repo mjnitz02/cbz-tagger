@@ -17,7 +17,6 @@ class ChapterPluginMDX(ChapterPluginEntity):
     so it doesn't use the ResponseBuilder for parse_info_feed.
     """
 
-    PLUGIN_TYPE = "mdx"
     BASE_URL = Urls.MDX
     TITLE_URL = f"https://{BASE_URL}/title/"
     entity_url: str = f"https://api.{BASE_URL}/manga"

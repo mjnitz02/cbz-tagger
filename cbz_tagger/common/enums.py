@@ -54,6 +54,7 @@ class Plugins:
         """
 
         def decorator(plugin_cls: type["ChapterPluginEntity"]) -> type["ChapterPluginEntity"]:
+            plugin_cls.PLUGIN_TYPE = plugin_type
             cls._REGISTRY[plugin_type] = plugin_cls
             if plugin_cls.TITLE_URL:
                 cls.TITLE_URLS[plugin_type] = plugin_cls.TITLE_URL

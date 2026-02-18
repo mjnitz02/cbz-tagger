@@ -27,7 +27,7 @@ class ChapterPluginEntity(BaseEntity):
     Use @Plugins.register() decorator to auto-register the plugin.
     """
 
-    PLUGIN_TYPE: str = ""  # Must be set by subclasses
+    PLUGIN_TYPE: str = ""  # Must be set by subclasses; set with @Plugins.register("type") decorator
     BASE_URL: str = ""  # Must be set by subclasses; used to set API endpoints and construct chapter URLs
     TITLE_URL: str = ""  # Must be set by subclasses; used to construct entity links
     ResponseBuilder = ChapterResponseBuilder

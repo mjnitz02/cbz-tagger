@@ -11,7 +11,6 @@ logger = logging.getLogger()
 
 @Plugins.register("cmk")
 class ChapterPluginCMK(ChapterPluginEntity):
-    PLUGIN_TYPE = "cmk"
     BASE_URL = base64.b64decode("YXBpLmNvbWljay5mdW4=").decode("utf-8")
     TITLE_URL = f"https://{BASE_URL}/comic/"
     entity_url = f"https://{BASE_URL}/"
