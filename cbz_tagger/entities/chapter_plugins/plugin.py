@@ -9,7 +9,7 @@ from PIL import Image
 from PIL import ImageFile
 
 from cbz_tagger.entities.base_entity import BaseEntity
-from cbz_tagger.entities.chapter_plugins.html_scraper import HtmlScraper
+from cbz_tagger.common.html_scraper import HtmlScraper
 from cbz_tagger.entities.chapter_plugins.response_builder import ChapterData
 from cbz_tagger.entities.chapter_plugins.response_builder import ChapterResponseBuilder
 
