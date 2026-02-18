@@ -36,17 +36,7 @@ class Emoji:
 
     @classmethod
     def to_api(cls):
-        return {
-            "CIRCLE_GREEN": cls.CIRCLE_GREEN,
-            "CIRCLE_YELLOW": cls.CIRCLE_YELLOW,
-            "CIRCLE_RED": cls.CIRCLE_RED,
-            "CIRCLE_BROWN": cls.CIRCLE_BROWN,
-            "CHECK_GREEN": cls.CHECK_GREEN,
-            "QUESTION_MARK": cls.QUESTION_MARK,
-            "SQUARE_GREEN": cls.SQUARE_GREEN,
-            "SQUARE_RED": cls.SQUARE_RED,
-            "SQUARE_ORANGE": cls.SQUARE_ORANGE,
-        }
+        return {k: v for k, v in cls.__dict__.items() if not k.startswith("_") and not callable(v)}
 
 
 class ChapterData(BaseModel):
