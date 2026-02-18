@@ -38,7 +38,6 @@ class EnvNamespace:
     """Namespace for AppEnv configuration fetched from the API."""
 
     VERSION: str
-    CONTAINER_MODE: str
     PUID: int | str
     PGID: int | str
     DEBUG_MODE: bool

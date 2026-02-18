@@ -262,7 +262,6 @@ class UiState:
         return ui.table(
             columns=columns,
             rows=[
-                {"property": "container_mode", "value": self.env.CONTAINER_MODE},
                 {"property": "config_path", "value": self.env.CONFIG_PATH},
                 {"property": "scan_path", "value": self.env.SCAN_PATH},
                 {"property": "storage_path", "value": self.env.STORAGE_PATH},

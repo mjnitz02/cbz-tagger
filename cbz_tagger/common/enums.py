@@ -7,19 +7,6 @@ if TYPE_CHECKING:
 APPLICATION_MAJOR_VERSION = 4
 
 
-class Mode:
-    AUTO = "auto"
-    MANUAL = "manual"
-    RETAG = "retag"
-    UPDATE = "update"
-
-
-class ContainerMode:
-    TIMER: str = "timer"
-    MANUAL: str = "manual"
-    GUI: str = "gui"
-
-
 class Urls:
     MDX = base64.b64decode("bWFuZ2FkZXgub3Jn").decode("utf-8")
 

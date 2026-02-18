@@ -67,7 +67,6 @@ dev:
 	@echo "Starting CBZ Tagger development servers..."
 	@export LOG_LEVEL=INFO; \
 	export DEBUG_MODE=true; \
-	export TIMER_MODE=true; \
 	export TIMER_DELAY=35; \
 	export CONFIG_PATH=~/Downloads/cbz_tagger/config; \
 	export SCAN_PATH=~/Downloads/cbz_tagger/scan; \
@@ -82,9 +81,7 @@ dev:
 	kill $$API_PID 2>/dev/null || true
 
 run:
-	export TIMER_MODE=true; \
 	export TIMER_DELAY=600; \
-	export GUI_MODE=true; \
 	export LOG_LEVEL=INFO; \
 	CONFIG_PATH=~/Downloads/cbz_tagger/config; \
 	SCAN_PATH=~/Downloads/cbz_tagger/scan; \

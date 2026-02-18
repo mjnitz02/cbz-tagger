@@ -7,8 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     CONFIG_PATH="/config" \
     SCAN_PATH="/scan" \
-    STORAGE_PATH="/storage" \
-    TIMER_MODE_DELAY="600"
+    STORAGE_PATH="/storage"
 
 ### Upgrade ###
 RUN apk update && apk upgrade
@@ -26,13 +25,7 @@ RUN echo "Install dependencies" && \
     apk add --no-cache uv && \
     uv sync --no-cache
 
-### Container Aliases ###
-RUN echo "Adding aliases to container" && \
-    for cmd in auto manual refresh add remove delete; do \
-        echo -e '#!/bin/sh\nuv run /app/run.py --'$cmd > /usr/bin/$cmd && \
-        chmod +x /usr/bin/$cmd; \
-    done && \
-    chmod +x /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
 
 # Define volume mappings
 VOLUME /config /scan /storage

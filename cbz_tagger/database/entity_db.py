@@ -63,9 +63,6 @@ class EntityDB:
     def keys(self):
         return self.entity_map.keys()
 
-    def entity_keys(self):
-        return self.metadata.keys()
-
     @property
     def image_db_path(self) -> str:
         return os.path.join(self.root_path, "images")
