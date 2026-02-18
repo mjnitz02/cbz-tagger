@@ -19,17 +19,13 @@ class ChapterPluginMDX(ChapterPluginEntity):
 
     PLUGIN_TYPE = "mdx"
     BASE_URL = Urls.MDX
-    TITLE_URL = f"https://{BASE_URL}/title/"
-    entity_url: str = f"https://api.{BASE_URL}/manga"
-    download_url: str = f"https://api.{BASE_URL}/at-home/server"
+    TITLE_URL = f"https://{Urls.MDX}/title/"
+    entity_url: str = f"https://api.{Urls.MDX}/manga"
+    download_url: str = f"https://api.{Urls.MDX}/at-home/server"
     quality = "data"
 
     @classmethod
-    def from_server_url(cls, query_params: dict | None = None, **kwargs):
-        if query_params is None:
-            query_params = {}
-        entity_id = query_params["ids[]"][0]
-
+    def fetch_chapters(cls, entity_id: str) -> list:
         order = {
             "createdAt": "asc",
             "updatedAt": "asc",
@@ -39,8 +35,7 @@ class ChapterPluginMDX(ChapterPluginEntity):
             "chapter": "asc",
         }
         params = "&".join([f"order%5B{key}%5D={value}" for key, value in order.items()])
-        response = cls.unpaginate_request(f"{cls.entity_url}/{entity_id}/feed?{params}")
-        return response
+        return cls.unpaginate_request(f"{cls.entity_url}/{entity_id}/feed?{params}")
 
     def get_chapter_url(self):
         url = f"{self.download_url}/{self.entity_id}"
