@@ -4,7 +4,7 @@ from typing import Any
 
 from bs4.element import Tag
 
-from cbz_tagger.common.Plugins import Plugins
+from cbz_tagger.common.plugins import Plugins
 from cbz_tagger.entities.plugins.plugin_entity import ChapterPluginEntity
 
 

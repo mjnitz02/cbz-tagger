@@ -11,7 +11,7 @@ from pydantic import BaseModel
 
 from cbz_tagger.common.enums import Emoji
 from cbz_tagger.common.env import AppEnv
-from cbz_tagger.common.Plugins import Plugins
+from cbz_tagger.common.plugins import Plugins
 from cbz_tagger.database.file_scanner import FileScanner
 from cbz_tagger.entities.metadata_entity import MetadataEntity
 
