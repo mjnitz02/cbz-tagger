@@ -2,9 +2,9 @@ import logging
 from typing import Any
 
 # Import plugins to trigger registration
-import cbz_tagger.entities.chapter_plugins  # noqa: F401
+import cbz_tagger.entities.plugins  # noqa: F401
 from cbz_tagger.common.enums import Plugins
-from cbz_tagger.entities.chapter_plugins.plugin import ChapterPluginEntity
+from cbz_tagger.entities.plugins.plugin import ChapterPluginEntity
 
 logger = logging.getLogger()
 
