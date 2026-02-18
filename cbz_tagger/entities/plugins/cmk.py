@@ -4,14 +4,13 @@ import time
 from typing import Any
 
 from cbz_tagger.common.enums import Plugins
-from cbz_tagger.entities.chapter_plugins.plugin import ChapterPluginEntity
+from cbz_tagger.entities.plugins.plugin_entity import ChapterPluginEntity
 
 logger = logging.getLogger()
 
 
 @Plugins.register("cmk")
 class ChapterPluginCMK(ChapterPluginEntity):
-    PLUGIN_TYPE = "cmk"
     BASE_URL = base64.b64decode("YXBpLmNvbWljay5mdW4=").decode("utf-8")
     TITLE_URL = f"https://{BASE_URL}/comic/"
     entity_url = f"https://{BASE_URL}/"

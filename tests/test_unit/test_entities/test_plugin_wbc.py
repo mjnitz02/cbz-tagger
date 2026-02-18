@@ -4,7 +4,7 @@ from unittest.mock import patch
 import pytest
 
 from cbz_tagger.entities.chapter_entity import ChapterEntity
-from cbz_tagger.entities.chapter_plugins.wbc import ChapterPluginWBC
+from cbz_tagger.entities.plugins.wbc import ChapterPluginWBC
 
 
 @pytest.fixture

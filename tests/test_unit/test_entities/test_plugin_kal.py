@@ -7,7 +7,7 @@ from unittest.mock import patch
 import pytest
 
 from cbz_tagger.entities.chapter_entity import ChapterEntity
-from cbz_tagger.entities.chapter_plugins.kal import ChapterPluginKAL
+from cbz_tagger.entities.plugins.kal import ChapterPluginKAL
 
 
 @pytest.mark.parametrize(

@@ -33,7 +33,7 @@ test-lint:
 	uv run ruff format . --check
 	uv run ruff check .
 	uvx yamlfix .github cbz_tagger tests docker-compose.yaml .pre-commit-config.yaml --check
-	uvx ty check cbz_tagger
+	uvx ty@0.0.14 check cbz_tagger
 
 test:
 	echo "Running tests locally"

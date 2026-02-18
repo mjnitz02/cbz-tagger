@@ -2,7 +2,7 @@ import base64
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from cbz_tagger.entities.chapter_plugins.plugin import ChapterPluginEntity
+    from cbz_tagger.entities.plugins.plugin_entity import ChapterPluginEntity
 
 APPLICATION_MAJOR_VERSION = 4
 
@@ -47,13 +47,16 @@ class Plugins:
         """Decorator to register a plugin class.
 
         Usage:
-            @Plugins.register(Plugins.ABC)
+            @Plugins.register("abc")  # Registers the plugin with type "abc"
             class ChapterPluginABC(ChapterPluginEntity):
-                PLUGIN_TYPE = Plugins.ABC
+                # Plugin implementation...
+                BASE_URL = "http://abc.com"
+                TITLE_URL = "http://abc.com/title/"
                 ...
         """
 
         def decorator(plugin_cls: type["ChapterPluginEntity"]) -> type["ChapterPluginEntity"]:
+            plugin_cls.PLUGIN_TYPE = plugin_type
             cls._REGISTRY[plugin_type] = plugin_cls
             if plugin_cls.TITLE_URL:
                 cls.TITLE_URLS[plugin_type] = plugin_cls.TITLE_URL
