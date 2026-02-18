@@ -21,7 +21,7 @@ def test_download_cbz_files_with_mark_all_tracked(
     mock_download_file.side_effect = capture_download_file
 
     # Assert we can add a "tracked" entity to the database, and we're marking everything as completed
-    integration_scanner.add_tracked_entity()
+    integration_scanner.entity_database.add(None, track=True)
     assert len(integration_scanner.entity_database.entity_downloads) == 3
     assert integration_scanner.entity_database.entity_map == {
         "Yo Kai Sangokushi Bag of Wisdom": "f2def508-4407-471c-bf2c-86bea3e4e592"
@@ -33,7 +33,7 @@ def test_download_cbz_files_with_mark_all_tracked(
     integration_scanner.entity_database.download_chapter = mock.MagicMock()
 
     # Refresh the database to run all downloads, nothing should be downloaded
-    integration_scanner.refresh()
+    integration_scanner.entity_database.refresh(integration_scanner.storage_path)
     integration_scanner.entity_database.download_chapter.assert_not_called()
     assert len(os.listdir(os.path.join(integration_scanner.config_path, "images"))) == 1
     assert len(os.listdir(integration_scanner.scan_path)) == 0
@@ -58,7 +58,7 @@ def test_download_cbz_files_without_mark_all_tracked(
     mock_download_file.side_effect = capture_download_file
 
     # Assert we can add a "tracked" entity to the database, and we're marking everything as completed
-    integration_scanner.add_tracked_entity()
+    integration_scanner.entity_database.add(None, track=True)
     assert len(integration_scanner.entity_database.entity_downloads) == 0
     assert integration_scanner.entity_database.entity_map == {
         "Yo Kai Sangokushi Bag of Wisdom": "f2def508-4407-471c-bf2c-86bea3e4e592"
@@ -72,7 +72,7 @@ def test_download_cbz_files_without_mark_all_tracked(
 
     # Refresh the database to run all downloads, nothing should be downloaded since the actual request
     # to the server is mocked above. We will run everything else though against real APIs.
-    integration_scanner.refresh()
+    integration_scanner.entity_database.refresh(integration_scanner.storage_path)
     assert len(os.listdir(os.path.join(integration_scanner.config_path, "images"))) == 1
     assert len(os.listdir(integration_scanner.scan_path)) == 0
     assert len(integration_scanner.entity_database.entity_downloads) == missing_chapters
@@ -94,7 +94,7 @@ def test_download_cbz_files_without_mark_all_tracked(
     assert result["metadata"]["status"] == "Continuing"
 
     # Test tracking removal
-    integration_scanner.remove_tracked_entity()
+    integration_scanner.entity_database.remove()
     assert integration_scanner.entity_database.entity_tracked == set()
     assert integration_scanner.entity_database.entity_downloads == set()
 
@@ -104,7 +104,7 @@ def test_download_cbz_files_without_mark_all_tracked(
     assert len(integration_scanner.entity_database.covers) >= 1
     assert len(integration_scanner.entity_database.metadata) >= 1
     assert len(integration_scanner.entity_database.volumes) >= 1
-    integration_scanner.delete_entity()
+    integration_scanner.entity_database.delete()
     assert len(integration_scanner.entity_database.authors) >= 1
     assert len(integration_scanner.entity_database.chapters) == 0
     assert len(integration_scanner.entity_database.covers) == 0

@@ -4,19 +4,11 @@ import os
 import platform
 import pwd
 
-from cbz_tagger.common.enums import ContainerMode
 from cbz_tagger.common.version import extract_version
 
 
 class AppEnv:
     VERSION = extract_version()
-
-    if os.getenv("GUI_MODE") == "true":
-        CONTAINER_MODE = ContainerMode.GUI
-    elif os.getenv("TIMER_MODE") == "true":
-        CONTAINER_MODE = ContainerMode.TIMER
-    else:
-        CONTAINER_MODE = ContainerMode.MANUAL
 
     if platform.system() == "Darwin":
         PUID = os.getenv("PUID", pwd.getpwnam(getpass.getuser()).pw_uid)
@@ -63,7 +55,6 @@ class AppEnv:
         """Return all environment variables as a dictionary for the API."""
         return {
             "VERSION": self.VERSION,
-            "CONTAINER_MODE": self.CONTAINER_MODE,
             "PUID": self.PUID,
             "PGID": self.PGID,
             "DEBUG_MODE": self.DEBUG_MODE,

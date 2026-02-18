@@ -119,19 +119,3 @@ class FileScanner:
         except (RuntimeError, EnvironmentError) as err:
             logger.error("ERROR >> %s not in database. Run manual mode to add new series. %s", manga_name, err)
             return None, None, None, None
-
-    def add_tracked_entity(self):
-        self.entity_database.add(None, track=True)
-
-    def remove_tracked_entity(self):
-        self.entity_database.remove()
-
-    def delete_entity(self):
-        self.entity_database.delete()
-
-    def refresh(self):
-        logger.info("Refreshing database...")
-        self.entity_database.refresh(self.storage_path)
-
-    def download_chapters(self, storage_path):
-        self.entity_database.download_missing_chapters(storage_path)

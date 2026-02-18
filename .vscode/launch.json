@@ -9,9 +9,7 @@
             "args": ["--entrymode"],
             "console": "integratedTerminal",
             "env": {
-                "TIMER_MODE": "true",
                 "TIMER_DELAY": "25",
-                "GUI_MODE": "true",
                 "LOG_LEVEL": "INFO",
                 "CONFIG_PATH": "${env:HOME}/Downloads/cbz_tagger/config",
                 "LOG_PATH": "${env:HOME}/Downloads/cbz_tagger/config/logs/cbz_tagger.log",
@@ -28,7 +26,6 @@
             "console": "integratedTerminal",
             "env": {
                 "LOG_LEVEL": "INFO",
-                "TIMER_MODE": "true",
                 "TIMER_DELAY": "35",
                 "CONFIG_PATH": "${env:HOME}/Downloads/cbz_tagger/config",
                 "SCAN_PATH": "${env:HOME}/Downloads/cbz_tagger/scan",
@@ -43,7 +40,6 @@
             "console": "integratedTerminal",
             "env": {
                 "LOG_LEVEL": "INFO",
-                "TIMER_MODE": "true",
                 "TIMER_DELAY": "35",
                 "CONFIG_PATH": "${env:HOME}/Downloads/cbz_tagger/config",
                 "SCAN_PATH": "${env:HOME}/Downloads/cbz_tagger/scan",

@@ -424,7 +424,7 @@ class TestAPIEndpoints:
         data = response.json()
         assert data == {"emoji": "data"}
 
-    @patch("cbz_tagger.common.enums.Plugins.to_api")
+    @patch("cbz_tagger.common.plugins.Plugins.to_api")
     def test_get_plugins_enum_endpoint(self, mock_to_api, reset_app_state, client):
         """Test GET /api/enums/plugins endpoint."""
         mock_to_api.return_value = {"plugins": "data"}
