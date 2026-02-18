@@ -17,7 +17,6 @@ logger = logging.getLogger()
 class ChapterEntity(ChapterPluginEntity):
     @classmethod
     def from_server_url(cls, query_params=None, **kwargs):
-        _ = query_params
         plugin_type = kwargs.get("plugin_type", Plugins.DEFAULT)
 
         if query_params is None:
