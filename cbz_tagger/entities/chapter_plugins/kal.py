@@ -1,3 +1,4 @@
+import base64
 import re
 from datetime import datetime
 from datetime import timedelta
@@ -10,11 +11,12 @@ from cbz_tagger.common.enums import Urls
 from cbz_tagger.entities.chapter_plugins.html_plugin import HtmlChapterPluginEntity
 
 
-@Plugins.register(Plugins.KAL)
+@Plugins.register("kal")
 class ChapterPluginKAL(HtmlChapterPluginEntity):
-    PLUGIN_TYPE = Plugins.KAL
-    TITLE_URL = f"https://{Urls.KAL}/manga/"
-    entity_url = f"https://{Urls.KAL}"
+    PLUGIN_TYPE = "kal"
+    BASE_URL = base64.b64decode("a2FsaXNjYW4uaW8=").decode("utf-8")
+    TITLE_URL = f"https://{BASE_URL}/manga/"
+    entity_url = f"https://{BASE_URL}"
 
     @staticmethod
     def get_approximate_date(date_str) -> str | None:

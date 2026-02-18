@@ -102,7 +102,7 @@ def test_end_to_end_live_wbc(
 @pytest.mark.skip("Debugging only")
 @pytest.mark.parametrize(
     "entity_id,plugin_type,plugin_id",
-    [("", Plugins.WBC, "")],
+    [("", "wbc", "")],
 )
 def test_entity_retrievals(
     entity_id,

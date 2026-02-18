@@ -462,12 +462,12 @@ class UiState:
         entity_id = entity["entity_id"]
         entity_name = self.gui_elements["selector_add_name"].value
         if (
-            self.gui_elements["selector_add_backend"].value != self.Plugins.MDX
+            self.gui_elements["selector_add_backend"].value != self.Plugins.DEFAULT
             and len(self.gui_elements["input_box_add_backend"].value) == 0
         ):
             self.notify_and_log("Please enter a backend id for non-MDX backends")
             return
-        if self.gui_elements["selector_add_backend"].value != self.Plugins.MDX:
+        if self.gui_elements["selector_add_backend"].value != self.Plugins.DEFAULT:
             backend = {
                 "plugin_type": self.gui_elements["selector_add_backend"].value,
                 "plugin_id": self.gui_elements["input_box_add_backend"].value,
@@ -517,7 +517,7 @@ class UiState:
                 self.gui_elements["selector_add_series"].value = self.gui_elements["selector_add_series"].options[0]
                 self.gui_elements["selector_add_name"].options = ["Please refresh series list"]
                 self.gui_elements["selector_add_name"].value = self.gui_elements["selector_add_name"].options[0]
-                self.gui_elements["selector_add_backend"].value = self.Plugins.MDX
+                self.gui_elements["selector_add_backend"].value = self.Plugins.DEFAULT
                 self.gui_elements["input_box_add_backend"].value = ""
                 self.gui_elements["radio_add_mark_all_tracked"].value = "No"
                 self.refresh_table()
@@ -691,7 +691,7 @@ def add_series():
             value="Please search for a series",
         ).classes("w-2/3")
         gui.gui_elements["selector_add_backend"] = ui.select(
-            label="Select a series backend (Default: MDX)", options=gui.Plugins.all(), value=gui.Plugins.MDX
+            label="Select a series backend (Default: MDX)", options=gui.Plugins.all(), value=gui.Plugins.DEFAULT
         ).classes("w-2/3")
         gui.gui_elements["input_box_add_backend"] = ui.input(
             "Backend id for the series (Only for non-MDX backends)",

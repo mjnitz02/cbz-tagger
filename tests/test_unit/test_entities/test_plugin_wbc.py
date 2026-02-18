@@ -24,7 +24,7 @@ def wbc_chapter_response(tests_fixtures_path):
 @pytest.fixture
 def chapter_entity(requests_mock, wbc_series_response, wbc_chapter_response):
     requests_mock.get(
-        f"https://{Urls.WBC}/series/example_manga/full-chapter-list",
+        f"https://{ChapterPluginWBC.BASE_URL}/series/example_manga/full-chapter-list",
         text=wbc_series_response,
     )
     requests_mock.get(
@@ -42,7 +42,7 @@ def chapter_entity(requests_mock, wbc_series_response, wbc_chapter_response):
                 "url": "http://wbc.example.com/chapter",
             },
             "relationships": [{"type": "scanlation_group", "id": "group_id"}],
-            "type": Plugins.WBC,
+            "type": ChapterPluginWBC.PLUGIN_TYPE,
         },
     )
 
@@ -54,14 +54,14 @@ def test_get_chapter_url(chapter_entity):
 
 def test_from_server_url_no_plugin_id(chapter_entity):
     with pytest.raises(EnvironmentError, match="plugin_id not provided"):
-        chapter_entity.from_server_url({"ids[]": ["example_manga"]}, plugin_type=Plugins.CMK)
+        chapter_entity.from_server_url({"ids[]": ["example_manga"]}, plugin_type=ChapterPluginWBC.PLUGIN_TYPE)
 
 
 @patch("cbz_tagger.entities.base_entity.random.uniform", return_value=0.1)
 @patch("cbz_tagger.entities.base_entity.time.sleep")
 def test_from_server_url(mock_sleep, mock_random, chapter_entity):
     result = chapter_entity.from_server_url(
-        {"ids[]": ["example_manga"]}, plugin_type=Plugins.WBC, plugin_id="example_manga"
+        {"ids[]": ["example_manga"]}, plugin_type=ChapterPluginWBC.PLUGIN_TYPE, plugin_id="example_manga"
     )
 
     assert len(result) == 5
@@ -82,7 +82,7 @@ def test_parse_info_feed(mock_sleep, mock_random, chapter_entity):
     assert result == [
         {
             "id": "example_manga-01j76xz09nwpn7pmb237qvjyp2",
-            "type": "wbc",
+            "type": ChapterPluginWBC.PLUGIN_TYPE,
             "attributes": {
                 "title": "Chapter 3.1",
                 "url": "https://site.com/chapters/01J76XZ09NWPN7PMB237QVJYP2",
@@ -97,7 +97,7 @@ def test_parse_info_feed(mock_sleep, mock_random, chapter_entity):
         },
         {
             "id": "example_manga-01j76xz09ndfnrrgap5tb15jea",
-            "type": "wbc",
+            "type": ChapterPluginWBC.PLUGIN_TYPE,
             "attributes": {
                 "title": "Chapter 3",
                 "url": "https://site.com/chapters/01J76XZ09NDFNRRGAP5TB15JEA",
@@ -112,7 +112,7 @@ def test_parse_info_feed(mock_sleep, mock_random, chapter_entity):
         },
         {
             "id": "example_manga-01j76xz09ng81kb3c8x2v3p74y",
-            "type": "wbc",
+            "type": ChapterPluginWBC.PLUGIN_TYPE,
             "attributes": {
                 "title": "Chapter 2.5",
                 "url": "https://site.com/chapters/01J76XZ09NG81KB3C8X2V3P74Y",
@@ -127,7 +127,7 @@ def test_parse_info_feed(mock_sleep, mock_random, chapter_entity):
         },
         {
             "id": "example_manga-01j76xz09n6jydfdpwr4r85y03",
-            "type": "wbc",
+            "type": ChapterPluginWBC.PLUGIN_TYPE,
             "attributes": {
                 "title": "Chapter 2",
                 "url": "https://site.com/chapters/01J76XZ09N6JYDFDPWR4R85Y03",
@@ -142,7 +142,7 @@ def test_parse_info_feed(mock_sleep, mock_random, chapter_entity):
         },
         {
             "id": "example_manga-01j76xz09nhvbhpczrq0ytw7gs",
-            "type": "wbc",
+            "type": ChapterPluginWBC.PLUGIN_TYPE,
             "attributes": {
                 "title": "Chapter 1",
                 "url": "https://site.com/chapters/01J76XZ09NHVBHPCZRQ0YTW7GS",

@@ -22,10 +22,6 @@ class ContainerMode:
 
 class Urls:
     MDX = base64.b64decode("bWFuZ2FkZXgub3Jn").decode("utf-8")
-    CMK = base64.b64decode("YXBpLmNvbWljay5mdW4=").decode("utf-8")
-    CMK_TITLE = base64.b64decode("Y29taWNrLmlv").decode("utf-8")
-    WBC = base64.b64decode("d2VlYmNlbnRyYWwuY29t").decode("utf-8")
-    KAL = base64.b64decode("a2FsaXNjYW4uaW8=").decode("utf-8")
 
 
 class Plugins:
@@ -34,9 +30,7 @@ class Plugins:
     WBC = "wbc"
     KAL = "kal"
 
-    TITLE_URLS = {
-        MDX: f"https://{Urls.MDX}/title/",
-    }
+    TITLE_URLS = {}
 
     # Plugin registry - populated by @Plugins.register() decorator
     _REGISTRY: dict[str, type["ChapterPluginEntity"]] = {}
@@ -44,10 +38,7 @@ class Plugins:
     @classmethod
     def to_api(cls):
         return {
-            "MDX": Plugins.MDX,
-            "CMK": Plugins.CMK,
-            "WBC": Plugins.WBC,
-            "KAL": Plugins.KAL,
+            "DEFAULT": "mdx",
             "all": Plugins.all(),
         }
 
