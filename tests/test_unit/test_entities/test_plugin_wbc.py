@@ -3,8 +3,6 @@ from unittest.mock import patch
 
 import pytest
 
-from cbz_tagger.common.enums import Plugins
-from cbz_tagger.common.enums import Urls
 from cbz_tagger.entities.chapter_entity import ChapterEntity
 from cbz_tagger.entities.chapter_plugins.wbc import ChapterPluginWBC
 

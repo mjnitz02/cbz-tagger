@@ -4,7 +4,6 @@ import time
 from typing import Any
 
 from cbz_tagger.common.enums import Plugins
-from cbz_tagger.common.enums import Urls
 from cbz_tagger.entities.chapter_plugins.plugin import ChapterPluginEntity
 
 logger = logging.getLogger()

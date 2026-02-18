@@ -25,6 +25,7 @@ class Urls:
 
 
 class Plugins:
+    DEFAULT = "mdx"
     MDX = "mdx"
     CMK = "cmk"
     WBC = "wbc"
@@ -38,7 +39,7 @@ class Plugins:
     @classmethod
     def to_api(cls):
         return {
-            "DEFAULT": "mdx",
+            "DEFAULT": cls.DEFAULT,
             "all": Plugins.all(),
         }
 
@@ -70,7 +71,7 @@ class Plugins:
         """Get a registered plugin class by type.
 
         Args:
-            plugin_type: The plugin type constant (e.g., Plugins.MDX)
+            plugin_type: The plugin type constant (e.g., Plugins.DEFAULT)
 
         Returns:
             The plugin class

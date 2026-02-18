@@ -7,7 +7,6 @@ from typing import Any
 from bs4.element import Tag
 
 from cbz_tagger.common.enums import Plugins
-from cbz_tagger.common.enums import Urls
 from cbz_tagger.entities.chapter_plugins.html_plugin import HtmlChapterPluginEntity
 
 

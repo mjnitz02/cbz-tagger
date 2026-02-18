@@ -21,7 +21,7 @@ class ChapterEntity(BaseEntity):
 
     @classmethod
     def from_server_url(cls, query_params=None, **kwargs):
-        plugin_type = kwargs.get("plugin_type", Plugins.MDX)
+        plugin_type = kwargs.get("plugin_type", Plugins.DEFAULT)
         entity_plugin = Plugins.get_plugin(plugin_type)
         response = entity_plugin.from_server_url(query_params=query_params, **kwargs)
         return [cls(data) for data in response]
@@ -70,8 +70,8 @@ class ChapterEntity(BaseEntity):
     def entity_type(self):
         # Backwards compatibility for old chapter types
         if self.content.get("type", "") == "chapter":
-            return Plugins.MDX
-        return self.content.get("type", Plugins.MDX)
+            return Plugins.DEFAULT
+        return self.content.get("type", Plugins.DEFAULT)
 
     @property
     def entity_plugin(self):

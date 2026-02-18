@@ -2,7 +2,6 @@ from unittest import mock
 
 import pytest
 
-from cbz_tagger.common.enums import Plugins
 from cbz_tagger.entities.chapter_entity import ChapterEntity
 from cbz_tagger.entities.cover_entity import CoverEntity
 from cbz_tagger.entities.metadata_entity import MetadataEntity
