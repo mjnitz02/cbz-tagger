@@ -42,7 +42,6 @@ services:
     image: mjnitz02/cbz_tagger:latest
     container_name: cbztagger
     environment:
-      - GUI_MODE=true
       - TIMER_DELAY=43200
       - PROXY_URL=http://proxy:3128
       - PUID=1000
@@ -61,7 +60,6 @@ services:
 ```bash
 docker run -d \
   --name=cbztagger \
-  -e GUI_MODE=true \
   -e TIMER_DELAY=43200 \
   -e PROXY_URL=http://proxy:3128 \
   -e PUID=1000 \
@@ -82,7 +80,6 @@ inside the container to be accessible from the host's IP on port `8080` outside 
 |       Parameter       | Function                                                                                                    |
 |:---------------------:|-------------------------------------------------------------------------------------------------------------|
 |    `-p 8080:8080`     | WebUI                                                                                                       |
-|  `-e GUI_MODE=true`   | Enable or disable the gui.<br/>Disabled runs command line only. (true/false)                                     |
 | `-e TIMER_DELAY=43200` | The default number of seconds to wait between scans.<br/>It is recommended to set this to at least several hours. |
 |  `-e PROXY_URL=None`  | Specify the URL of the http proxy.<br/>All requests will be redirected, proxy must be available if defined.      |
 |    `-e PUID=1000`     | for UserID - see below for explanation                                                                      |

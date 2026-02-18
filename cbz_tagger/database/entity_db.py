@@ -12,8 +12,8 @@ from zipfile import ZipFile
 from cbz_tagger.common.enums import Emoji
 from cbz_tagger.common.enums import Plugins
 from cbz_tagger.common.enums import Urls
-from cbz_tagger.common.helpers import make_directory_with_ownership
-from cbz_tagger.common.helpers import set_file_ownership
+from cbz_tagger.common.permissions import make_directory_with_ownership
+from cbz_tagger.common.permissions import set_file_ownership
 from cbz_tagger.common.input import InputEntity
 from cbz_tagger.common.input import console_selector
 from cbz_tagger.database.author_entity_db import AuthorEntityDB
