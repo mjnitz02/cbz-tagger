@@ -1,6 +1,6 @@
 [project]
 name = "cbz_tagger"
-version = "4.2.0"
+version = "4.2.1"
 description = "CBZ Tagger is a tool to tag comic book files in CBZ format"
 authors = [
     {name = "Matt Nitzken",email = "mjnitz02@gmail.com"}
@@ -13,7 +13,7 @@ dependencies = [
     "ruff>=0.12.7",
     "nicegui>=3.7.1",
     "cloudscraper>=1.2.71",
-    "pillow>=11.3.0",
+    "pillow>=12.2.0",
     "requests>=2.32.4",
     "beautifulsoup4>=4.14.0",
     "pre-commit>=4.2.0",
