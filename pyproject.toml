@@ -1,6 +1,6 @@
 [project]
 name = "cbz_tagger"
-version = "4.2.0"
+version = "4.2.1"
 description = "CBZ Tagger is a tool to tag comic book files in CBZ format"
 authors = [
     {name = "Matt Nitzken",email = "mjnitz02@gmail.com"}
