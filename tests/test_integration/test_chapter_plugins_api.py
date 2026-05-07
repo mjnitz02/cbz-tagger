@@ -14,7 +14,7 @@ def check_entity_download_links(entity, entity_link_count):
     response = entity.request_with_retry(download_links[0])
     assert response.status_code == 200
     in_memory_image = Image.open(BytesIO(response.content))
-    assert in_memory_image.format in ["JPEG", "PNG"]
+    assert in_memory_image.format in ["JPEG", "PNG", "WEBP"]
 
 
 # These are random selections of cancelled free web comics for testing the API connections
