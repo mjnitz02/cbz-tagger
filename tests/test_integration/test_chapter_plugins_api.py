@@ -1,7 +1,8 @@
 import os
 
 import pytest
-
+from io import BytesIO
+from PIL import Image
 from cbz_tagger.entities.chapter_entity import ChapterEntity
 
 
@@ -11,6 +12,7 @@ def check_entity_download_links(entity, entity_link_count):
     assert len(download_links) == entity_link_count
     response = entity.request_with_retry(download_links[0])
     assert response.status_code == 200
+    in_memory_image = Image.open(BytesIO(response.content))
 
 
 # These are random selections of cancelled free web comics for testing the API connections

@@ -31,7 +31,7 @@ class ChapterPluginEntity(BaseEntity):
     BASE_URL: str = ""  # Must be set by subclasses; used to set API endpoints and construct chapter URLs
     TITLE_URL: str = ""  # Must be set by subclasses; used to construct entity links
     ResponseBuilder = ChapterResponseBuilder
-    quality = "dataSaver"  # Default quality for chapter images; can be overridden by subclasses if needed
+    quality = "data"  # Default quality for chapter images; can be overridden by subclasses if needed
 
     @classmethod
     def fetch_chapters(cls, entity_id: str) -> list[Any]:

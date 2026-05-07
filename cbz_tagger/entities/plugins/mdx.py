@@ -21,6 +21,7 @@ class ChapterPluginMDX(ChapterPluginEntity):
     TITLE_URL = f"https://{BASE_URL}/title/"
     entity_url: str = f"https://api.{BASE_URL}/manga"
     download_url: str = f"https://api.{BASE_URL}/at-home/server"
+    chapter_url: str = f"https://uploads.{BASE_URL}"
 
     @classmethod
     def fetch_chapters(cls, entity_id: str) -> list:
@@ -57,7 +58,7 @@ class ChapterPluginMDX(ChapterPluginEntity):
                     f"Failed to download chapter {self.entity_id}, not enough pages returned from server"
                 )
 
-        base_url = f"{response['baseUrl']}/{self.quality}/{response['chapter']['hash']}"
+        base_url = f"{self.chapter_url}/{self.quality}/{response['chapter']['hash']}"
         links = []
         for chapter_image_name in response["chapter"][self.quality]:
             links.append(f"{base_url}/{chapter_image_name}")
