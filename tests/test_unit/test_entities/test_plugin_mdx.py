@@ -31,7 +31,7 @@ def test_chapter_entity(chapter_request_content):
     assert entity.chapter_number == 5
     assert entity.chapter_string == "5"
     assert entity.padded_chapter_string == "005"
-    assert entity.quality == "data"
+    assert entity.quality == "dataSaver"
     assert entity.translated_language == "en"
 
 
@@ -45,7 +45,7 @@ def test_chapter_entity_with_decimal_chapter(chapter_request_content):
     assert entity.chapter_number == 5.5
     assert entity.chapter_string == "5.5"
     assert entity.padded_chapter_string == "005.5"
-    assert entity.quality == "data"
+    assert entity.quality == "dataSaver"
     assert entity.translated_language == "en"
 
 
@@ -59,7 +59,7 @@ def test_chapter_entity_with_double_decimal_chapter(chapter_request_content):
     assert entity.chapter_number == 5.51
     assert entity.chapter_string == "5.51"
     assert entity.padded_chapter_string == "005.51"
-    assert entity.quality == "data"
+    assert entity.quality == "dataSaver"
     assert entity.translated_language == "en"
 
 
@@ -73,7 +73,7 @@ def test_chapter_entity_with_triple_decimal_chapter(chapter_request_content):
     assert entity.chapter_number == 5.512
     assert entity.chapter_string == "5.512"
     assert entity.padded_chapter_string == "005.512"
-    assert entity.quality == "data"
+    assert entity.quality == "dataSaver"
     assert entity.translated_language == "en"
 
 
