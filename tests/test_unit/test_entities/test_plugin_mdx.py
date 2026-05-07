@@ -109,7 +109,7 @@ def test_download_chapter(mock_download_file, mock_path_exists, mock_image_open,
     _ = mock_path_exists
     mock_requests_get.return_value.json.return_value = {
         "baseUrl": "http://example.com",
-        "chapter": {"hash": "hash_value", "data": ["image1.jpg", "image2.jpg"]},
+        "chapter": {"hash": "hash_value", "dataSaver": ["image1.jpg", "image2.jpg"]},
     }
     mock_download_file.return_value = b"image data"
     mock_image = MagicMock()
@@ -120,8 +120,8 @@ def test_download_chapter(mock_download_file, mock_path_exists, mock_image_open,
 
     assert result == ["/fake/filepath/001.jpg", "/fake/filepath/002.jpg"]
     mock_requests_get.assert_called_once_with(f"https://api.{Urls.MDX}/at-home/server/chapter_id")
-    mock_download_file.assert_any_call("http://example.com/data/hash_value/image1.jpg")
-    mock_download_file.assert_any_call("http://example.com/data/hash_value/image2.jpg")
+    mock_download_file.assert_any_call("http://example.com/dataSaver/hash_value/image1.jpg")
+    mock_download_file.assert_any_call("http://example.com/dataSaver/hash_value/image2.jpg")
     assert mock_image.save.call_count == 2
 
 
@@ -134,7 +134,7 @@ def test_download_chapter_raises_environment_error(
     _ = mock_path_exists
     mock_requests_get.return_value.json.return_value = {
         "baseUrl": "http://example.com",
-        "chapter": {"hash": "hash_value", "data": ["image1.jpg", "image2.jpg"]},
+        "chapter": {"hash": "hash_value", "dataSaver": ["image1.jpg", "image2.jpg"]},
     }
     mock_download_file.side_effect = EnvironmentError("Failed to download file")
 
@@ -149,13 +149,16 @@ def test_mdx_parse_chapter_download_links(mock_request_with_retry, chapter_entit
     mock_response = MagicMock()
     mock_response.json.return_value = {
         "baseUrl": "http://example.com",
-        "chapter": {"hash": "hash_value", "data": ["image1.jpg", "image2.jpg"]},
+        "chapter": {"hash": "hash_value", "dataSaver": ["image1.jpg", "image2.jpg"]},
     }
     mock_request_with_retry.return_value = mock_response
 
     result = chapter_entity.parse_chapter_download_links("http://example.com/chapter")
 
-    assert result == ["http://example.com/data/hash_value/image1.jpg", "http://example.com/data/hash_value/image2.jpg"]
+    assert result == [
+        "http://example.com/dataSaver/hash_value/image1.jpg",
+        "http://example.com/dataSaver/hash_value/image2.jpg",
+    ]
     mock_request_with_retry.assert_called_with("http://example.com/chapter")
 
 
