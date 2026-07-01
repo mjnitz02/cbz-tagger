@@ -282,7 +282,7 @@ def get_chapters_operation(entity_id: str):
     return [
         {
             "entity_id": chapter.entity_id,
-            "chapter_number": chapter.chapter_number,
+            "chapter_number": chapter.chapter_string,
         }
         for chapter in (chapters if chapters is not None else [])
     ]

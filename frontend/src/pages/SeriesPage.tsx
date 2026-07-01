@@ -1,6 +1,6 @@
 import { Fragment, useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ChevronDown, ChevronRight, RotateCw } from 'lucide-react'
 import {
   Select,
   SelectContent,
@@ -28,12 +28,14 @@ const CANONICAL_STATUSES = [
 ]
 
 const STATUS_BADGES: Record<string, { label: string; className: string }> = {
-  ongoing: { label: 'Ongoing', className: 'bg-green-100 text-green-800' },
-  hiatus: { label: 'Hiatus', className: 'bg-amber-100 text-amber-800' },
-  completed: { label: 'Completed', className: 'bg-blue-100 text-blue-800' },
-  cancelled: { label: 'Cancelled', className: 'bg-red-100 text-red-800' },
-  dropped: { label: 'Dropped', className: 'bg-gray-200 text-gray-700' },
+  ongoing: { label: 'Ongoing', className: 'bg-green-500/15 text-green-400' },
+  hiatus: { label: 'Hiatus', className: 'bg-amber-500/15 text-amber-400' },
+  completed: { label: 'Completed', className: 'bg-blue-500/15 text-blue-400' },
+  cancelled: { label: 'Cancelled', className: 'bg-red-500/15 text-red-400' },
+  dropped: { label: 'Dropped', className: 'bg-zinc-500/15 text-zinc-400' },
 }
+
+const STATUS_FALLBACK = 'bg-zinc-500/15 text-zinc-400'
 
 const ACCENT_CLASS: Record<ReturnType<typeof stalenessTier>, string> = {
   fresh: 'border-l-4 border-green-500',
@@ -45,7 +47,7 @@ const ACCENT_CLASS: Record<ReturnType<typeof stalenessTier>, string> = {
 function StatusBadge({ status }: { status: string }) {
   const badge = STATUS_BADGES[status] ?? {
     label: status.charAt(0).toUpperCase() + status.slice(1),
-    className: 'bg-gray-200 text-gray-700',
+    className: STATUS_FALLBACK,
   }
   return (
     <span
@@ -64,13 +66,15 @@ function TrackedBadge({ tracked }: { tracked: boolean }) {
     <span
       className={cn(
         'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
-        tracked ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-700',
+        tracked
+          ? 'bg-green-500/15 text-green-400'
+          : 'bg-zinc-500/15 text-zinc-400',
       )}
     >
       <span
         className={cn(
           'size-1.5 rounded-full',
-          tracked ? 'bg-green-600' : 'bg-gray-500',
+          tracked ? 'bg-green-400' : 'bg-zinc-500',
         )}
       />
       {tracked ? 'Tracked' : 'Untracked'}
@@ -133,6 +137,38 @@ function SeriesPage() {
     refetchInterval: 60_000,
   })
 
+  const queryClient = useQueryClient()
+
+  const { data: scannerStatus } = useQuery({
+    queryKey: ['scanner-status'],
+    queryFn: async () => {
+      const { data, error } = await apiClient.GET('/api/scanner/status')
+      if (error) throw error
+      return data
+    },
+    refetchInterval: 5_000,
+  })
+
+  const refresh = useMutation({
+    mutationFn: async () => {
+      const { error, response } = await apiClient.POST('/api/scanner/refresh')
+      const status = response.status
+      if (error) {
+        throw new Error(
+          status === 409
+            ? 'A scan is already running. Try again shortly.'
+            : 'Database refresh failed. Check the logs.',
+        )
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['series-state'] })
+      queryClient.invalidateQueries({ queryKey: ['scanner-status'] })
+    },
+  })
+
+  const refreshing = refresh.isPending || (scannerStatus?.busy ?? false)
+
   const series = useMemo(() => data?.series ?? [], [data])
 
   const statusOptions = useMemo(() => {
@@ -193,7 +229,26 @@ function SeriesPage() {
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <h1 className="text-2xl font-medium">Series</h1>
+      <div className="flex items-start justify-between gap-4">
+        <h1 className="text-2xl font-medium">Series</h1>
+        <div className="flex flex-col items-end gap-1">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => refresh.mutate()}
+            disabled={refreshing}
+          >
+            <RotateCw className={cn('size-4', refreshing && 'animate-spin')} />
+            {refreshing ? 'Refreshing…' : 'Refresh database'}
+          </Button>
+          {refresh.isError && (
+            <span className="text-xs text-destructive">
+              {(refresh.error as Error).message}
+            </span>
+          )}
+        </div>
+      </div>
 
       <div className="flex flex-wrap items-end gap-3">
         <div className="flex flex-col gap-1.5">
