@@ -30,6 +30,7 @@ def mock_scanner():
     scanner.entity_database.entity_map = {"test_series": "test_id"}
     scanner.entity_database.chapters = MagicMock()
     scanner.entity_database.chapters.database = {}
+    scanner.entity_database.entity_downloads = set()
     return scanner
 
 
@@ -168,11 +169,11 @@ class TestScannerOperations:
         mock_scanner.entity_database.delete_entity_id.assert_called_once_with("entity_id", "Entity Name")
 
     @patch("cbz_tagger.web.api.scanner")
-    def test_delete_chapter_tracking_operation(self, mock_scanner):
-        """Test delete chapter tracking operation."""
-        api.delete_chapter_tracking_operation("entity_id", "chapter_id")
-        mock_scanner.entity_database.delete_chapter_entity_id_from_downloaded_chapters.assert_called_once_with(
-            "entity_id", "chapter_id"
+    def test_set_downloads_operation(self, mock_scanner):
+        """Test set downloads operation."""
+        api.set_downloads_operation("entity_id", ["chapter_id_1", "chapter_id_2"])
+        mock_scanner.entity_database.set_downloaded_chapters.assert_called_once_with(
+            "entity_id", ["chapter_id_1", "chapter_id_2"]
         )
 
     @patch("cbz_tagger.web.api.scanner")
@@ -233,20 +234,21 @@ class TestScannerOperations:
         """Test get chapters operation when chapters exist."""
         mock_chapter1 = MagicMock()
         mock_chapter1.entity_id = "entity1"
-        mock_chapter1.chapter_number = "1"
+        mock_chapter1.chapter_string = "1"
 
         mock_chapter2 = MagicMock()
         mock_chapter2.entity_id = "entity2"
-        mock_chapter2.chapter_number = "2"
+        mock_chapter2.chapter_string = "2"
 
         mock_scanner.entity_database.chapters.database.get.return_value = [mock_chapter1, mock_chapter2]
+        mock_scanner.entity_database.entity_downloads = {("test_entity_id", "entity1")}
 
         result = api.get_chapters_operation("test_entity_id")
 
         mock_scanner.reload_scanner.assert_called_once()
         assert len(result) == 2
-        assert result[0] == {"entity_id": "entity1", "chapter_number": "1"}
-        assert result[1] == {"entity_id": "entity2", "chapter_number": "2"}
+        assert result[0] == {"entity_id": "entity1", "chapter_number": "1", "downloaded": True}
+        assert result[1] == {"entity_id": "entity2", "chapter_number": "2", "downloaded": False}
 
     @patch("cbz_tagger.web.api.scanner")
     def test_get_chapters_operation_no_chapters(self, mock_scanner):
@@ -349,8 +351,9 @@ class TestAPIEndpoints:
         """Test GET /api/scanner/series/{entity_id}/chapters endpoint."""
         mock_chapter = MagicMock()
         mock_chapter.entity_id = "chapter1"
-        mock_chapter.chapter_number = "1"
+        mock_chapter.chapter_string = "1"
         mock_scanner.entity_database.chapters.database.get.return_value = [mock_chapter]
+        mock_scanner.entity_database.entity_downloads = {("test_id", "chapter1")}
 
         response = client.get("/api/scanner/series/test_id/chapters")
         assert response.status_code == 200
@@ -359,6 +362,7 @@ class TestAPIEndpoints:
         assert len(data["chapters"]) == 1
         assert data["chapters"][0]["entity_id"] == "chapter1"
         assert data["chapters"][0]["chapter_number"] == "1"
+        assert data["chapters"][0]["downloaded"] is True
 
     @patch("cbz_tagger.entities.metadata_entity.MetadataEntity.from_server_url")
     def test_search_series_endpoint(self, mock_from_server, reset_app_state, client):
@@ -437,13 +441,24 @@ class TestAPIEndpoints:
         assert "deleted successfully" in data["message"]
 
     @patch("cbz_tagger.web.api.scanner")
-    def test_delete_chapter_tracking_endpoint(self, mock_scanner, reset_app_state, client):
-        """Test DELETE /api/scanner/chapter/{entity_id}/{chapter_id} endpoint."""
-        response = client.delete("/api/scanner/chapter/entity_id/chapter_id")
+    def test_set_series_downloads_endpoint(self, mock_scanner, reset_app_state, client):
+        """Test PUT /api/scanner/series/{entity_id}/downloads endpoint."""
+        response = client.put(
+            "/api/scanner/series/entity_id/downloads",
+            json={"downloaded_chapter_ids": ["chapter_id_1", "chapter_id_2"]},
+        )
         assert response.status_code == 200
         data = response.json()
         assert "message" in data
-        assert "deleted successfully" in data["message"]
+        assert "updated successfully" in data["message"]
+        mock_scanner.entity_database.set_downloaded_chapters.assert_called_once_with(
+            "entity_id", ["chapter_id_1", "chapter_id_2"]
+        )
+
+    def test_delete_chapter_tracking_route_removed(self, reset_app_state, client):
+        """Test the old DELETE /api/scanner/chapter/{entity_id}/{chapter_id} route no longer exists."""
+        response = client.delete("/api/scanner/chapter/entity_id/chapter_id")
+        assert response.status_code in (404, 405)
 
     @patch("cbz_tagger.web.api.scanner")
     def test_clean_orphaned_files_endpoint(self, mock_scanner, reset_app_state, client):

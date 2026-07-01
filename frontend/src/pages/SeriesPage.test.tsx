@@ -92,6 +92,15 @@ function mockSeries(series: unknown[] = SERIES) {
   )
 }
 
+async function openRowMenu(
+  user: ReturnType<typeof userEvent.setup>,
+  seriesName: string,
+) {
+  await user.click(
+    screen.getByRole('button', { name: `Actions for ${seriesName}` }),
+  )
+}
+
 function nameOrder() {
   return screen
     .getAllByRole('link')
@@ -147,7 +156,9 @@ describe('SeriesPage', () => {
 
     await screen.findByText('Alpha Manga')
     await user.click(screen.getByRole('button', { name: /status/i }))
-    await user.click(await screen.findByRole('menuitemcheckbox', { name: 'Hiatus' }))
+    await user.click(
+      await screen.findByRole('menuitemcheckbox', { name: 'Hiatus' }),
+    )
 
     expect(screen.getByText('Beta Manga')).toBeInTheDocument()
     expect(screen.queryByText('Alpha Manga')).not.toBeInTheDocument()
@@ -301,7 +312,8 @@ describe('SeriesPage', () => {
     renderWithClient()
 
     await screen.findByText('Alpha Manga')
-    await user.click(screen.getByRole('button', { name: 'Delete Alpha Manga' }))
+    await openRowMenu(user, 'Alpha Manga')
+    await user.click(await screen.findByRole('menuitem', { name: 'Delete' }))
 
     expect(await screen.findByText('Delete Alpha Manga?')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Delete' }))
@@ -317,7 +329,8 @@ describe('SeriesPage', () => {
     renderWithClient()
 
     await screen.findByText('Alpha Manga')
-    await user.click(screen.getByRole('button', { name: 'Delete Alpha Manga' }))
+    await openRowMenu(user, 'Alpha Manga')
+    await user.click(await screen.findByRole('menuitem', { name: 'Delete' }))
     await user.click(screen.getByRole('button', { name: 'Cancel' }))
 
     expect(screen.queryByText('Delete Alpha Manga?')).not.toBeInTheDocument()
@@ -338,11 +351,69 @@ describe('SeriesPage', () => {
     renderWithClient()
 
     await screen.findByText('Alpha Manga')
-    await user.click(screen.getByRole('button', { name: 'Delete Alpha Manga' }))
+    await openRowMenu(user, 'Alpha Manga')
+    await user.click(await screen.findByRole('menuitem', { name: 'Delete' }))
     await user.click(screen.getByRole('button', { name: 'Delete' }))
 
     expect(
       await screen.findByText('Scanner is busy. Please wait and try again.'),
     ).toBeInTheDocument()
+  })
+
+  it('opens the chapter downloads dialog from the actions menu, toggles a chapter, and saves', async () => {
+    mockSeries()
+    server.use(
+      http.get('*/api/scanner/series/alpha-id/chapters', () =>
+        HttpResponse.json({
+          chapters: [
+            { entity_id: 'chapter-1', chapter_number: '1', downloaded: true },
+            { entity_id: 'chapter-2', chapter_number: '2', downloaded: false },
+          ],
+        }),
+      ),
+    )
+    let putBody: unknown
+    server.use(
+      http.put(
+        '*/api/scanner/series/alpha-id/downloads',
+        async ({ request }) => {
+          putBody = await request.json()
+          return HttpResponse.json({
+            message: 'Downloaded chapters updated successfully',
+          })
+        },
+      ),
+    )
+    const user = userEvent.setup()
+    renderWithClient()
+
+    await screen.findByText('Alpha Manga')
+    await openRowMenu(user, 'Alpha Manga')
+    await user.click(
+      await screen.findByRole('menuitem', { name: 'Manage downloads' }),
+    )
+
+    expect(
+      await screen.findByText('Manage downloads — Alpha Manga'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('1 of 2 downloaded')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('checkbox', { name: 'Chapter 2' }))
+    expect(screen.getByText('2 of 2 downloaded')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(
+      await screen.findByText('Updated downloaded chapters for Alpha Manga'),
+    ).toBeInTheDocument()
+    expect(putBody).toEqual({
+      downloaded_chapter_ids: expect.arrayContaining([
+        'chapter-1',
+        'chapter-2',
+      ]),
+    })
+    expect(
+      screen.queryByText('Manage downloads — Alpha Manga'),
+    ).not.toBeInTheDocument()
   })
 })

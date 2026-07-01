@@ -263,6 +263,28 @@ class EntityDB:
         else:
             logger.warning("Chapter %s not found in downloaded chapters for %s.", chapter_id, entity_id)
 
+    def add_chapter_entity_id_to_downloaded_chapters(self, entity_id, chapter_id):
+        """Add a chapter entity ID to the downloaded chapters."""
+        if (entity_id, chapter_id) not in self.entity_downloads:
+            self.entity_downloads.add((entity_id, chapter_id))
+            logger.info("Added chapter %s to downloaded chapters for %s.", chapter_id, entity_id)
+            self.save()
+        else:
+            logger.warning("Chapter %s already in downloaded chapters for %s.", chapter_id, entity_id)
+
+    def set_downloaded_chapters(self, entity_id, downloaded_chapter_ids):
+        """Reconcile the downloaded chapters for an entity to match the given set in a single save()."""
+        known = {c.entity_id for c in (self.chapters[entity_id] or [])}
+        desired = set(downloaded_chapter_ids) & known
+        current = {c for (e, c) in self.entity_downloads if e == entity_id}
+        to_add = desired - current
+        to_remove = (current & known) - desired
+        for c in to_add:
+            self.entity_downloads.add((entity_id, c))
+        for c in to_remove:
+            self.entity_downloads.discard((entity_id, c))
+        self.save()
+
     def update_manga_entity_name(self, manga_name):
         entity_id = self.entity_map.get(manga_name)
         self.update_manga_entity_id(entity_id)

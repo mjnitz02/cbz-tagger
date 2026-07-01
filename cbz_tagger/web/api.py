@@ -128,10 +128,15 @@ class SeriesListResponse(BaseModel):
 class ChapterSummary(BaseModel):
     entity_id: str
     chapter_number: str
+    downloaded: bool
 
 
 class ChaptersResponse(BaseModel):
     chapters: list[ChapterSummary]
+
+
+class SetDownloadsRequest(BaseModel):
+    downloaded_chapter_ids: list[str]
 
 
 class SearchSeriesResponse(BaseModel):
@@ -236,9 +241,9 @@ def delete_series_operation(entity_id: str, entity_name: str):
     scanner.entity_database.delete_entity_id(entity_id, entity_name)
 
 
-def delete_chapter_tracking_operation(entity_id: str, chapter_id: str):
-    """Delete chapter tracking for a specific chapter."""
-    scanner.entity_database.delete_chapter_entity_id_from_downloaded_chapters(entity_id, chapter_id)
+def set_downloads_operation(entity_id: str, downloaded_chapter_ids: list[str]):
+    """Reconcile the downloaded chapters for a series."""
+    scanner.entity_database.set_downloaded_chapters(entity_id, downloaded_chapter_ids)
 
 
 def clean_orphaned_files_operation():
@@ -279,10 +284,12 @@ def get_chapters_operation(entity_id: str):
     """Get chapters for a specific series."""
     scanner.reload_scanner()
     chapters = scanner.entity_database.chapters.database.get(entity_id, [])
+    entity_downloads = scanner.entity_database.entity_downloads
     return [
         {
             "entity_id": chapter.entity_id,
             "chapter_number": chapter.chapter_string,
+            "downloaded": (entity_id, chapter.entity_id) in entity_downloads,
         }
         for chapter in (chapters if chapters is not None else [])
     ]
@@ -389,11 +396,11 @@ async def delete_series(entity_id: str, entity_name: str):
     return {"message": f"Series '{entity_name}' deleted successfully"}
 
 
-@app.delete("/api/scanner/chapter/{entity_id}/{chapter_id}", response_model=MessageResponse)
-async def delete_chapter_tracking(entity_id: str, chapter_id: str):
-    """Delete chapter tracking for a specific chapter."""
-    await run_scanner_operation(delete_chapter_tracking_operation, entity_id, chapter_id)
-    return {"message": "Chapter tracking deleted successfully"}
+@app.put("/api/scanner/series/{entity_id}/downloads", response_model=MessageResponse)
+async def set_series_downloads(entity_id: str, request: SetDownloadsRequest):
+    """Reconcile the downloaded chapters for a series."""
+    await run_scanner_operation(set_downloads_operation, entity_id, request.downloaded_chapter_ids)
+    return {"message": "Downloaded chapters updated successfully"}
 
 
 @app.post("/api/scanner/clean-orphaned", response_model=MessageResponse)

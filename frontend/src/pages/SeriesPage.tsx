@@ -1,7 +1,14 @@
 import { Fragment, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertDialog } from 'radix-ui'
-import { ChevronDown, ChevronRight, RotateCw, Trash2 } from 'lucide-react'
+import {
+  ChevronDown,
+  ChevronRight,
+  Download,
+  MoreHorizontal,
+  RotateCw,
+  Trash2,
+} from 'lucide-react'
 import {
   Select,
   SelectContent,
@@ -13,10 +20,12 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import ChapterDownloadsDialog from '@/components/ChapterDownloadsDialog'
 import { apiClient } from '@/lib/api-client'
 import { cn } from '@/lib/utils'
 import { formatRelative, stalenessTier } from '@/lib/staleness'
@@ -136,6 +145,7 @@ function SeriesPage() {
   const [sortMode, setSortMode] = useState<SortMode>('name')
   const [openId, setOpenId] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<SeriesStateItem | null>(null)
+  const [manageTarget, setManageTarget] = useState<SeriesStateItem | null>(null)
   const [statusMessage, setStatusMessage] = useState<string>()
 
   const { data, isLoading, error } = useQuery({
@@ -490,14 +500,32 @@ function SeriesPage() {
                       {formatRelative(row.latest_chapter_date)}
                     </td>
                     <td className="py-2 pr-2 text-right">
-                      <button
-                        type="button"
-                        aria-label={`Delete ${row.name}`}
-                        onClick={() => setDeleteTarget(row)}
-                        className="text-muted-foreground hover:text-destructive"
-                      >
-                        <Trash2 className="size-4" />
-                      </button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            type="button"
+                            aria-label={`Actions for ${row.name}`}
+                            className="text-muted-foreground hover:text-foreground"
+                          >
+                            <MoreHorizontal className="size-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onSelect={() => setManageTarget(row)}
+                          >
+                            <Download className="size-4" />
+                            Manage downloads
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onSelect={() => setDeleteTarget(row)}
+                          >
+                            <Trash2 className="size-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                   {expanded && (
@@ -601,6 +629,14 @@ function SeriesPage() {
           </AlertDialog.Content>
         </AlertDialog.Portal>
       </AlertDialog.Root>
+
+      <ChapterDownloadsDialog
+        series={manageTarget}
+        onOpenChange={(open) => {
+          if (!open) setManageTarget(null)
+        }}
+        onStatusMessage={setStatusMessage}
+      />
     </div>
   )
 }

@@ -184,7 +184,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/scanner/chapter/{entity_id}/{chapter_id}": {
+    "/api/scanner/series/{entity_id}/downloads": {
         parameters: {
             query?: never;
             header?: never;
@@ -192,13 +192,13 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put?: never;
-        post?: never;
         /**
-         * Delete Chapter Tracking
-         * @description Delete chapter tracking for a specific chapter.
+         * Set Series Downloads
+         * @description Reconcile the downloaded chapters for a series.
          */
-        delete: operations["delete_chapter_tracking_api_scanner_chapter__entity_id___chapter_id__delete"];
+        put: operations["set_series_downloads_api_scanner_series__entity_id__downloads_put"];
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -304,6 +304,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/{full_path}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Serve Spa
+         * @description Serve the built React SPA, falling back to index.html for client-side routes.
+         */
+        get: operations["serve_spa__full_path__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -335,6 +355,8 @@ export interface components {
             entity_id: string;
             /** Chapter Number */
             chapter_number: string;
+            /** Downloaded */
+            downloaded: boolean;
         };
         /** ChaptersResponse */
         ChaptersResponse: {
@@ -460,6 +482,11 @@ export interface components {
             name: string;
             /** Entity Id */
             entity_id: string;
+        };
+        /** SetDownloadsRequest */
+        SetDownloadsRequest: {
+            /** Downloaded Chapter Ids */
+            downloaded_chapter_ids: string[];
         };
         /** ValidationError */
         ValidationError: {
@@ -711,17 +738,20 @@ export interface operations {
             };
         };
     };
-    delete_chapter_tracking_api_scanner_chapter__entity_id___chapter_id__delete: {
+    set_series_downloads_api_scanner_series__entity_id__downloads_put: {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 entity_id: string;
-                chapter_id: string;
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetDownloadsRequest"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
@@ -850,6 +880,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EnvConfigResponse"];
+                };
+            };
+        };
+    };
+    serve_spa__full_path__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                full_path: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
