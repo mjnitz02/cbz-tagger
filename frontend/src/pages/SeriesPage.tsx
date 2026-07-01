@@ -9,6 +9,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { apiClient } from '@/lib/api-client'
@@ -297,26 +303,44 @@ function SeriesPage() {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <span className="text-xs text-muted-foreground">Status</span>
-          <div className="flex flex-wrap gap-1">
-            {statusOptions.map((status) => {
-              const active = statusFilter.has(status)
-              const badge = STATUS_BADGES[status]
-              return (
-                <Button
-                  key={status}
-                  type="button"
-                  size="sm"
-                  variant={active ? 'secondary' : 'outline'}
-                  aria-pressed={active}
-                  onClick={() => toggleStatus(status)}
-                >
-                  {badge?.label ??
-                    status.charAt(0).toUpperCase() + status.slice(1)}
-                </Button>
-              )
-            })}
-          </div>
+          <label
+            htmlFor="status-filter"
+            className="text-xs text-muted-foreground"
+          >
+            Status
+          </label>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                id="status-filter"
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-32 justify-between font-normal"
+              >
+                {statusFilter.size === 0
+                  ? 'All'
+                  : `${statusFilter.size} selected`}
+                <ChevronDown className="size-4 opacity-60" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              {statusOptions.map((status) => {
+                const badge = STATUS_BADGES[status]
+                return (
+                  <DropdownMenuCheckboxItem
+                    key={status}
+                    checked={statusFilter.has(status)}
+                    onCheckedChange={() => toggleStatus(status)}
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    {badge?.label ??
+                      status.charAt(0).toUpperCase() + status.slice(1)}
+                  </DropdownMenuCheckboxItem>
+                )
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <div className="flex flex-col gap-1.5">

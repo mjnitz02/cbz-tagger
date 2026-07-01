@@ -146,7 +146,8 @@ describe('SeriesPage', () => {
     renderWithClient()
 
     await screen.findByText('Alpha Manga')
-    await user.click(screen.getByRole('button', { name: 'Hiatus' }))
+    await user.click(screen.getByRole('button', { name: /status/i }))
+    await user.click(await screen.findByRole('menuitemcheckbox', { name: 'Hiatus' }))
 
     expect(screen.getByText('Beta Manga')).toBeInTheDocument()
     expect(screen.queryByText('Alpha Manga')).not.toBeInTheDocument()
