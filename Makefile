@@ -1,69 +1,82 @@
-ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+SHELL := /usr/bin/env bash
+.SHELLFLAGS := -eu -o pipefail -c
 
-.PHONY: install lint-format lint-check lint-typing
+.DEFAULT_GOAL := help
 
-install:
+.PHONY: help install pre-commit-install update-packages \
+	lint-format lint-check lint-yaml lint-typing lint test-lint \
+	test test-unit test-integration test-unit-docker test-integration-docker \
+	build-docker run-docker dev run clean-git
+
+help: ## Show this help message
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} \
+		/^[a-zA-Z0-9_-]+:.*##/ { printf "  \033[36m%-24s\033[0m %s\n", $$1, $$2 } \
+		/^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) }' $(MAKEFILE_LIST)
+
+##@ Setup
+
+install: ## Install project dependencies with uv
 	uv sync
 
-pre-commit-install:
+pre-commit-install: ## Install pre-commit git hooks
 	pre-commit install
 
-update-packages:
+update-packages: ## Upgrade all dependencies to their latest compatible versions
 	uv sync --upgrade
 
-lint-format:
+##@ Linting
+
+lint-format: ## Format code with ruff
 	uv run ruff format .
 
-lint-check:
+lint-check: ## Run ruff checks and auto-fix issues
 	uv run ruff check . --fix
 
-lint-yaml:
+lint-yaml: ## Fix YAML formatting across the repo
 	uvx yamlfix .github cbz_tagger tests docker-compose.yaml .pre-commit-config.yaml
 
-lint-typing:
+lint-typing: ## Run static type checking with ty
 	uvx ty@0.0.14 check cbz_tagger
 
-lint:
-	$(MAKE) lint-format
-	$(MAKE) lint-check
-	$(MAKE) lint-typing
-	$(MAKE) lint-yaml
+lint: lint-format lint-check lint-typing lint-yaml ## Run all linters and auto-fix issues
 
-test-lint:
+test-lint: ## Check formatting/lint/types without modifying files (CI mode)
 	uv run ruff format . --check
 	uv run ruff check .
 	uvx yamlfix .github cbz_tagger tests docker-compose.yaml .pre-commit-config.yaml --check
 	uvx ty@0.0.14 check cbz_tagger
 
-test:
-	echo "Running tests locally"
+##@ Testing
+
+test: build-docker ## Run the full test suite locally and in Docker
+	@echo "Running tests locally"
 	uv run pytest tests/ -W ignore::DeprecationWarning
-	echo "Building Docker image for testing"
-	docker build -t cbz-tagger .
-	echo "Running tests in Docker"
+	@echo "Running tests in Docker"
 	docker run --entrypoint "/bin/sh" cbz-tagger -c "uv run pytest /app/tests/ -W ignore::DeprecationWarning"
 
-test-unit:
+test-unit: ## Run unit tests locally
 	uv run pytest tests/test_unit/ -W ignore::DeprecationWarning
 
-test-integration:
+test-integration: ## Run integration tests locally
 	uv run pytest tests/test_integration/ -W ignore::DeprecationWarning
 
-test-unit-docker:
-	docker build -t cbz-tagger .
+test-unit-docker: build-docker ## Run unit tests inside a Docker container
 	docker run --entrypoint "/bin/sh" cbz-tagger -c "uv run pytest /app/tests/test_unit/ -W ignore::DeprecationWarning"
 
-test-integration-docker:
-	docker build -t cbz-tagger .
+test-integration-docker: build-docker ## Run integration tests inside a Docker container
 	docker run -e CBZ_TAGGER_SKIP_INTEGRATION_TESTS --entrypoint "/bin/sh" cbz-tagger -c "uv run pytest /app/tests/test_integration/ -W ignore::DeprecationWarning"
 
-build-docker:
+##@ Docker
+
+build-docker: ## Build the cbz-tagger Docker image
 	docker build -t cbz-tagger .
 
-run-docker:
+run-docker: ## Run cbz-tagger via docker-compose
 	docker-compose up --build
 
-dev:
+##@ Local development
+
+dev: ## Run the API and GUI dev servers locally
 	@echo "Starting CBZ Tagger development servers..."
 	@export LOG_LEVEL=INFO; \
 	export DEBUG_MODE=true; \
@@ -80,15 +93,17 @@ dev:
 	uv run python -m cbz_tagger.gui.server || kill $$API_PID; \
 	kill $$API_PID 2>/dev/null || true
 
-run:
-	export TIMER_DELAY=600; \
+run: ## Run the standalone tagger script locally
+	@export TIMER_DELAY=600; \
 	export LOG_LEVEL=INFO; \
-	CONFIG_PATH=~/Downloads/cbz_tagger/config; \
-	SCAN_PATH=~/Downloads/cbz_tagger/scan; \
-	STORAGE_PATH=~/Downloads/cbz_tagger/storage; \
+	export CONFIG_PATH=~/Downloads/cbz_tagger/config; \
+	export SCAN_PATH=~/Downloads/cbz_tagger/scan; \
+	export STORAGE_PATH=~/Downloads/cbz_tagger/storage; \
 	mkdir -p $$CONFIG_PATH $$SCAN_PATH $$STORAGE_PATH; \
 	uv run python run.py
 
-clean-git:
+##@ Maintenance
+
+clean-git: ## Delete local branches that no longer exist on the remote
 	chmod +x ./scripts/clean_git.sh
 	./scripts/clean_git.sh

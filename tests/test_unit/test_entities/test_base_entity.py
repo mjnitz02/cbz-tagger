@@ -60,6 +60,67 @@ def test_base_entity_to_hash(manga_request_content):
     assert entity4.to_hash() == hash_value
 
 
+# cloudscraper's `User_Agent` only knows how to impersonate these browsers/platforms;
+# anything outside this set silently falls back to its own (stale) defaults.
+CLOUDSCRAPER_SUPPORTED_BROWSERS = {"chrome", "firefox"}
+CLOUDSCRAPER_SUPPORTED_PLATFORMS = {"linux", "windows", "darwin", "android", "ios"}
+
+# Substrings seen in cloudscraper's bundled fake-user-agent pool (QQBrowser/UBrowser
+# forks of old Chrome/Firefox builds) that MangaDex's WAF was observed rejecting with 400s.
+FLAGGED_USER_AGENT_MARKERS = ["QQBrowser", "UBrowser"]
+
+
+def test_request_configs_structure():
+    configs = BaseEntity._get_request_configs()
+
+    # Rotation is meaningless with fewer than two configs
+    assert len(configs) >= 2
+
+    for config in configs:
+        assert config["browser"] in CLOUDSCRAPER_SUPPORTED_BROWSERS
+        assert config["platform"] in CLOUDSCRAPER_SUPPORTED_PLATFORMS
+
+        headers = config["headers"]
+        assert headers.get("User-Agent")
+        assert headers.get("Accept")
+        assert headers.get("Accept-Language")
+
+
+def test_request_configs_user_agents_are_unique():
+    configs = BaseEntity._get_request_configs()
+    user_agents = [config["headers"]["User-Agent"] for config in configs]
+    assert len(user_agents) == len(set(user_agents))
+
+
+def test_request_configs_user_agents_match_declared_browser_and_are_not_flagged():
+    browser_signature = {"chrome": "Chrome", "firefox": "Firefox"}
+
+    for config in BaseEntity._get_request_configs():
+        user_agent = config["headers"]["User-Agent"]
+
+        assert browser_signature[config["browser"]] in user_agent
+        for marker in FLAGGED_USER_AGENT_MARKERS:
+            assert marker not in user_agent
+
+
+@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=1.0)
+@patch("cbz_tagger.entities.base_entity.time.sleep")
+def test_request_with_retry_rotates_through_configs(mock_sleep, mock_random):
+    _ = mock_sleep, mock_random
+    configs = BaseEntity._get_request_configs()
+
+    with requests_mock.Mocker() as rm:
+        rm.get("http://example.com/file", status_code=500)
+
+        with pytest.raises(EnvironmentError):
+            BaseEntity.request_with_retry("http://example.com/file", retries=len(configs))
+
+        assert rm.call_count == len(configs)
+        for attempt, request in enumerate(rm.request_history):
+            expected_headers = configs[attempt % len(configs)]["headers"]
+            assert request.headers["User-Agent"] == expected_headers["User-Agent"]
+
+
 @patch("cbz_tagger.entities.base_entity.random.uniform", return_value=1.0)
 @patch("cbz_tagger.entities.base_entity.time.sleep")
 def test_request_with_retry_success(mock_sleep, mock_random):
