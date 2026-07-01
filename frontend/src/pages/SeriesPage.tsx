@@ -432,8 +432,8 @@ function SeriesPage() {
               <th className="w-8 py-2" />
               <th className="py-2 pr-4">Name</th>
               <th className="py-2 pr-4">Status</th>
-              <th className="py-2 pr-4">Tracked</th>
-              <th className="py-2 pr-4">Chapter</th>
+              <th className="hidden py-2 pr-4 md:table-cell">Tracked</th>
+              <th className="hidden py-2 pr-4 md:table-cell">Chapter</th>
               <th className="py-2 pr-4">Last updated</th>
               <th className="w-8 py-2" />
             </tr>
@@ -477,10 +477,12 @@ function SeriesPage() {
                     <td className="py-2 pr-4">
                       <StatusBadge status={row.status} />
                     </td>
-                    <td className="py-2 pr-4">
+                    <td className="hidden py-2 pr-4 md:table-cell">
                       <TrackedBadge tracked={row.tracked} />
                     </td>
-                    <td className="py-2 pr-4">{row.latest_chapter ?? '—'}</td>
+                    <td className="hidden py-2 pr-4 md:table-cell">
+                      {row.latest_chapter ?? '—'}
+                    </td>
                     <td
                       className="py-2 pr-4"
                       title={row.latest_chapter_date ?? undefined}
@@ -502,6 +504,20 @@ function SeriesPage() {
                     <tr className="border-border border-b bg-muted/30">
                       <td colSpan={7} className="p-4">
                         <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-4">
+                          <div className="md:hidden">
+                            <dt className="text-xs text-muted-foreground">
+                              Tracked
+                            </dt>
+                            <dd>
+                              <TrackedBadge tracked={row.tracked} />
+                            </dd>
+                          </div>
+                          <div className="md:hidden">
+                            <dt className="text-xs text-muted-foreground">
+                              Chapter
+                            </dt>
+                            <dd>{row.latest_chapter ?? '—'}</dd>
+                          </div>
                           <div>
                             <dt className="text-xs text-muted-foreground">
                               Entity ID
