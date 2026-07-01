@@ -121,14 +121,6 @@ jobs:
           CBZ_TAGGER_SKIP_INTEGRATION_TESTS: WBC
         run: |
           make test-integration
-  docker_image_unit_tests:
-    name: Dockerized Unit Tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Test docker image
-        run: |
-          make test-unit-docker
   docker_image_integration_tests:
     name: Dockerized Integration Tests
     runs-on: ubuntu-latest

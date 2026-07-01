@@ -18,6 +18,7 @@ class AppEnv:
         PGID = os.getenv("PGID", 100)
 
     DEBUG_MODE = os.getenv("DEBUG_MODE", "false").lower() == "true"
+    PORT: int = int(os.getenv("PORT", 8000))
     UMASK: str = os.getenv("UMASK", "022")
     CONFIG_PATH: str = str(os.getenv("CONFIG_PATH", "/config"))
     SCAN_PATH: str = str(os.getenv("SCAN_PATH", "/scan"))

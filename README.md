@@ -11,11 +11,10 @@ the files correctly. It populates the majority of fields specified by the
 retrieving the cover image from the metadata source and embedding it into the CBZ file along with correctly formatting
 the file structure to be compatible with readers such as [Komga](https://komga.org/).
 
-The GUI interface was implemented in version 2.x and is a work in progress. It is fully functional, but may experience
-occasional graphical glitches. The command line interface is more robust, but is also more difficult to use when large
-amounts of comics are being processed or tracked. CBZ Tagger does implement a tracking and refresh system to help
-keep your library up to date, but this is a newer addition and has been undergoing continuous revisions to try
-and make the API processing more robust.
+CBZ Tagger ships with a web UI (React, served by the same container on port `8080`) for browsing tracked series,
+adding new series, and managing configuration. The command line interface is also available for scripted or
+one-off usage. CBZ Tagger implements a tracking and refresh system to help keep your library up to date, and this
+has been undergoing continuous revisions to try and make the API processing more robust.
 
 **If you discover issues while using CBZ Tagger, please feel free to file an issue in github. This helps to improve
 the code base and keep the tool functional and reliable!**

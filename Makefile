@@ -102,7 +102,7 @@ run-docker: ## Run cbz-tagger via docker-compose
 
 ##@ Local development
 
-dev: ## Run the API, GUI, and frontend dev servers locally
+dev: ## Run the API and frontend dev servers locally
 	@echo "Starting CBZ Tagger development servers..."
 	@export LOG_LEVEL=INFO; \
 	export DEBUG_MODE=true; \
@@ -116,11 +116,8 @@ dev: ## Run the API, GUI, and frontend dev servers locally
 	API_PID=$$!; \
 	sleep 2; \
 	echo "Starting Vite frontend dev server on port 5173..."; \
-	(cd frontend && npm run dev) & \
-	VITE_PID=$$!; \
-	echo "Starting NiceGUI frontend on port 8080..."; \
-	uv run python -m cbz_tagger.gui.server || (kill $$API_PID $$VITE_PID 2>/dev/null; true); \
-	kill $$API_PID $$VITE_PID 2>/dev/null || true
+	(cd frontend && npm run dev) || (kill $$API_PID 2>/dev/null; true); \
+	kill $$API_PID 2>/dev/null || true
 
 run: ## Run the standalone tagger script locally
 	@export TIMER_DELAY=600; \

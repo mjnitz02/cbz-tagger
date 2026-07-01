@@ -31,20 +31,6 @@
                 "SCAN_PATH": "${env:HOME}/Downloads/cbz_tagger/scan",
                 "STORAGE_PATH": "${env:HOME}/Downloads/cbz_tagger/storage"
             }
-        },
-        {
-            "name": "CBZ Tagger Dev Servers (NiceGUI frontend)",
-            "type": "python",
-            "request": "launch",
-            "module": "cbz_tagger.gui.server",
-            "console": "integratedTerminal",
-            "env": {
-                "LOG_LEVEL": "INFO",
-                "TIMER_DELAY": "180",
-                "CONFIG_PATH": "${env:HOME}/Downloads/cbz_tagger/config",
-                "SCAN_PATH": "${env:HOME}/Downloads/cbz_tagger/scan",
-                "STORAGE_PATH": "${env:HOME}/Downloads/cbz_tagger/storage"
-            }
         }
     ]
 }

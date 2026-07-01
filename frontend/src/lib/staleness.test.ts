@@ -60,9 +60,9 @@ describe('formatRelative', () => {
   })
 
   it('returns "just now" for under an hour ago', () => {
-    expect(formatRelative(new Date(NOW.getTime() - 30 * 1000).toISOString())).toBe(
-      'just now',
-    )
+    expect(
+      formatRelative(new Date(NOW.getTime() - 30 * 1000).toISOString()),
+    ).toBe('just now')
   })
 
   it('returns hours ago for under a day', () => {

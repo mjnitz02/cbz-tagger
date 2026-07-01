@@ -2,9 +2,7 @@
 services:
   cbz_tagger:
     build: .
-    ports:
-      - 8080:8080  # NiceGUI frontend
-      - 8000:8000  # FastAPI backend
+    ports: [8080:8080]
     environment: [TIMER_DELAY=600, LOG_LEVEL=INFO]
     volumes:
       - ~/Downloads/cbz_tagger/config:/config

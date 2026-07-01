@@ -216,7 +216,9 @@ describe('SeriesPage', () => {
 
     await screen.findByText('Alpha Manga')
     await user.click(screen.getByLabelText('Sort'))
-    await user.click(await screen.findByRole('option', { name: 'Stalest first' }))
+    await user.click(
+      await screen.findByRole('option', { name: 'Stalest first' }),
+    )
 
     expect(nameOrder()).toEqual([
       'Delta Manga',

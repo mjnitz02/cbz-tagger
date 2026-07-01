@@ -140,10 +140,7 @@ function SeriesPage() {
     const extra = [...present]
       .filter((status) => !CANONICAL_STATUSES.includes(status))
       .sort()
-    return [
-      ...CANONICAL_STATUSES.filter((status) => present.has(status)),
-      ...extra,
-    ]
+    return [...CANONICAL_STATUSES, ...extra]
   }, [series])
 
   const pluginOptions = useMemo(() => {

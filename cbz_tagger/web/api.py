@@ -3,17 +3,25 @@ import logging
 import os
 from contextlib import asynccontextmanager
 from datetime import datetime
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.responses import Response
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from cbz_tagger.common.env import AppEnv
 from cbz_tagger.common.plugins import Plugins
 from cbz_tagger.database.file_scanner import FileScanner
 from cbz_tagger.entities.metadata_entity import MetadataEntity
-from cbz_tagger.gui.file_log_reader import FileLogReader
+from cbz_tagger.web.file_log_reader import FileLogReader
+
+# Built React SPA, produced by `npm run build` (frontend/dist). Only present in the
+# production Docker image; local dev serves the frontend via a separate Vite process.
+FRONTEND_DIST = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +34,7 @@ scanner = FileScanner(
     environment=env.get_user_environment(),
 )
 
-# Simple in-memory state storage (replaces NiceGUI app.storage)
+# Simple in-memory state storage
 _app_state = {"scanning_state": False, "background_timer_started": False}
 
 
@@ -421,3 +429,24 @@ async def get_plugins_enum():
 async def get_env_config():
     """Get the AppEnv configuration values."""
     return env.to_api()
+
+
+class ImmutableStaticFiles(StaticFiles):
+    """Serves Vite's content-hashed assets with a cache header safe to keep forever."""
+
+    def file_response(self, *args, **kwargs) -> Response:
+        response = super().file_response(*args, **kwargs)
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        return response
+
+
+if FRONTEND_DIST.is_dir():
+    app.mount("/assets", ImmutableStaticFiles(directory=FRONTEND_DIST / "assets"), name="frontend-assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        """Serve the built React SPA, falling back to index.html for client-side routes."""
+        candidate = FRONTEND_DIST / full_path
+        if full_path and candidate.is_file():
+            return FileResponse(candidate)
+        return FileResponse(FRONTEND_DIST / "index.html")

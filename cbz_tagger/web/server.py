@@ -21,12 +21,13 @@ def main():
     logger.info("Config path: %s", env.CONFIG_PATH)
     logger.info("Scan path: %s", env.SCAN_PATH)
     logger.info("Storage path: %s", env.STORAGE_PATH)
+    logger.info("Port: %s", env.PORT)
 
     # Run the server
     uvicorn.run(
         "cbz_tagger.web.api:app",
         host="0.0.0.0",
-        port=8000,
+        port=env.PORT,
         reload=env.DEBUG_MODE,  # Enable auto-reload for development
         log_level=env.LOG_LEVEL,
     )
