@@ -135,6 +135,27 @@ class LogsResponse(BaseModel):
     logs: str
 
 
+class PluginsResponse(BaseModel):
+    DEFAULT: str
+    all: list[str]
+
+
+class EnvConfigResponse(BaseModel):
+    VERSION: str
+    PUID: int
+    PGID: int
+    DEBUG_MODE: bool
+    UMASK: str
+    CONFIG_PATH: str
+    SCAN_PATH: str
+    STORAGE_PATH: str
+    LOG_PATH: str
+    TIMER_DELAY: int
+    PROXY_URL: str | None
+    DELAY_PER_REQUEST: float
+    LOG_LEVEL: int
+
+
 # Helper functions
 def is_scanner_busy() -> bool:
     """Check if the scanner is currently busy."""
@@ -380,13 +401,13 @@ async def get_emoji_enum():
     return Emoji.to_api()
 
 
-@app.get("/api/enums/plugins")
+@app.get("/api/enums/plugins", response_model=PluginsResponse)
 async def get_plugins_enum():
     """Get the Plugins enum values and list."""
     return Plugins.to_api()
 
 
-@app.get("/api/enums/env")
+@app.get("/api/enums/env", response_model=EnvConfigResponse)
 async def get_env_config():
     """Get the AppEnv configuration values."""
     return env.to_api()

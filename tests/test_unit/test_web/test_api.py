@@ -488,20 +488,35 @@ class TestAPIEndpoints:
     @patch("cbz_tagger.common.plugins.Plugins.to_api")
     def test_get_plugins_enum_endpoint(self, mock_to_api, reset_app_state, client):
         """Test GET /api/enums/plugins endpoint."""
-        mock_to_api.return_value = {"plugins": "data"}
+        mock_to_api.return_value = {"DEFAULT": "mdx", "all": ["mdx", "kal"]}
         response = client.get("/api/enums/plugins")
         assert response.status_code == 200
         data = response.json()
-        assert data == {"plugins": "data"}
+        assert data == {"DEFAULT": "mdx", "all": ["mdx", "kal"]}
 
     @patch("cbz_tagger.web.api.env")
     def test_get_env_config_endpoint(self, mock_env, reset_app_state, client):
         """Test GET /api/enums/env endpoint."""
-        mock_env.to_api.return_value = {"config": "value"}
+        env_config = {
+            "VERSION": "1.0.0",
+            "PUID": 1000,
+            "PGID": 1000,
+            "DEBUG_MODE": False,
+            "UMASK": "022",
+            "CONFIG_PATH": "/config",
+            "SCAN_PATH": "/scan",
+            "STORAGE_PATH": "/storage",
+            "LOG_PATH": "/config/logs/cbz_tagger.log",
+            "TIMER_DELAY": 6000,
+            "PROXY_URL": None,
+            "DELAY_PER_REQUEST": 0.5,
+            "LOG_LEVEL": 20,
+        }
+        mock_env.to_api.return_value = env_config
         response = client.get("/api/enums/env")
         assert response.status_code == 200
         data = response.json()
-        assert data == {"config": "value"}
+        assert data == env_config
 
 
 class TestPydanticModels:
