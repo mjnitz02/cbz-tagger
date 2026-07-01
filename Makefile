@@ -5,7 +5,7 @@ SHELL := /usr/bin/env bash
 
 .PHONY: help install pre-commit-install update-packages \
 	lint-format lint-check lint-yaml lint-typing lint test-lint \
-	frontend-install frontend-lint frontend-test-lint frontend-test frontend-build frontend-generate-api \
+	frontend-install frontend-lint frontend-typing frontend-test-lint frontend-test frontend-build frontend-generate-api \
 	test test-unit test-integration test-unit-docker test-integration-docker \
 	build-docker run-docker dev run clean-git
 
@@ -57,10 +57,13 @@ frontend-lint: ## Format and lint the frontend, auto-fixing issues
 	cd frontend && npm run format
 	cd frontend && npm run lint
 
+frontend-typing: ## Check frontend TypeScript types
+	cd frontend && npx tsc -b --noEmit
+
 frontend-test-lint: ## Check frontend formatting/lint/types without modifying files (CI mode)
 	cd frontend && npm run format:check
 	cd frontend && npm run lint:check
-	cd frontend && npx tsc -b --noEmit
+	$(MAKE) frontend-typing
 
 frontend-test: ## Run frontend unit/component tests
 	cd frontend && npm run test
