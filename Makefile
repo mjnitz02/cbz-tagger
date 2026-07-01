@@ -106,7 +106,7 @@ dev: ## Run the API, GUI, and frontend dev servers locally
 	@echo "Starting CBZ Tagger development servers..."
 	@export LOG_LEVEL=INFO; \
 	export DEBUG_MODE=true; \
-	export TIMER_DELAY=35; \
+	export TIMER_DELAY=180; \
 	export CONFIG_PATH=~/Downloads/cbz_tagger/config; \
 	export SCAN_PATH=~/Downloads/cbz_tagger/scan; \
 	export STORAGE_PATH=~/Downloads/cbz_tagger/storage; \
