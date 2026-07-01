@@ -425,7 +425,7 @@ describe('SeriesPage', () => {
     mockSeries()
     server.use(
       http.get('*/api/enums/env', () =>
-        HttpResponse.json({ VERSION: '4.5.0', CONFIG_PATH: '/config' }),
+        HttpResponse.json({ VERSION: '5.0.0', CONFIG_PATH: '/config' }),
       ),
     )
     const user = userEvent.setup()
