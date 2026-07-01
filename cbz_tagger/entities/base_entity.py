@@ -70,39 +70,60 @@ class BaseEntity(BaseEntityObject):
 
     @classmethod
     def _get_request_configs(cls) -> list[dict]:
-        """Generate different browser configurations to rotate through for better anti-detection."""
+        """Generate different browser configurations to rotate through for better anti-detection.
+
+        cloudscraper's bundled fake-user-agent pool is stuck on ~2016-2017 browser builds
+        (some tagged with QQBrowser/UBrowser strings), which modern WAFs increasingly flag
+        with 400s. Pin explicit, current desktop User-Agents here instead of relying on
+        cloudscraper's auto-generated ones.
+        """
         return [
             {
                 "browser": "chrome",
                 "platform": "windows",
                 "headers": {
-                    "Accept": "application/json,text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                    "User-Agent": (
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                        "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+                    ),
+                    "Accept": "application/json, text/plain, */*",
                     "Accept-Language": "en-US,en;q=0.9",
-                    "DNT": "1",
-                    "Connection": "keep-alive",
-                    "Upgrade-Insecure-Requests": "1",
-                },
-            },
-            {
-                "browser": "firefox",
-                "platform": "darwin",
-                "headers": {
-                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-                    "Accept-Language": "en-US,en;q=0.5",
-                    "DNT": "1",
-                    "Connection": "keep-alive",
+                    "Sec-Fetch-Dest": "empty",
+                    "Sec-Fetch-Mode": "cors",
+                    "Sec-Fetch-Site": "same-site",
+                    "sec-ch-ua": '"Chromium";v="131", "Not_A Brand";v="24", "Google Chrome";v="131"',
+                    "sec-ch-ua-mobile": "?0",
+                    "sec-ch-ua-platform": '"Windows"',
                 },
             },
             {
                 "browser": "chrome",
                 "platform": "darwin",
                 "headers": {
-                    "Accept": "application/json,text/html,application/xhtml+xml",
-                    "Accept-Language": "en-GB,en;q=0.9",
-                    "Connection": "keep-alive",
-                    "Sec-Fetch-Dest": "document",
-                    "Sec-Fetch-Mode": "navigate",
-                    "Sec-Fetch-Site": "none",
+                    "User-Agent": (
+                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+                        "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+                    ),
+                    "Accept": "application/json, text/plain, */*",
+                    "Accept-Language": "en-US,en;q=0.9",
+                    "Sec-Fetch-Dest": "empty",
+                    "Sec-Fetch-Mode": "cors",
+                    "Sec-Fetch-Site": "same-site",
+                    "sec-ch-ua": '"Chromium";v="131", "Not_A Brand";v="24", "Google Chrome";v="131"',
+                    "sec-ch-ua-mobile": "?0",
+                    "sec-ch-ua-platform": '"macOS"',
+                },
+            },
+            {
+                "browser": "firefox",
+                "platform": "windows",
+                "headers": {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0",
+                    "Accept": "application/json, text/plain, */*",
+                    "Accept-Language": "en-US,en;q=0.5",
+                    "Sec-Fetch-Dest": "empty",
+                    "Sec-Fetch-Mode": "cors",
+                    "Sec-Fetch-Site": "same-site",
                 },
             },
         ]

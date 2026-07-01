@@ -132,16 +132,19 @@ make pre-commit-install
 
 ### Running tests
 ```shell
-# Test unit tests
+# Run the full test suite locally and in Docker
 make test
 
-# Test docker containers
-make build-docker
-make test-docker
+# Run unit tests only (locally or in Docker)
+make test-unit
+make test-unit-docker
+
+# Run integration tests only (locally or in Docker)
+make test-integration
+make test-integration-docker
 ```
 
 ### Run CBZ Tagger docker locally
 ```shell
-# Test unit tests
 make run-docker
 ```
