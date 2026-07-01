@@ -101,6 +101,10 @@ async function openRowMenu(
   )
 }
 
+async function openActionsMenu(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole('button', { name: 'Actions' }))
+}
+
 function nameOrder() {
   return screen
     .getAllByRole('link')
@@ -415,5 +419,72 @@ describe('SeriesPage', () => {
     expect(
       screen.queryByText('Manage downloads — Alpha Manga'),
     ).not.toBeInTheDocument()
+  })
+
+  it('opens the config dialog from the actions menu', async () => {
+    mockSeries()
+    server.use(
+      http.get('*/api/enums/env', () =>
+        HttpResponse.json({ VERSION: '4.5.0', CONFIG_PATH: '/config' }),
+      ),
+    )
+    const user = userEvent.setup()
+    renderWithClient()
+
+    await screen.findByText('Alpha Manga')
+    await openActionsMenu(user)
+    await user.click(await screen.findByRole('menuitem', { name: 'Config' }))
+
+    expect(await screen.findByText('Server Configuration')).toBeInTheDocument()
+    expect(screen.getByText('CONFIG_PATH')).toBeInTheDocument()
+    expect(screen.getByText('/config')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+    expect(screen.queryByText('Server Configuration')).not.toBeInTheDocument()
+  })
+
+  it('cleans orphaned files from the actions menu', async () => {
+    mockSeries()
+    server.use(
+      http.post('*/api/scanner/clean-orphaned', () =>
+        HttpResponse.json({ message: 'Orphaned files cleaned successfully' }),
+      ),
+    )
+    const user = userEvent.setup()
+    renderWithClient()
+
+    await screen.findByText('Alpha Manga')
+    await openActionsMenu(user)
+    await user.click(
+      await screen.findByRole('menuitem', { name: 'Clean orphaned files' }),
+    )
+
+    expect(
+      await screen.findByText('Orphaned files removed successfully'),
+    ).toBeInTheDocument()
+  })
+
+  it('shows a busy message when cleaning orphaned files while the scanner is locked', async () => {
+    mockSeries()
+    server.use(
+      http.post('*/api/scanner/clean-orphaned', () =>
+        HttpResponse.json(
+          { detail: 'Scanner is currently busy. Please wait.' },
+          { status: 409 },
+        ),
+      ),
+    )
+    const user = userEvent.setup()
+    renderWithClient()
+
+    await screen.findByText('Alpha Manga')
+    await openActionsMenu(user)
+    await user.click(
+      await screen.findByRole('menuitem', { name: 'Clean orphaned files' }),
+    )
+
+    expect(
+      await screen.findByText('Scanner is busy. Please wait and try again.'),
+    ).toBeInTheDocument()
   })
 })

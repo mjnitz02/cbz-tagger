@@ -7,6 +7,8 @@ import {
   Download,
   MoreHorizontal,
   RotateCw,
+  Settings2,
+  Sparkles,
   Trash2,
 } from 'lucide-react'
 import {
@@ -21,11 +23,13 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import ChapterDownloadsDialog from '@/components/ChapterDownloadsDialog'
+import ConfigDialog from '@/components/ConfigDialog'
 import { apiClient } from '@/lib/api-client'
 import { cn } from '@/lib/utils'
 import { formatRelative, stalenessTier } from '@/lib/staleness'
@@ -147,6 +151,7 @@ function SeriesPage() {
   const [deleteTarget, setDeleteTarget] = useState<SeriesStateItem | null>(null)
   const [manageTarget, setManageTarget] = useState<SeriesStateItem | null>(null)
   const [statusMessage, setStatusMessage] = useState<string>()
+  const [configOpen, setConfigOpen] = useState(false)
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['series-state'],
@@ -208,6 +213,21 @@ function SeriesPage() {
       }
       setStatusMessage(`Removed ${target.name} from the database`)
       setDeleteTarget(null)
+      queryClient.invalidateQueries({ queryKey: ['series-state'] })
+    },
+  })
+
+  const cleanOrphanedFiles = useMutation({
+    mutationFn: async () => {
+      const { response } = await apiClient.POST('/api/scanner/clean-orphaned')
+      return response
+    },
+    onSuccess: (response) => {
+      if (response.status === 409) {
+        setStatusMessage(BUSY_MESSAGE)
+        return
+      }
+      setStatusMessage('Orphaned files removed successfully')
       queryClient.invalidateQueries({ queryKey: ['series-state'] })
     },
   })
@@ -277,16 +297,38 @@ function SeriesPage() {
       <div className="flex items-start justify-between gap-4">
         <h1 className="text-2xl font-medium">Series</h1>
         <div className="flex flex-col items-end gap-1">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => refresh.mutate()}
-            disabled={refreshing}
-          >
-            <RotateCw className={cn('size-4', refreshing && 'animate-spin')} />
-            {refreshing ? 'Refreshing…' : 'Refresh database'}
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button type="button" variant="outline" size="sm">
+                <Settings2 className="size-4" />
+                Actions
+                <ChevronDown className="size-4 opacity-60" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem
+                disabled={refreshing}
+                onSelect={() => refresh.mutate()}
+              >
+                <RotateCw
+                  className={cn('size-4', refreshing && 'animate-spin')}
+                />
+                {refreshing ? 'Refreshing…' : 'Refresh database'}
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setConfigOpen(true)}>
+                <Settings2 className="size-4" />
+                Config
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                disabled={cleanOrphanedFiles.isPending}
+                onSelect={() => cleanOrphanedFiles.mutate()}
+              >
+                <Sparkles className="size-4" />
+                Clean orphaned files
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           {refresh.isError && (
             <span className="text-xs text-destructive">
               {(refresh.error as Error).message}
@@ -517,6 +559,7 @@ function SeriesPage() {
                             <Download className="size-4" />
                             Manage downloads
                           </DropdownMenuItem>
+                          <DropdownMenuSeparator />
                           <DropdownMenuItem
                             variant="destructive"
                             onSelect={() => setDeleteTarget(row)}
@@ -637,6 +680,8 @@ function SeriesPage() {
         }}
         onStatusMessage={setStatusMessage}
       />
+
+      <ConfigDialog open={configOpen} onOpenChange={setConfigOpen} />
     </div>
   )
 }

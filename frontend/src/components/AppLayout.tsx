@@ -9,7 +9,6 @@ import { cn } from '@/lib/utils'
 const NAV_LINKS = [
   { to: '/series', label: 'Series' },
   { to: '/add_series', label: 'Add Series' },
-  { to: '/config', label: 'Config' },
   { to: '/log', label: 'Log' },
 ]
 
