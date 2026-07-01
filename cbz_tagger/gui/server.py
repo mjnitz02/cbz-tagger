@@ -444,6 +444,12 @@ class UiState:
             formatted_state.append(item)
 
         # Update UI only if client is still valid
+        if "table_series" not in self.gui_elements:
+            # Series table hasn't been rendered yet in this process (e.g. refresh was
+            # triggered from the nav bar on another page before /series was ever visited)
+            logger.debug("Cannot refresh GUI - series table not yet initialized")
+            return
+
         try:
             if context.client:
                 self.gui_elements["table_series"].rows = formatted_state
