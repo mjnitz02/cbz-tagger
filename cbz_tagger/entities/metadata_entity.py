@@ -1,9 +1,7 @@
 import math
 from datetime import datetime
 
-from cbz_tagger.common.enums import Emoji
 from cbz_tagger.common.enums import IgnoredTags
-from cbz_tagger.common.enums import Status
 from cbz_tagger.entities.base_entity import BaseEntity
 
 
@@ -67,18 +65,6 @@ class MetadataEntity(BaseEntity):
         if self.completed:
             return "Ended"
         return "Continuing"
-
-    @property
-    def status_indicator(self) -> str:
-        if self.status == Status.ONGOING:
-            return Emoji.CIRCLE_GREEN
-        if self.status == Status.COMPLETED:
-            return Emoji.CHECK_GREEN
-        if self.status == Status.HIATUS:
-            return Emoji.CIRCLE_YELLOW
-        if self.status == Status.CANCELLED:
-            return Emoji.CIRCLE_RED
-        return Emoji.QUESTION_MARK
 
     @property
     def age_rating(self) -> str:

@@ -23,22 +23,6 @@ class Status:
     DROPPED: str = "dropped"
 
 
-class Emoji:
-    CIRCLE_GREEN: str = "🟢"
-    CIRCLE_YELLOW: str = "🟡"
-    CIRCLE_RED: str = "🔴"
-    CIRCLE_BROWN: str = "🟤"
-    CHECK_GREEN: str = "✅"
-    QUESTION_MARK: str = "❓"
-    SQUARE_GREEN: str = "🟩"
-    SQUARE_RED: str = "🟥"
-    SQUARE_ORANGE: str = "🟧"
-
-    @classmethod
-    def to_api(cls):
-        return {k: v for k, v in cls.__dict__.items() if not k.startswith("_") and not callable(v)}
-
-
 class ChapterData(BaseModel):
     """Data model representing chapter information for building standardized responses."""
 

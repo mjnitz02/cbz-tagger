@@ -708,16 +708,15 @@ def test_entity_database_to_state(mock_entity_db, manga_name):
     assert state == [
         {
             "entity_id": "831b12b8-2d0e-4397-8719-1efee4c32f40",
-            "entity_name": {
-                "link": f"https://{Urls.MDX}/title/831b12b8-2d0e-4397-8719-1efee4c32f40",
-                "name": manga_name,
-            },
-            "latest_chapter": 11.0,
+            "name": manga_name,
+            "name_link": f"https://{Urls.MDX}/title/831b12b8-2d0e-4397-8719-1efee4c32f40",
+            "status": "ongoing",
+            "tracked": False,
+            "latest_chapter": "11",
             "latest_chapter_date": datetime(2021, 7, 13, 8, 28, 1, tzinfo=timezone.utc),
-            "plugin": {"link": f"https://{Urls.MDX}/title/831b12b8-2d0e-4397-8719-1efee4c32f40", "name": "mdx"},
-            "status": "🟢",
-            "tracked": "🟤",
-            "updated": "2022-12-31T11:57:41+00:00",
+            "metadata_updated": "2022-12-31T11:57:41+00:00",
+            "plugin": "mdx",
+            "plugin_link": f"https://{Urls.MDX}/title/831b12b8-2d0e-4397-8719-1efee4c32f40",
         }
     ]
 

@@ -214,11 +214,11 @@ class TestScannerOperations:
     @patch("cbz_tagger.web.api.scanner")
     def test_get_scanner_state_operation(self, mock_scanner):
         """Test get scanner state operation."""
-        mock_scanner.to_state.return_value = {"state": "data"}
+        mock_scanner.to_state.return_value = []
         result = api.get_scanner_state_operation()
         mock_scanner.reload_scanner.assert_called_once()
         mock_scanner.to_state.assert_called_once()
-        assert result == {"state": "data"}
+        assert result == []
 
     @patch("cbz_tagger.web.api.scanner")
     def test_get_series_list_operation(self, mock_scanner):
@@ -310,12 +310,27 @@ class TestAPIEndpoints:
     @patch("cbz_tagger.web.api.scanner")
     def test_get_scanner_state_endpoint(self, mock_scanner, reset_app_state, client):
         """Test GET /api/scanner/state endpoint."""
-        mock_scanner.to_state.return_value = {"test": "state"}
+        mock_scanner.to_state.return_value = [
+            {
+                "entity_id": "id1",
+                "name": "Series1",
+                "name_link": "https://example.com/title/id1",
+                "status": "ongoing",
+                "tracked": True,
+                "latest_chapter": "11",
+                "latest_chapter_date": "2021-07-13T08:28:01+00:00",
+                "metadata_updated": "2022-12-31T11:57:41+00:00",
+                "plugin": "mdx",
+                "plugin_link": "https://example.com/title/id1",
+            }
+        ]
         response = client.get("/api/scanner/state")
         assert response.status_code == 200
         data = response.json()
-        assert "state" in data
-        assert data["state"] == {"test": "state"}
+        assert "series" in data
+        assert data["series"][0]["entity_id"] == "id1"
+        assert data["series"][0]["status"] == "ongoing"
+        assert data["series"][0]["tracked"] is True
 
     @patch("cbz_tagger.web.api.scanner")
     def test_get_series_list_endpoint(self, mock_scanner, reset_app_state, client):
@@ -475,15 +490,6 @@ class TestAPIEndpoints:
         assert "message" in data
         assert "cleared successfully" in data["message"]
         mock_log_reader.clear_log_file.assert_called_once()
-
-    @patch("cbz_tagger.common.enums.Emoji.to_api")
-    def test_get_emoji_enum_endpoint(self, mock_to_api, reset_app_state, client):
-        """Test GET /api/enums/emoji endpoint."""
-        mock_to_api.return_value = {"emoji": "data"}
-        response = client.get("/api/enums/emoji")
-        assert response.status_code == 200
-        data = response.json()
-        assert data == {"emoji": "data"}
 
     @patch("cbz_tagger.common.plugins.Plugins.to_api")
     def test_get_plugins_enum_endpoint(self, mock_to_api, reset_app_state, client):

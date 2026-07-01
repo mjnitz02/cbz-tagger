@@ -9,7 +9,6 @@ from fastapi import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from cbz_tagger.common.enums import Emoji
 from cbz_tagger.common.env import AppEnv
 from cbz_tagger.common.plugins import Plugins
 from cbz_tagger.database.file_scanner import FileScanner
@@ -133,6 +132,23 @@ class SearchSeriesResponse(BaseModel):
 
 class LogsResponse(BaseModel):
     logs: str
+
+
+class SeriesStateItem(BaseModel):
+    entity_id: str
+    name: str
+    name_link: str
+    status: str
+    tracked: bool
+    latest_chapter: str | None
+    latest_chapter_date: datetime | None
+    metadata_updated: str | None
+    plugin: str
+    plugin_link: str
+
+
+class SeriesStateResponse(BaseModel):
+    series: list[SeriesStateItem]
 
 
 class PluginsResponse(BaseModel):
@@ -289,12 +305,12 @@ async def reload_scanner():
     return {"message": "Scanner reloaded successfully"}
 
 
-@app.get("/api/scanner/state")
+@app.get("/api/scanner/state", response_model=SeriesStateResponse)
 async def get_scanner_state():
     """Get the current state of the scanner."""
     loop = asyncio.get_event_loop()
     state = await loop.run_in_executor(None, get_scanner_state_operation)
-    return {"state": state}
+    return {"series": state}
 
 
 @app.get("/api/scanner/series", response_model=SeriesListResponse)
@@ -393,12 +409,6 @@ async def clear_logs():
     loop = asyncio.get_event_loop()
     await loop.run_in_executor(None, clear_logs_operation)
     return {"message": "Log file cleared successfully"}
-
-
-@app.get("/api/enums/emoji")
-async def get_emoji_enum():
-    """Get the Emoji enum values."""
-    return Emoji.to_api()
 
 
 @app.get("/api/enums/plugins", response_model=PluginsResponse)
