@@ -187,6 +187,30 @@ class TestScannerOperations:
         api.reload_scanner_operation()
         mock_scanner.reload_scanner.assert_called_once()
 
+    @patch("cbz_tagger.web.api.FileLogReader")
+    def test_get_logs_operation(self, mock_log_reader_class):
+        """Test get logs operation."""
+        mock_log_reader = MagicMock()
+        mock_log_reader.read_last_lines.return_value = "log line 1\nlog line 2\n"
+        mock_log_reader_class.return_value = mock_log_reader
+
+        result = api.get_logs_operation(500)
+
+        mock_log_reader_class.assert_called_once_with(api.env.LOG_PATH)
+        mock_log_reader.read_last_lines.assert_called_once_with(500)
+        assert result == "log line 1\nlog line 2\n"
+
+    @patch("cbz_tagger.web.api.FileLogReader")
+    def test_clear_logs_operation(self, mock_log_reader_class):
+        """Test clear logs operation."""
+        mock_log_reader = MagicMock()
+        mock_log_reader_class.return_value = mock_log_reader
+
+        api.clear_logs_operation()
+
+        mock_log_reader_class.assert_called_once_with(api.env.LOG_PATH)
+        mock_log_reader.clear_log_file.assert_called_once()
+
     @patch("cbz_tagger.web.api.scanner")
     def test_get_scanner_state_operation(self, mock_scanner):
         """Test get scanner state operation."""
@@ -414,6 +438,43 @@ class TestAPIEndpoints:
         data = response.json()
         assert "message" in data
         assert "cleaned successfully" in data["message"]
+
+    @patch("cbz_tagger.web.api.FileLogReader")
+    def test_get_logs_endpoint(self, mock_log_reader_class, reset_app_state, client):
+        """Test GET /api/logs endpoint."""
+        mock_log_reader = MagicMock()
+        mock_log_reader.read_last_lines.return_value = "log contents"
+        mock_log_reader_class.return_value = mock_log_reader
+
+        response = client.get("/api/logs")
+        assert response.status_code == 200
+        data = response.json()
+        assert data == {"logs": "log contents"}
+        mock_log_reader.read_last_lines.assert_called_once_with(1000)
+
+    @patch("cbz_tagger.web.api.FileLogReader")
+    def test_get_logs_endpoint_with_max_lines(self, mock_log_reader_class, reset_app_state, client):
+        """Test GET /api/logs endpoint with max_lines query parameter."""
+        mock_log_reader = MagicMock()
+        mock_log_reader.read_last_lines.return_value = "log contents"
+        mock_log_reader_class.return_value = mock_log_reader
+
+        response = client.get("/api/logs?max_lines=50")
+        assert response.status_code == 200
+        mock_log_reader.read_last_lines.assert_called_once_with(50)
+
+    @patch("cbz_tagger.web.api.FileLogReader")
+    def test_clear_logs_endpoint(self, mock_log_reader_class, reset_app_state, client):
+        """Test POST /api/logs/clear endpoint."""
+        mock_log_reader = MagicMock()
+        mock_log_reader_class.return_value = mock_log_reader
+
+        response = client.post("/api/logs/clear")
+        assert response.status_code == 200
+        data = response.json()
+        assert "message" in data
+        assert "cleared successfully" in data["message"]
+        mock_log_reader.clear_log_file.assert_called_once()
 
     @patch("cbz_tagger.common.enums.Emoji.to_api")
     def test_get_emoji_enum_endpoint(self, mock_to_api, reset_app_state, client):

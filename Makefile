@@ -5,6 +5,7 @@ SHELL := /usr/bin/env bash
 
 .PHONY: help install pre-commit-install update-packages \
 	lint-format lint-check lint-yaml lint-typing lint test-lint \
+	frontend-install frontend-lint frontend-test-lint frontend-test frontend-build frontend-generate-api \
 	test test-unit test-integration test-unit-docker test-integration-docker \
 	build-docker run-docker dev run clean-git
 
@@ -38,13 +39,38 @@ lint-yaml: ## Fix YAML formatting across the repo
 lint-typing: ## Run static type checking with ty
 	uvx ty@0.0.14 check cbz_tagger
 
-lint: lint-format lint-check lint-typing lint-yaml ## Run all linters and auto-fix issues
+lint: lint-format lint-check lint-typing lint-yaml frontend-lint ## Run all linters and auto-fix issues
 
 test-lint: ## Check formatting/lint/types without modifying files (CI mode)
 	uv run ruff format . --check
 	uv run ruff check .
 	uvx yamlfix .github cbz_tagger tests docker-compose.yaml .pre-commit-config.yaml --check
 	uvx ty@0.0.14 check cbz_tagger
+	$(MAKE) frontend-test-lint
+
+##@ Frontend
+
+frontend-install: ## Install frontend dependencies
+	cd frontend && npm ci
+
+frontend-lint: ## Format and lint the frontend, auto-fixing issues
+	cd frontend && npm run format
+	cd frontend && npm run lint
+
+frontend-test-lint: ## Check frontend formatting/lint/types without modifying files (CI mode)
+	cd frontend && npm run format:check
+	cd frontend && npm run lint:check
+	cd frontend && npx tsc -b --noEmit
+
+frontend-test: ## Run frontend unit/component tests
+	cd frontend && npm run test
+
+frontend-build: ## Build the frontend static assets
+	cd frontend && npm run build
+
+frontend-generate-api: ## Regenerate the typed TS API client from FastAPI's OpenAPI schema
+	uv run python -m scripts.export_openapi_schema
+	cd frontend && npx openapi-typescript openapi.json -o src/lib/api-schema.ts
 
 ##@ Testing
 
@@ -76,7 +102,7 @@ run-docker: ## Run cbz-tagger via docker-compose
 
 ##@ Local development
 
-dev: ## Run the API and GUI dev servers locally
+dev: ## Run the API, GUI, and frontend dev servers locally
 	@echo "Starting CBZ Tagger development servers..."
 	@export LOG_LEVEL=INFO; \
 	export DEBUG_MODE=true; \
@@ -89,9 +115,12 @@ dev: ## Run the API and GUI dev servers locally
 	uv run python -m cbz_tagger.web.server & \
 	API_PID=$$!; \
 	sleep 2; \
+	echo "Starting Vite frontend dev server on port 5173..."; \
+	(cd frontend && npm run dev) & \
+	VITE_PID=$$!; \
 	echo "Starting NiceGUI frontend on port 8080..."; \
-	uv run python -m cbz_tagger.gui.server || kill $$API_PID; \
-	kill $$API_PID 2>/dev/null || true
+	uv run python -m cbz_tagger.gui.server || (kill $$API_PID $$VITE_PID 2>/dev/null; true); \
+	kill $$API_PID $$VITE_PID 2>/dev/null || true
 
 run: ## Run the standalone tagger script locally
 	@export TIMER_DELAY=600; \

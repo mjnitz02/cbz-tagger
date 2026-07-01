@@ -14,6 +14,7 @@ from cbz_tagger.common.env import AppEnv
 from cbz_tagger.common.plugins import Plugins
 from cbz_tagger.database.file_scanner import FileScanner
 from cbz_tagger.entities.metadata_entity import MetadataEntity
+from cbz_tagger.gui.file_log_reader import FileLogReader
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +100,41 @@ class SeriesSearchResult(BaseModel):
     display_name: str  # Formatted for display in UI
 
 
+class MessageResponse(BaseModel):
+    message: str
+
+
+class ScannerStatusResponse(BaseModel):
+    busy: bool
+    scanner_initialized: bool
+
+
+class SeriesSummary(BaseModel):
+    name: str
+    entity_id: str
+
+
+class SeriesListResponse(BaseModel):
+    series: list[SeriesSummary]
+
+
+class ChapterSummary(BaseModel):
+    entity_id: str
+    chapter_number: str
+
+
+class ChaptersResponse(BaseModel):
+    chapters: list[ChapterSummary]
+
+
+class SearchSeriesResponse(BaseModel):
+    results: list[SeriesSearchResult]
+
+
+class LogsResponse(BaseModel):
+    logs: str
+
+
 # Helper functions
 def is_scanner_busy() -> bool:
     """Check if the scanner is currently busy."""
@@ -170,6 +206,18 @@ def reload_scanner_operation():
     scanner.reload_scanner()
 
 
+def get_logs_operation(max_lines: int) -> str:
+    """Read the last N lines from the log file."""
+    log_reader = FileLogReader(env.LOG_PATH)
+    return log_reader.read_last_lines(max_lines)
+
+
+def clear_logs_operation() -> None:
+    """Clear the log file."""
+    log_reader = FileLogReader(env.LOG_PATH)
+    log_reader.clear_log_file()
+
+
 def get_scanner_state_operation():
     """Get the current state of the scanner."""
     scanner.reload_scanner()
@@ -196,7 +244,7 @@ def get_chapters_operation(entity_id: str):
 
 
 # API Endpoints
-@app.get("/api/scanner/status")
+@app.get("/api/scanner/status", response_model=ScannerStatusResponse)
 async def get_scanner_status():
     """Get the current status of the scanner."""
     return {
@@ -205,14 +253,14 @@ async def get_scanner_status():
     }
 
 
-@app.post("/api/scanner/refresh")
+@app.post("/api/scanner/refresh", response_model=MessageResponse)
 async def refresh_scanner():
     """Refresh the scanner database."""
     await run_scanner_operation(refresh_scanner_operation)
     return {"message": "Scanner refresh completed successfully"}
 
 
-@app.post("/api/scanner/reload")
+@app.post("/api/scanner/reload", response_model=MessageResponse)
 async def reload_scanner():
     """Reload the scanner to refresh its internal state."""
     loop = asyncio.get_event_loop()
@@ -228,7 +276,7 @@ async def get_scanner_state():
     return {"state": state}
 
 
-@app.get("/api/scanner/series")
+@app.get("/api/scanner/series", response_model=SeriesListResponse)
 async def get_series_list():
     """Get the list of all series."""
     loop = asyncio.get_event_loop()
@@ -236,7 +284,7 @@ async def get_series_list():
     return {"series": [{"name": name, "entity_id": entity_id} for name, entity_id in series_list]}
 
 
-@app.get("/api/scanner/series/{entity_id}/chapters")
+@app.get("/api/scanner/series/{entity_id}/chapters", response_model=ChaptersResponse)
 async def get_series_chapters(entity_id: str):
     """Get chapters for a specific series."""
     loop = asyncio.get_event_loop()
@@ -244,7 +292,7 @@ async def get_series_chapters(entity_id: str):
     return {"chapters": chapters}
 
 
-@app.get("/api/scanner/search-series")
+@app.get("/api/scanner/search-series", response_model=SearchSeriesResponse)
 async def search_series(title: str):
     """Search for series by title using MangaDex API."""
     if not title or len(title.strip()) == 0:
@@ -275,7 +323,7 @@ async def search_series(title: str):
     return {"results": results}
 
 
-@app.post("/api/scanner/add-series")
+@app.post("/api/scanner/add-series", response_model=MessageResponse)
 async def add_series(request: AddSeriesRequest):
     """Add a new series to the scanner."""
     await run_scanner_operation(
@@ -289,25 +337,41 @@ async def add_series(request: AddSeriesRequest):
     return {"message": f"Series '{request.entity_name}' added successfully"}
 
 
-@app.delete("/api/scanner/series/{entity_id}")
+@app.delete("/api/scanner/series/{entity_id}", response_model=MessageResponse)
 async def delete_series(entity_id: str, entity_name: str):
     """Delete a series from the scanner."""
     await run_scanner_operation(delete_series_operation, entity_id, entity_name)
     return {"message": f"Series '{entity_name}' deleted successfully"}
 
 
-@app.delete("/api/scanner/chapter/{entity_id}/{chapter_id}")
+@app.delete("/api/scanner/chapter/{entity_id}/{chapter_id}", response_model=MessageResponse)
 async def delete_chapter_tracking(entity_id: str, chapter_id: str):
     """Delete chapter tracking for a specific chapter."""
     await run_scanner_operation(delete_chapter_tracking_operation, entity_id, chapter_id)
     return {"message": "Chapter tracking deleted successfully"}
 
 
-@app.post("/api/scanner/clean-orphaned")
+@app.post("/api/scanner/clean-orphaned", response_model=MessageResponse)
 async def clean_orphaned_files():
     """Clean orphaned files."""
     await run_scanner_operation(clean_orphaned_files_operation)
     return {"message": "Orphaned files cleaned successfully"}
+
+
+@app.get("/api/logs", response_model=LogsResponse)
+async def get_logs(max_lines: int = 1000):
+    """Get the last N lines of the log file."""
+    loop = asyncio.get_event_loop()
+    logs = await loop.run_in_executor(None, get_logs_operation, max_lines)
+    return {"logs": logs}
+
+
+@app.post("/api/logs/clear", response_model=MessageResponse)
+async def clear_logs():
+    """Clear the log file."""
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, clear_logs_operation)
+    return {"message": "Log file cleared successfully"}
 
 
 @app.get("/api/enums/emoji")
