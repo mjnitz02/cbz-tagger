@@ -708,16 +708,15 @@ def test_entity_database_to_state(mock_entity_db, manga_name):
     assert state == [
         {
             "entity_id": "831b12b8-2d0e-4397-8719-1efee4c32f40",
-            "entity_name": {
-                "link": f"https://{Urls.MDX}/title/831b12b8-2d0e-4397-8719-1efee4c32f40",
-                "name": manga_name,
-            },
-            "latest_chapter": 11.0,
+            "name": manga_name,
+            "name_link": f"https://{Urls.MDX}/title/831b12b8-2d0e-4397-8719-1efee4c32f40",
+            "status": "ongoing",
+            "tracked": False,
+            "latest_chapter": "11",
             "latest_chapter_date": datetime(2021, 7, 13, 8, 28, 1, tzinfo=timezone.utc),
-            "plugin": {"link": f"https://{Urls.MDX}/title/831b12b8-2d0e-4397-8719-1efee4c32f40", "name": "mdx"},
-            "status": "🟢",
-            "tracked": "🟤",
-            "updated": "2022-12-31T11:57:41+00:00",
+            "metadata_updated": "2022-12-31T11:57:41+00:00",
+            "plugin": "mdx",
+            "plugin_link": f"https://{Urls.MDX}/title/831b12b8-2d0e-4397-8719-1efee4c32f40",
         }
     ]
 
@@ -1065,3 +1064,59 @@ def test_entity_db_delete_chapter_entity_id_from_downloaded_chapters_multiple_sa
 
     # Verify save was called
     simple_mock_entity_db.save.assert_called()
+
+
+def test_entity_db_add_chapter_entity_id_to_downloaded_chapters(simple_mock_entity_db, manga_request_id):
+    """Test add_chapter_entity_id_to_downloaded_chapters adds a chapter that is not yet downloaded"""
+    chapter_id = "chapter-123"
+
+    assert (manga_request_id, chapter_id) not in simple_mock_entity_db.entity_downloads
+
+    simple_mock_entity_db.add_chapter_entity_id_to_downloaded_chapters(manga_request_id, chapter_id)
+
+    assert (manga_request_id, chapter_id) in simple_mock_entity_db.entity_downloads
+    simple_mock_entity_db.save.assert_called_once()
+
+
+def test_entity_db_add_chapter_entity_id_to_downloaded_chapters_idempotent(simple_mock_entity_db, manga_request_id):
+    """Test add_chapter_entity_id_to_downloaded_chapters is a no-op if the chapter is already downloaded"""
+    chapter_id = "chapter-123"
+    simple_mock_entity_db.entity_downloads.add((manga_request_id, chapter_id))
+
+    simple_mock_entity_db.add_chapter_entity_id_to_downloaded_chapters(manga_request_id, chapter_id)
+
+    assert len(simple_mock_entity_db.entity_downloads) == 1
+    simple_mock_entity_db.save.assert_not_called()
+
+
+def test_entity_db_set_downloaded_chapters_add_and_remove(simple_mock_entity_db, manga_request_id):
+    """Test set_downloaded_chapters reconciles the downloaded set to match the desired chapters"""
+    chapter_1 = mock.MagicMock(entity_id="chapter-1")
+    chapter_2 = mock.MagicMock(entity_id="chapter-2")
+    chapter_3 = mock.MagicMock(entity_id="chapter-3")
+    simple_mock_entity_db.chapters.database[manga_request_id] = [chapter_1, chapter_2, chapter_3]
+
+    # Chapter 1 is currently downloaded, chapter 2 and 3 are not
+    simple_mock_entity_db.entity_downloads.add((manga_request_id, "chapter-1"))
+
+    # Desired state: keep chapter 1, add chapter 2, leave chapter 3 out
+    simple_mock_entity_db.set_downloaded_chapters(manga_request_id, ["chapter-1", "chapter-2"])
+
+    assert (manga_request_id, "chapter-1") in simple_mock_entity_db.entity_downloads
+    assert (manga_request_id, "chapter-2") in simple_mock_entity_db.entity_downloads
+    assert (manga_request_id, "chapter-3") not in simple_mock_entity_db.entity_downloads
+    simple_mock_entity_db.save.assert_called_once()
+
+
+def test_entity_db_set_downloaded_chapters_ignores_unknown_chapters(simple_mock_entity_db, manga_request_id):
+    """Test set_downloaded_chapters leaves downloads for chapters outside the known list untouched"""
+    chapter_1 = mock.MagicMock(entity_id="chapter-1")
+    simple_mock_entity_db.chapters.database[manga_request_id] = [chapter_1]
+
+    # A chapter that is downloaded but no longer present in the known chapter list (e.g. a race)
+    simple_mock_entity_db.entity_downloads.add((manga_request_id, "unknown-chapter"))
+
+    simple_mock_entity_db.set_downloaded_chapters(manga_request_id, [])
+
+    assert (manga_request_id, "unknown-chapter") in simple_mock_entity_db.entity_downloads
+    simple_mock_entity_db.save.assert_called_once()

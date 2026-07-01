@@ -3,17 +3,25 @@ import logging
 import os
 from contextlib import asynccontextmanager
 from datetime import datetime
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.responses import Response
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from cbz_tagger.common.enums import Emoji
 from cbz_tagger.common.env import AppEnv
 from cbz_tagger.common.plugins import Plugins
 from cbz_tagger.database.file_scanner import FileScanner
 from cbz_tagger.entities.metadata_entity import MetadataEntity
+from cbz_tagger.web.file_log_reader import FileLogReader
+
+# Built React SPA, produced by `npm run build` (frontend/dist). Only present in the
+# production Docker image; local dev serves the frontend via a separate Vite process.
+FRONTEND_DIST = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +34,7 @@ scanner = FileScanner(
     environment=env.get_user_environment(),
 )
 
-# Simple in-memory state storage (replaces NiceGUI app.storage)
+# Simple in-memory state storage
 _app_state = {"scanning_state": False, "background_timer_started": False}
 
 
@@ -99,6 +107,84 @@ class SeriesSearchResult(BaseModel):
     display_name: str  # Formatted for display in UI
 
 
+class MessageResponse(BaseModel):
+    message: str
+
+
+class ScannerStatusResponse(BaseModel):
+    busy: bool
+    scanner_initialized: bool
+
+
+class SeriesSummary(BaseModel):
+    name: str
+    entity_id: str
+
+
+class SeriesListResponse(BaseModel):
+    series: list[SeriesSummary]
+
+
+class ChapterSummary(BaseModel):
+    entity_id: str
+    chapter_number: str
+    downloaded: bool
+
+
+class ChaptersResponse(BaseModel):
+    chapters: list[ChapterSummary]
+
+
+class SetDownloadsRequest(BaseModel):
+    downloaded_chapter_ids: list[str]
+
+
+class SearchSeriesResponse(BaseModel):
+    results: list[SeriesSearchResult]
+
+
+class LogsResponse(BaseModel):
+    logs: str
+
+
+class SeriesStateItem(BaseModel):
+    entity_id: str
+    name: str
+    name_link: str
+    status: str
+    tracked: bool
+    latest_chapter: str | None
+    latest_chapter_date: datetime | None
+    metadata_updated: str | None
+    plugin: str
+    plugin_link: str
+
+
+class SeriesStateResponse(BaseModel):
+    series: list[SeriesStateItem]
+
+
+class PluginsResponse(BaseModel):
+    DEFAULT: str
+    all: list[str]
+
+
+class EnvConfigResponse(BaseModel):
+    VERSION: str
+    PUID: int
+    PGID: int
+    DEBUG_MODE: bool
+    UMASK: str
+    CONFIG_PATH: str
+    SCAN_PATH: str
+    STORAGE_PATH: str
+    LOG_PATH: str
+    TIMER_DELAY: int
+    PROXY_URL: str | None
+    DELAY_PER_REQUEST: float
+    LOG_LEVEL: int
+
+
 # Helper functions
 def is_scanner_busy() -> bool:
     """Check if the scanner is currently busy."""
@@ -155,9 +241,9 @@ def delete_series_operation(entity_id: str, entity_name: str):
     scanner.entity_database.delete_entity_id(entity_id, entity_name)
 
 
-def delete_chapter_tracking_operation(entity_id: str, chapter_id: str):
-    """Delete chapter tracking for a specific chapter."""
-    scanner.entity_database.delete_chapter_entity_id_from_downloaded_chapters(entity_id, chapter_id)
+def set_downloads_operation(entity_id: str, downloaded_chapter_ids: list[str]):
+    """Reconcile the downloaded chapters for a series."""
+    scanner.entity_database.set_downloaded_chapters(entity_id, downloaded_chapter_ids)
 
 
 def clean_orphaned_files_operation():
@@ -168,6 +254,18 @@ def clean_orphaned_files_operation():
 def reload_scanner_operation():
     """Reload the scanner to refresh its internal state."""
     scanner.reload_scanner()
+
+
+def get_logs_operation(max_lines: int) -> str:
+    """Read the last N lines from the log file."""
+    log_reader = FileLogReader(env.LOG_PATH)
+    return log_reader.read_last_lines(max_lines)
+
+
+def clear_logs_operation() -> None:
+    """Clear the log file."""
+    log_reader = FileLogReader(env.LOG_PATH)
+    log_reader.clear_log_file()
 
 
 def get_scanner_state_operation():
@@ -186,17 +284,19 @@ def get_chapters_operation(entity_id: str):
     """Get chapters for a specific series."""
     scanner.reload_scanner()
     chapters = scanner.entity_database.chapters.database.get(entity_id, [])
+    entity_downloads = scanner.entity_database.entity_downloads
     return [
         {
             "entity_id": chapter.entity_id,
-            "chapter_number": chapter.chapter_number,
+            "chapter_number": chapter.chapter_string,
+            "downloaded": (entity_id, chapter.entity_id) in entity_downloads,
         }
         for chapter in (chapters if chapters is not None else [])
     ]
 
 
 # API Endpoints
-@app.get("/api/scanner/status")
+@app.get("/api/scanner/status", response_model=ScannerStatusResponse)
 async def get_scanner_status():
     """Get the current status of the scanner."""
     return {
@@ -205,14 +305,14 @@ async def get_scanner_status():
     }
 
 
-@app.post("/api/scanner/refresh")
+@app.post("/api/scanner/refresh", response_model=MessageResponse)
 async def refresh_scanner():
     """Refresh the scanner database."""
     await run_scanner_operation(refresh_scanner_operation)
     return {"message": "Scanner refresh completed successfully"}
 
 
-@app.post("/api/scanner/reload")
+@app.post("/api/scanner/reload", response_model=MessageResponse)
 async def reload_scanner():
     """Reload the scanner to refresh its internal state."""
     loop = asyncio.get_event_loop()
@@ -220,15 +320,15 @@ async def reload_scanner():
     return {"message": "Scanner reloaded successfully"}
 
 
-@app.get("/api/scanner/state")
+@app.get("/api/scanner/state", response_model=SeriesStateResponse)
 async def get_scanner_state():
     """Get the current state of the scanner."""
     loop = asyncio.get_event_loop()
     state = await loop.run_in_executor(None, get_scanner_state_operation)
-    return {"state": state}
+    return {"series": state}
 
 
-@app.get("/api/scanner/series")
+@app.get("/api/scanner/series", response_model=SeriesListResponse)
 async def get_series_list():
     """Get the list of all series."""
     loop = asyncio.get_event_loop()
@@ -236,7 +336,7 @@ async def get_series_list():
     return {"series": [{"name": name, "entity_id": entity_id} for name, entity_id in series_list]}
 
 
-@app.get("/api/scanner/series/{entity_id}/chapters")
+@app.get("/api/scanner/series/{entity_id}/chapters", response_model=ChaptersResponse)
 async def get_series_chapters(entity_id: str):
     """Get chapters for a specific series."""
     loop = asyncio.get_event_loop()
@@ -244,7 +344,7 @@ async def get_series_chapters(entity_id: str):
     return {"chapters": chapters}
 
 
-@app.get("/api/scanner/search-series")
+@app.get("/api/scanner/search-series", response_model=SearchSeriesResponse)
 async def search_series(title: str):
     """Search for series by title using MangaDex API."""
     if not title or len(title.strip()) == 0:
@@ -275,7 +375,7 @@ async def search_series(title: str):
     return {"results": results}
 
 
-@app.post("/api/scanner/add-series")
+@app.post("/api/scanner/add-series", response_model=MessageResponse)
 async def add_series(request: AddSeriesRequest):
     """Add a new series to the scanner."""
     await run_scanner_operation(
@@ -289,40 +389,71 @@ async def add_series(request: AddSeriesRequest):
     return {"message": f"Series '{request.entity_name}' added successfully"}
 
 
-@app.delete("/api/scanner/series/{entity_id}")
+@app.delete("/api/scanner/series/{entity_id}", response_model=MessageResponse)
 async def delete_series(entity_id: str, entity_name: str):
     """Delete a series from the scanner."""
     await run_scanner_operation(delete_series_operation, entity_id, entity_name)
     return {"message": f"Series '{entity_name}' deleted successfully"}
 
 
-@app.delete("/api/scanner/chapter/{entity_id}/{chapter_id}")
-async def delete_chapter_tracking(entity_id: str, chapter_id: str):
-    """Delete chapter tracking for a specific chapter."""
-    await run_scanner_operation(delete_chapter_tracking_operation, entity_id, chapter_id)
-    return {"message": "Chapter tracking deleted successfully"}
+@app.put("/api/scanner/series/{entity_id}/downloads", response_model=MessageResponse)
+async def set_series_downloads(entity_id: str, request: SetDownloadsRequest):
+    """Reconcile the downloaded chapters for a series."""
+    await run_scanner_operation(set_downloads_operation, entity_id, request.downloaded_chapter_ids)
+    return {"message": "Downloaded chapters updated successfully"}
 
 
-@app.post("/api/scanner/clean-orphaned")
+@app.post("/api/scanner/clean-orphaned", response_model=MessageResponse)
 async def clean_orphaned_files():
     """Clean orphaned files."""
     await run_scanner_operation(clean_orphaned_files_operation)
     return {"message": "Orphaned files cleaned successfully"}
 
 
-@app.get("/api/enums/emoji")
-async def get_emoji_enum():
-    """Get the Emoji enum values."""
-    return Emoji.to_api()
+@app.get("/api/logs", response_model=LogsResponse)
+async def get_logs(max_lines: int = 1000):
+    """Get the last N lines of the log file."""
+    loop = asyncio.get_event_loop()
+    logs = await loop.run_in_executor(None, get_logs_operation, max_lines)
+    return {"logs": logs}
 
 
-@app.get("/api/enums/plugins")
+@app.post("/api/logs/clear", response_model=MessageResponse)
+async def clear_logs():
+    """Clear the log file."""
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, clear_logs_operation)
+    return {"message": "Log file cleared successfully"}
+
+
+@app.get("/api/enums/plugins", response_model=PluginsResponse)
 async def get_plugins_enum():
     """Get the Plugins enum values and list."""
     return Plugins.to_api()
 
 
-@app.get("/api/enums/env")
+@app.get("/api/enums/env", response_model=EnvConfigResponse)
 async def get_env_config():
     """Get the AppEnv configuration values."""
     return env.to_api()
+
+
+class ImmutableStaticFiles(StaticFiles):
+    """Serves Vite's content-hashed assets with a cache header safe to keep forever."""
+
+    def file_response(self, *args, **kwargs) -> Response:
+        response = super().file_response(*args, **kwargs)
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        return response
+
+
+if FRONTEND_DIST.is_dir():
+    app.mount("/assets", ImmutableStaticFiles(directory=FRONTEND_DIST / "assets"), name="frontend-assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        """Serve the built React SPA, falling back to index.html for client-side routes."""
+        candidate = FRONTEND_DIST / full_path
+        if full_path and candidate.is_file():
+            return FileResponse(candidate)
+        return FileResponse(FRONTEND_DIST / "index.html")

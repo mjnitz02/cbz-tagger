@@ -30,6 +30,7 @@ def mock_scanner():
     scanner.entity_database.entity_map = {"test_series": "test_id"}
     scanner.entity_database.chapters = MagicMock()
     scanner.entity_database.chapters.database = {}
+    scanner.entity_database.entity_downloads = set()
     return scanner
 
 
@@ -168,11 +169,11 @@ class TestScannerOperations:
         mock_scanner.entity_database.delete_entity_id.assert_called_once_with("entity_id", "Entity Name")
 
     @patch("cbz_tagger.web.api.scanner")
-    def test_delete_chapter_tracking_operation(self, mock_scanner):
-        """Test delete chapter tracking operation."""
-        api.delete_chapter_tracking_operation("entity_id", "chapter_id")
-        mock_scanner.entity_database.delete_chapter_entity_id_from_downloaded_chapters.assert_called_once_with(
-            "entity_id", "chapter_id"
+    def test_set_downloads_operation(self, mock_scanner):
+        """Test set downloads operation."""
+        api.set_downloads_operation("entity_id", ["chapter_id_1", "chapter_id_2"])
+        mock_scanner.entity_database.set_downloaded_chapters.assert_called_once_with(
+            "entity_id", ["chapter_id_1", "chapter_id_2"]
         )
 
     @patch("cbz_tagger.web.api.scanner")
@@ -187,14 +188,38 @@ class TestScannerOperations:
         api.reload_scanner_operation()
         mock_scanner.reload_scanner.assert_called_once()
 
+    @patch("cbz_tagger.web.api.FileLogReader")
+    def test_get_logs_operation(self, mock_log_reader_class):
+        """Test get logs operation."""
+        mock_log_reader = MagicMock()
+        mock_log_reader.read_last_lines.return_value = "log line 1\nlog line 2\n"
+        mock_log_reader_class.return_value = mock_log_reader
+
+        result = api.get_logs_operation(500)
+
+        mock_log_reader_class.assert_called_once_with(api.env.LOG_PATH)
+        mock_log_reader.read_last_lines.assert_called_once_with(500)
+        assert result == "log line 1\nlog line 2\n"
+
+    @patch("cbz_tagger.web.api.FileLogReader")
+    def test_clear_logs_operation(self, mock_log_reader_class):
+        """Test clear logs operation."""
+        mock_log_reader = MagicMock()
+        mock_log_reader_class.return_value = mock_log_reader
+
+        api.clear_logs_operation()
+
+        mock_log_reader_class.assert_called_once_with(api.env.LOG_PATH)
+        mock_log_reader.clear_log_file.assert_called_once()
+
     @patch("cbz_tagger.web.api.scanner")
     def test_get_scanner_state_operation(self, mock_scanner):
         """Test get scanner state operation."""
-        mock_scanner.to_state.return_value = {"state": "data"}
+        mock_scanner.to_state.return_value = []
         result = api.get_scanner_state_operation()
         mock_scanner.reload_scanner.assert_called_once()
         mock_scanner.to_state.assert_called_once()
-        assert result == {"state": "data"}
+        assert result == []
 
     @patch("cbz_tagger.web.api.scanner")
     def test_get_series_list_operation(self, mock_scanner):
@@ -209,20 +234,21 @@ class TestScannerOperations:
         """Test get chapters operation when chapters exist."""
         mock_chapter1 = MagicMock()
         mock_chapter1.entity_id = "entity1"
-        mock_chapter1.chapter_number = "1"
+        mock_chapter1.chapter_string = "1"
 
         mock_chapter2 = MagicMock()
         mock_chapter2.entity_id = "entity2"
-        mock_chapter2.chapter_number = "2"
+        mock_chapter2.chapter_string = "2"
 
         mock_scanner.entity_database.chapters.database.get.return_value = [mock_chapter1, mock_chapter2]
+        mock_scanner.entity_database.entity_downloads = {("test_entity_id", "entity1")}
 
         result = api.get_chapters_operation("test_entity_id")
 
         mock_scanner.reload_scanner.assert_called_once()
         assert len(result) == 2
-        assert result[0] == {"entity_id": "entity1", "chapter_number": "1"}
-        assert result[1] == {"entity_id": "entity2", "chapter_number": "2"}
+        assert result[0] == {"entity_id": "entity1", "chapter_number": "1", "downloaded": True}
+        assert result[1] == {"entity_id": "entity2", "chapter_number": "2", "downloaded": False}
 
     @patch("cbz_tagger.web.api.scanner")
     def test_get_chapters_operation_no_chapters(self, mock_scanner):
@@ -286,12 +312,27 @@ class TestAPIEndpoints:
     @patch("cbz_tagger.web.api.scanner")
     def test_get_scanner_state_endpoint(self, mock_scanner, reset_app_state, client):
         """Test GET /api/scanner/state endpoint."""
-        mock_scanner.to_state.return_value = {"test": "state"}
+        mock_scanner.to_state.return_value = [
+            {
+                "entity_id": "id1",
+                "name": "Series1",
+                "name_link": "https://example.com/title/id1",
+                "status": "ongoing",
+                "tracked": True,
+                "latest_chapter": "11",
+                "latest_chapter_date": "2021-07-13T08:28:01+00:00",
+                "metadata_updated": "2022-12-31T11:57:41+00:00",
+                "plugin": "mdx",
+                "plugin_link": "https://example.com/title/id1",
+            }
+        ]
         response = client.get("/api/scanner/state")
         assert response.status_code == 200
         data = response.json()
-        assert "state" in data
-        assert data["state"] == {"test": "state"}
+        assert "series" in data
+        assert data["series"][0]["entity_id"] == "id1"
+        assert data["series"][0]["status"] == "ongoing"
+        assert data["series"][0]["tracked"] is True
 
     @patch("cbz_tagger.web.api.scanner")
     def test_get_series_list_endpoint(self, mock_scanner, reset_app_state, client):
@@ -310,8 +351,9 @@ class TestAPIEndpoints:
         """Test GET /api/scanner/series/{entity_id}/chapters endpoint."""
         mock_chapter = MagicMock()
         mock_chapter.entity_id = "chapter1"
-        mock_chapter.chapter_number = "1"
+        mock_chapter.chapter_string = "1"
         mock_scanner.entity_database.chapters.database.get.return_value = [mock_chapter]
+        mock_scanner.entity_database.entity_downloads = {("test_id", "chapter1")}
 
         response = client.get("/api/scanner/series/test_id/chapters")
         assert response.status_code == 200
@@ -320,6 +362,7 @@ class TestAPIEndpoints:
         assert len(data["chapters"]) == 1
         assert data["chapters"][0]["entity_id"] == "chapter1"
         assert data["chapters"][0]["chapter_number"] == "1"
+        assert data["chapters"][0]["downloaded"] is True
 
     @patch("cbz_tagger.entities.metadata_entity.MetadataEntity.from_server_url")
     def test_search_series_endpoint(self, mock_from_server, reset_app_state, client):
@@ -398,13 +441,24 @@ class TestAPIEndpoints:
         assert "deleted successfully" in data["message"]
 
     @patch("cbz_tagger.web.api.scanner")
-    def test_delete_chapter_tracking_endpoint(self, mock_scanner, reset_app_state, client):
-        """Test DELETE /api/scanner/chapter/{entity_id}/{chapter_id} endpoint."""
-        response = client.delete("/api/scanner/chapter/entity_id/chapter_id")
+    def test_set_series_downloads_endpoint(self, mock_scanner, reset_app_state, client):
+        """Test PUT /api/scanner/series/{entity_id}/downloads endpoint."""
+        response = client.put(
+            "/api/scanner/series/entity_id/downloads",
+            json={"downloaded_chapter_ids": ["chapter_id_1", "chapter_id_2"]},
+        )
         assert response.status_code == 200
         data = response.json()
         assert "message" in data
-        assert "deleted successfully" in data["message"]
+        assert "updated successfully" in data["message"]
+        mock_scanner.entity_database.set_downloaded_chapters.assert_called_once_with(
+            "entity_id", ["chapter_id_1", "chapter_id_2"]
+        )
+
+    def test_delete_chapter_tracking_route_removed(self, reset_app_state, client):
+        """Test the old DELETE /api/scanner/chapter/{entity_id}/{chapter_id} route no longer exists."""
+        response = client.delete("/api/scanner/chapter/entity_id/chapter_id")
+        assert response.status_code in (404, 405)
 
     @patch("cbz_tagger.web.api.scanner")
     def test_clean_orphaned_files_endpoint(self, mock_scanner, reset_app_state, client):
@@ -415,32 +469,75 @@ class TestAPIEndpoints:
         assert "message" in data
         assert "cleaned successfully" in data["message"]
 
-    @patch("cbz_tagger.common.enums.Emoji.to_api")
-    def test_get_emoji_enum_endpoint(self, mock_to_api, reset_app_state, client):
-        """Test GET /api/enums/emoji endpoint."""
-        mock_to_api.return_value = {"emoji": "data"}
-        response = client.get("/api/enums/emoji")
+    @patch("cbz_tagger.web.api.FileLogReader")
+    def test_get_logs_endpoint(self, mock_log_reader_class, reset_app_state, client):
+        """Test GET /api/logs endpoint."""
+        mock_log_reader = MagicMock()
+        mock_log_reader.read_last_lines.return_value = "log contents"
+        mock_log_reader_class.return_value = mock_log_reader
+
+        response = client.get("/api/logs")
         assert response.status_code == 200
         data = response.json()
-        assert data == {"emoji": "data"}
+        assert data == {"logs": "log contents"}
+        mock_log_reader.read_last_lines.assert_called_once_with(1000)
+
+    @patch("cbz_tagger.web.api.FileLogReader")
+    def test_get_logs_endpoint_with_max_lines(self, mock_log_reader_class, reset_app_state, client):
+        """Test GET /api/logs endpoint with max_lines query parameter."""
+        mock_log_reader = MagicMock()
+        mock_log_reader.read_last_lines.return_value = "log contents"
+        mock_log_reader_class.return_value = mock_log_reader
+
+        response = client.get("/api/logs?max_lines=50")
+        assert response.status_code == 200
+        mock_log_reader.read_last_lines.assert_called_once_with(50)
+
+    @patch("cbz_tagger.web.api.FileLogReader")
+    def test_clear_logs_endpoint(self, mock_log_reader_class, reset_app_state, client):
+        """Test POST /api/logs/clear endpoint."""
+        mock_log_reader = MagicMock()
+        mock_log_reader_class.return_value = mock_log_reader
+
+        response = client.post("/api/logs/clear")
+        assert response.status_code == 200
+        data = response.json()
+        assert "message" in data
+        assert "cleared successfully" in data["message"]
+        mock_log_reader.clear_log_file.assert_called_once()
 
     @patch("cbz_tagger.common.plugins.Plugins.to_api")
     def test_get_plugins_enum_endpoint(self, mock_to_api, reset_app_state, client):
         """Test GET /api/enums/plugins endpoint."""
-        mock_to_api.return_value = {"plugins": "data"}
+        mock_to_api.return_value = {"DEFAULT": "mdx", "all": ["mdx", "kal"]}
         response = client.get("/api/enums/plugins")
         assert response.status_code == 200
         data = response.json()
-        assert data == {"plugins": "data"}
+        assert data == {"DEFAULT": "mdx", "all": ["mdx", "kal"]}
 
     @patch("cbz_tagger.web.api.env")
     def test_get_env_config_endpoint(self, mock_env, reset_app_state, client):
         """Test GET /api/enums/env endpoint."""
-        mock_env.to_api.return_value = {"config": "value"}
+        env_config = {
+            "VERSION": "1.0.0",
+            "PUID": 1000,
+            "PGID": 1000,
+            "DEBUG_MODE": False,
+            "UMASK": "022",
+            "CONFIG_PATH": "/config",
+            "SCAN_PATH": "/scan",
+            "STORAGE_PATH": "/storage",
+            "LOG_PATH": "/config/logs/cbz_tagger.log",
+            "TIMER_DELAY": 6000,
+            "PROXY_URL": None,
+            "DELAY_PER_REQUEST": 0.5,
+            "LOG_LEVEL": 20,
+        }
+        mock_env.to_api.return_value = env_config
         response = client.get("/api/enums/env")
         assert response.status_code == 200
         data = response.json()
-        assert data == {"config": "value"}
+        assert data == env_config
 
 
 class TestPydanticModels:

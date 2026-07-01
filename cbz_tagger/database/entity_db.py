@@ -9,7 +9,6 @@ from xml.etree import ElementTree
 from zipfile import ZIP_DEFLATED
 from zipfile import ZipFile
 
-from cbz_tagger.common.enums import Emoji
 from cbz_tagger.common.enums import Urls
 from cbz_tagger.common.input import InputEntity
 from cbz_tagger.common.input import console_selector
@@ -131,20 +130,19 @@ class EntityDB:
             plugin_id = self.entity_chapter_plugin.get(entity_id, {}).get("plugin_id", entity_id)
             state.append(
                 {
-                    "entity_name": {
-                        "name": entity_name if len(entity_name) < 51 else f"{entity_name[:50]}...",
-                        "link": f"{Plugins.TITLE_URLS[Plugins.DEFAULT]}{entity_id}",
-                    },
                     "entity_id": entity_id,
-                    "updated": entity_metadata.updated,
-                    "latest_chapter": latest_chapter.chapter_number if latest_chapter else None,
+                    "name": entity_name,
+                    "name_link": f"{Plugins.TITLE_URLS[Plugins.DEFAULT]}{entity_id}",
+                    "status": entity_metadata.status,
+                    "tracked": entity_id in self.entity_tracked,
+                    "latest_chapter": latest_chapter.chapter_string if latest_chapter else None,
                     "latest_chapter_date": latest_chapter.updated_date if latest_chapter else None,
-                    "status": entity_metadata.status_indicator,
-                    "plugin": {"name": plugin_type, "link": f"{Plugins.TITLE_URLS[plugin_type]}{plugin_id}"},
-                    "tracked": Emoji.CIRCLE_GREEN if entity_id in self.entity_tracked else Emoji.CIRCLE_BROWN,
+                    "metadata_updated": entity_metadata.updated,
+                    "plugin": plugin_type,
+                    "plugin_link": f"{Plugins.TITLE_URLS[plugin_type]}{plugin_id}",
                 }
             )
-        state = sorted(state, key=lambda d: d["entity_name"]["name"].lower())
+        state = sorted(state, key=lambda d: d["name"].lower())
         return state
 
     def check_manga_missing(self, manga_name):
@@ -264,6 +262,28 @@ class EntityDB:
             self.save()
         else:
             logger.warning("Chapter %s not found in downloaded chapters for %s.", chapter_id, entity_id)
+
+    def add_chapter_entity_id_to_downloaded_chapters(self, entity_id, chapter_id):
+        """Add a chapter entity ID to the downloaded chapters."""
+        if (entity_id, chapter_id) not in self.entity_downloads:
+            self.entity_downloads.add((entity_id, chapter_id))
+            logger.info("Added chapter %s to downloaded chapters for %s.", chapter_id, entity_id)
+            self.save()
+        else:
+            logger.warning("Chapter %s already in downloaded chapters for %s.", chapter_id, entity_id)
+
+    def set_downloaded_chapters(self, entity_id, downloaded_chapter_ids):
+        """Reconcile the downloaded chapters for an entity to match the given set in a single save()."""
+        known = {c.entity_id for c in (self.chapters[entity_id] or [])}
+        desired = set(downloaded_chapter_ids) & known
+        current = {c for (e, c) in self.entity_downloads if e == entity_id}
+        to_add = desired - current
+        to_remove = (current & known) - desired
+        for c in to_add:
+            self.entity_downloads.add((entity_id, c))
+        for c in to_remove:
+            self.entity_downloads.discard((entity_id, c))
+        self.save()
 
     def update_manga_entity_name(self, manga_name):
         entity_id = self.entity_map.get(manga_name)
