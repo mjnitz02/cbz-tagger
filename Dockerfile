@@ -18,28 +18,23 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     STORAGE_PATH="/storage" \
     PORT="8080"
 
-### Upgrade ###
-RUN apk update && apk upgrade
+### Upgrade base packages and install uv ###
+RUN apk update && apk upgrade && apk add --no-cache uv
+
+WORKDIR /app
+
+### Dependencies (cached unless pyproject.toml/uv.lock change) ###
+COPY pyproject.toml uv.lock ./
+RUN uv sync --no-cache --no-install-project
 
 ### CBZ Tagger ###
-WORKDIR /app
-COPY . /app
-COPY pyproject.toml ./
-COPY uv.lock ./
+COPY . .
 COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
-
-### Dependencies ###
-RUN echo "Install dependencies" && \
-# These dependencies don't seem necessary when using uv, but leaving them commented out for reference
-#    apk add --no-cache gcc libffi-dev musl-dev postgresql-dev zlib-dev jpeg-dev && \
-    apk add --no-cache uv && \
-    uv sync --no-cache
-
-RUN chmod +x /app/docker-entrypoint.sh
+RUN uv sync --no-cache
 
 # Define volume mappings
 VOLUME /config /scan /storage
 
 EXPOSE 8080
 
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
+CMD ["uv", "run", "python", "-m", "cbz_tagger.web.server"]

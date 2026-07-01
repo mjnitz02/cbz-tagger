@@ -28,3 +28,11 @@ repos:
         name: Check typing errors wih ty
         entry: make lint-typing
         language: system
+      - id: frontend-lint
+        name: Format and lint the frontend
+        entry: make frontend-lint
+        language: system
+      - id: frontend-typing
+        name: Check frontend typing errors with tsc
+        entry: make frontend-typing
+        language: system
