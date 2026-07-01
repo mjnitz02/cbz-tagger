@@ -31,6 +31,16 @@ function mockSeriesAndChapters() {
   )
 }
 
+async function selectSeriesAndChapter(
+  user: ReturnType<typeof userEvent.setup>,
+) {
+  await user.click(screen.getByRole('combobox', { name: 'Select a series' }))
+  await user.click(await screen.findByRole('option', { name: 'Test Manga' }))
+
+  await user.click(screen.getByRole('combobox', { name: 'Select a chapter' }))
+  await user.click(await screen.findByRole('option', { name: 'Chapter 5' }))
+}
+
 describe('ManageSeriesPage', () => {
   it('lists series and loads chapters when one is selected', async () => {
     mockSeriesAndChapters()
@@ -46,32 +56,30 @@ describe('ManageSeriesPage', () => {
     ).toBeInTheDocument()
   })
 
-  it('deletes the selected series', async () => {
+  it('resets a tracked chapter', async () => {
     mockSeriesAndChapters()
     server.use(
-      http.delete('*/api/scanner/series/series-1', () =>
-        HttpResponse.json({ message: 'Series deleted successfully' }),
+      http.delete('*/api/scanner/chapter/series-1/chapter-1', () =>
+        HttpResponse.json({ message: 'Chapter tracking removed' }),
       ),
     )
     const user = userEvent.setup()
     renderWithClient()
 
-    await user.click(screen.getByRole('combobox', { name: 'Select a series' }))
-    await user.click(await screen.findByRole('option', { name: 'Test Manga' }))
-
+    await selectSeriesAndChapter(user)
     await user.click(
-      screen.getByRole('button', { name: 'Delete Selected Series' }),
+      screen.getByRole('button', { name: 'Reset Tracked Chapter' }),
     )
 
     expect(
-      await screen.findByText('Removed Test Manga from the database'),
+      await screen.findByText('Removed tracked status for 5 from Test Manga'),
     ).toBeInTheDocument()
   })
 
   it('shows a busy message when the scanner is locked', async () => {
     mockSeriesAndChapters()
     server.use(
-      http.delete('*/api/scanner/series/series-1', () =>
+      http.delete('*/api/scanner/chapter/series-1/chapter-1', () =>
         HttpResponse.json(
           { detail: 'Scanner is currently busy. Please wait.' },
           { status: 409 },
@@ -81,34 +89,13 @@ describe('ManageSeriesPage', () => {
     const user = userEvent.setup()
     renderWithClient()
 
-    await user.click(screen.getByRole('combobox', { name: 'Select a series' }))
-    await user.click(await screen.findByRole('option', { name: 'Test Manga' }))
-
+    await selectSeriesAndChapter(user)
     await user.click(
-      screen.getByRole('button', { name: 'Delete Selected Series' }),
+      screen.getByRole('button', { name: 'Reset Tracked Chapter' }),
     )
 
     expect(
       await screen.findByText('Scanner is busy. Please wait and try again.'),
-    ).toBeInTheDocument()
-  })
-
-  it('cleans orphaned files', async () => {
-    mockSeriesAndChapters()
-    server.use(
-      http.post('*/api/scanner/clean-orphaned', () =>
-        HttpResponse.json({ message: 'Orphaned files cleaned successfully' }),
-      ),
-    )
-    const user = userEvent.setup()
-    renderWithClient()
-
-    await user.click(
-      screen.getByRole('button', { name: 'Clean Orphaned Files' }),
-    )
-
-    expect(
-      await screen.findByText('Orphaned files removed successfully'),
     ).toBeInTheDocument()
   })
 })

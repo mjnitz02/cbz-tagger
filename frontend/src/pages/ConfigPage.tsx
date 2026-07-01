@@ -1,13 +1,35 @@
-import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Button } from '@/components/ui/button'
 import { apiClient } from '@/lib/api-client'
 
+const BUSY_MESSAGE = 'Scanner is busy. Please wait and try again.'
+
 function ConfigPage() {
+  const queryClient = useQueryClient()
+  const [statusMessage, setStatusMessage] = useState<string>()
+
   const { data, isLoading, error } = useQuery({
     queryKey: ['env-config'],
     queryFn: async () => {
       const { data, error } = await apiClient.GET('/api/enums/env')
       if (error) throw error
       return data
+    },
+  })
+
+  const cleanOrphanedFiles = useMutation({
+    mutationFn: async () => {
+      const { response } = await apiClient.POST('/api/scanner/clean-orphaned')
+      return response
+    },
+    onSuccess: (response) => {
+      if (response.status === 409) {
+        setStatusMessage(BUSY_MESSAGE)
+        return
+      }
+      setStatusMessage('Orphaned files removed successfully')
+      queryClient.invalidateQueries({ queryKey: ['series-state'] })
     },
   })
 
@@ -28,6 +50,20 @@ function ConfigPage() {
           </tbody>
         </table>
       )}
+
+      <div className="mt-6 flex max-w-2xl flex-col items-start gap-2 border-t border-border pt-4">
+        <h2 className="text-sm font-medium">Maintenance</h2>
+        <Button
+          variant="outline"
+          disabled={cleanOrphanedFiles.isPending}
+          onClick={() => cleanOrphanedFiles.mutate()}
+        >
+          Clean Orphaned Files
+        </Button>
+        {statusMessage && (
+          <p className="text-sm text-muted-foreground">{statusMessage}</p>
+        )}
+      </div>
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
@@ -52,6 +53,51 @@ describe('ConfigPage', () => {
 
     expect(
       await screen.findByText('Failed to load configuration.'),
+    ).toBeInTheDocument()
+  })
+
+  it('cleans orphaned files', async () => {
+    server.use(
+      http.get('*/api/enums/env', () =>
+        HttpResponse.json({ VERSION: '1.0.0' }),
+      ),
+      http.post('*/api/scanner/clean-orphaned', () =>
+        HttpResponse.json({ message: 'Orphaned files cleaned successfully' }),
+      ),
+    )
+    const user = userEvent.setup()
+    renderWithClient()
+
+    await user.click(
+      screen.getByRole('button', { name: 'Clean Orphaned Files' }),
+    )
+
+    expect(
+      await screen.findByText('Orphaned files removed successfully'),
+    ).toBeInTheDocument()
+  })
+
+  it('shows a busy message when the scanner is locked', async () => {
+    server.use(
+      http.get('*/api/enums/env', () =>
+        HttpResponse.json({ VERSION: '1.0.0' }),
+      ),
+      http.post('*/api/scanner/clean-orphaned', () =>
+        HttpResponse.json(
+          { detail: 'Scanner is currently busy. Please wait.' },
+          { status: 409 },
+        ),
+      ),
+    )
+    const user = userEvent.setup()
+    renderWithClient()
+
+    await user.click(
+      screen.getByRole('button', { name: 'Clean Orphaned Files' }),
+    )
+
+    expect(
+      await screen.findByText('Scanner is busy. Please wait and try again.'),
     ).toBeInTheDocument()
   })
 })

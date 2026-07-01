@@ -50,31 +50,6 @@ function ManageSeriesPage() {
     (c) => c.entity_id === selectedChapterId,
   )
 
-  const deleteSeries = useMutation({
-    mutationFn: async () => {
-      const { response } = await apiClient.DELETE(
-        '/api/scanner/series/{entity_id}',
-        {
-          params: {
-            path: { entity_id: selectedSeriesId! },
-            query: { entity_name: selectedSeries!.name },
-          },
-        },
-      )
-      return response
-    },
-    onSuccess: (response) => {
-      if (response.status === 409) {
-        setStatusMessage(BUSY_MESSAGE)
-        return
-      }
-      setStatusMessage(`Removed ${selectedSeries?.name} from the database`)
-      setSelectedSeriesId(undefined)
-      setSelectedChapterId(undefined)
-      queryClient.invalidateQueries({ queryKey: ['series'] })
-    },
-  })
-
   const deleteChapterTracking = useMutation({
     mutationFn: async () => {
       const { response } = await apiClient.DELETE(
@@ -105,24 +80,13 @@ function ManageSeriesPage() {
     },
   })
 
-  const cleanOrphanedFiles = useMutation({
-    mutationFn: async () => {
-      const { response } = await apiClient.POST('/api/scanner/clean-orphaned')
-      return response
-    },
-    onSuccess: (response) => {
-      if (response.status === 409) {
-        setStatusMessage(BUSY_MESSAGE)
-        return
-      }
-      setStatusMessage('Orphaned files removed successfully')
-      queryClient.invalidateQueries({ queryKey: ['series'] })
-    },
-  })
-
   return (
     <div className="flex flex-col gap-4 p-4">
-      <h1 className="text-2xl font-medium">Manage Series</h1>
+      <h1 className="text-2xl font-medium">Reset Tracked Chapter</h1>
+      <p className="max-w-md text-sm text-muted-foreground">
+        Untrack a chapter so it can be redownloaded — useful when a chapter was
+        downloaded incorrectly or has since been fixed by the provider.
+      </p>
 
       <div className="flex max-w-md flex-col gap-1.5">
         <Label htmlFor="series-select">Select a series</Label>
@@ -162,30 +126,13 @@ function ManageSeriesPage() {
         </Select>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <Button variant="outline" onClick={() => seriesQuery.refetch()}>
-          Refresh Series List
-        </Button>
-        <Button
-          variant="destructive"
-          disabled={!selectedSeriesId || deleteSeries.isPending}
-          onClick={() => deleteSeries.mutate()}
-        >
-          Delete Selected Series
-        </Button>
+      <div>
         <Button
           variant="outline"
           disabled={!selectedChapterId || deleteChapterTracking.isPending}
           onClick={() => deleteChapterTracking.mutate()}
         >
           Reset Tracked Chapter
-        </Button>
-        <Button
-          variant="outline"
-          disabled={cleanOrphanedFiles.isPending}
-          onClick={() => cleanOrphanedFiles.mutate()}
-        >
-          Clean Orphaned Files
         </Button>
       </div>
 

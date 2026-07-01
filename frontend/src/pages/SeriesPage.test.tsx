@@ -288,4 +288,60 @@ describe('SeriesPage', () => {
       await screen.findByText('Failed to load series.'),
     ).toBeInTheDocument()
   })
+
+  it('deletes a series after confirming', async () => {
+    mockSeries()
+    server.use(
+      http.delete('*/api/scanner/series/alpha-id', () =>
+        HttpResponse.json({ message: 'Series deleted successfully' }),
+      ),
+    )
+    const user = userEvent.setup()
+    renderWithClient()
+
+    await screen.findByText('Alpha Manga')
+    await user.click(screen.getByRole('button', { name: 'Delete Alpha Manga' }))
+
+    expect(await screen.findByText('Delete Alpha Manga?')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Delete' }))
+
+    expect(
+      await screen.findByText('Removed Alpha Manga from the database'),
+    ).toBeInTheDocument()
+  })
+
+  it('cancels the delete confirmation without calling the API', async () => {
+    mockSeries()
+    const user = userEvent.setup()
+    renderWithClient()
+
+    await screen.findByText('Alpha Manga')
+    await user.click(screen.getByRole('button', { name: 'Delete Alpha Manga' }))
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    expect(screen.queryByText('Delete Alpha Manga?')).not.toBeInTheDocument()
+    expect(screen.getByText('Alpha Manga')).toBeInTheDocument()
+  })
+
+  it('shows a busy message when deleting while the scanner is locked', async () => {
+    mockSeries()
+    server.use(
+      http.delete('*/api/scanner/series/alpha-id', () =>
+        HttpResponse.json(
+          { detail: 'Scanner is currently busy. Please wait.' },
+          { status: 409 },
+        ),
+      ),
+    )
+    const user = userEvent.setup()
+    renderWithClient()
+
+    await screen.findByText('Alpha Manga')
+    await user.click(screen.getByRole('button', { name: 'Delete Alpha Manga' }))
+    await user.click(screen.getByRole('button', { name: 'Delete' }))
+
+    expect(
+      await screen.findByText('Scanner is busy. Please wait and try again.'),
+    ).toBeInTheDocument()
+  })
 })

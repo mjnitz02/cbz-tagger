@@ -1,6 +1,7 @@
 import { Fragment, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ChevronDown, ChevronRight, RotateCw } from 'lucide-react'
+import { AlertDialog } from 'radix-ui'
+import { ChevronDown, ChevronRight, RotateCw, Trash2 } from 'lucide-react'
 import {
   Select,
   SelectContent,
@@ -18,6 +19,8 @@ import type { components } from '@/lib/api-schema'
 type SeriesStateItem = components['schemas']['SeriesStateItem']
 type SortMode = 'name' | 'recent' | 'stalest'
 type TrackedFilter = 'all' | 'tracked' | 'untracked'
+
+const BUSY_MESSAGE = 'Scanner is busy. Please wait and try again.'
 
 const CANONICAL_STATUSES = [
   'ongoing',
@@ -126,6 +129,8 @@ function SeriesPage() {
   const [needsAttentionOnly, setNeedsAttentionOnly] = useState(false)
   const [sortMode, setSortMode] = useState<SortMode>('name')
   const [openId, setOpenId] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<SeriesStateItem | null>(null)
+  const [statusMessage, setStatusMessage] = useState<string>()
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['series-state'],
@@ -164,6 +169,30 @@ function SeriesPage() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['series-state'] })
       queryClient.invalidateQueries({ queryKey: ['scanner-status'] })
+    },
+  })
+
+  const deleteSeries = useMutation({
+    mutationFn: async (target: SeriesStateItem) => {
+      const { response } = await apiClient.DELETE(
+        '/api/scanner/series/{entity_id}',
+        {
+          params: {
+            path: { entity_id: target.entity_id },
+            query: { entity_name: target.name },
+          },
+        },
+      )
+      return response
+    },
+    onSuccess: (response, target) => {
+      if (response.status === 409) {
+        setStatusMessage(BUSY_MESSAGE)
+        return
+      }
+      setStatusMessage(`Removed ${target.name} from the database`)
+      setDeleteTarget(null)
+      queryClient.invalidateQueries({ queryKey: ['series-state'] })
     },
   })
 
@@ -368,6 +397,9 @@ function SeriesPage() {
       {data && visibleSeries.length === 0 && (
         <p className="text-muted-foreground">No series tracked</p>
       )}
+      {statusMessage && (
+        <p className="text-sm text-muted-foreground">{statusMessage}</p>
+      )}
 
       {data && visibleSeries.length > 0 && (
         <table className="w-full border-collapse text-left text-sm">
@@ -379,6 +411,7 @@ function SeriesPage() {
               <th className="py-2 pr-4">Tracked</th>
               <th className="py-2 pr-4">Chapter</th>
               <th className="py-2 pr-4">Last updated</th>
+              <th className="w-8 py-2" />
             </tr>
           </thead>
           <tbody>
@@ -430,10 +463,20 @@ function SeriesPage() {
                     >
                       {formatRelative(row.latest_chapter_date)}
                     </td>
+                    <td className="py-2 pr-2 text-right">
+                      <button
+                        type="button"
+                        aria-label={`Delete ${row.name}`}
+                        onClick={() => setDeleteTarget(row)}
+                        className="text-muted-foreground hover:text-destructive"
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
+                    </td>
                   </tr>
                   {expanded && (
                     <tr className="border-border border-b bg-muted/30">
-                      <td colSpan={6} className="p-4">
+                      <td colSpan={7} className="p-4">
                         <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-4">
                           <div>
                             <dt className="text-xs text-muted-foreground">
@@ -484,6 +527,40 @@ function SeriesPage() {
           </tbody>
         </table>
       )}
+
+      <AlertDialog.Root
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null)
+        }}
+      >
+        <AlertDialog.Portal>
+          <AlertDialog.Overlay className="fixed inset-0 z-50 bg-black/60 data-[state=closed]:animate-out data-[state=open]:animate-in data-[state=closed]:fade-out data-[state=open]:fade-in" />
+          <AlertDialog.Content className="fixed top-1/2 left-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-card p-6 shadow-xl duration-200 data-[state=closed]:animate-out data-[state=open]:animate-in data-[state=closed]:fade-out data-[state=open]:fade-in">
+            <AlertDialog.Title className="text-lg font-medium">
+              Delete {deleteTarget?.name}?
+            </AlertDialog.Title>
+            <AlertDialog.Description className="mt-2 text-sm text-muted-foreground">
+              This removes the series and its tracked chapters from the
+              database. This cannot be undone.
+            </AlertDialog.Description>
+            <div className="mt-6 flex justify-end gap-2">
+              <AlertDialog.Cancel asChild>
+                <Button variant="outline">Cancel</Button>
+              </AlertDialog.Cancel>
+              <Button
+                variant="destructive"
+                disabled={deleteSeries.isPending}
+                onClick={() =>
+                  deleteTarget && deleteSeries.mutate(deleteTarget)
+                }
+              >
+                Delete
+              </Button>
+            </div>
+          </AlertDialog.Content>
+        </AlertDialog.Portal>
+      </AlertDialog.Root>
     </div>
   )
 }
