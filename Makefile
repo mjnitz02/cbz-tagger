@@ -3,7 +3,8 @@ SHELL := /usr/bin/env bash
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install pre-commit-install update-packages \
+.PHONY: help install pre-commit-install \
+	update update-latest audit audit-python audit-frontend \
 	lint-format lint-check lint-yaml lint-typing lint test-lint \
 	frontend-install frontend-lint frontend-typing frontend-test-lint frontend-test frontend-build frontend-generate-api \
 	test test-unit test-integration test-unit-docker test-integration-docker \
@@ -21,9 +22,6 @@ install: ## Install project dependencies with uv
 
 pre-commit-install: ## Install pre-commit git hooks
 	pre-commit install
-
-update-packages: ## Upgrade all dependencies to their latest compatible versions
-	uv sync --upgrade
 
 ##@ Linting
 
@@ -130,6 +128,31 @@ run: ## Run the standalone tagger script locally
 	export STORAGE_PATH=~/Downloads/cbz_tagger/storage; \
 	mkdir -p $$CONFIG_PATH $$SCAN_PATH $$STORAGE_PATH; \
 	uv run python run.py
+
+##@ Dependencies
+
+update: ## Upgrade locked dependencies within the declared constraints (quick CVE fix)
+	uv sync --upgrade
+	cd frontend && npm update
+	@$(MAKE) --no-print-directory audit
+
+update-latest: ## Bump the declared constraints in pyproject.toml/package.json to the latest releases
+	uv lock --upgrade
+	uv run python -m scripts.bump_constraints
+	uv sync
+	cd frontend && npx --yes npm-check-updates -u
+	cd frontend && npm install
+	@$(MAKE) --no-print-directory audit
+
+audit: audit-python audit-frontend ## Report known vulnerabilities in all dependencies
+
+audit-python: ## Report known vulnerabilities in Python dependencies
+	@echo "== Python =="
+	@uv export --format requirements-txt --no-emit-project -q | uvx pip-audit -r /dev/stdin --disable-pip || true
+
+audit-frontend: ## Report known vulnerabilities in frontend dependencies
+	@echo "== Frontend =="
+	@cd frontend && npm audit || true
 
 ##@ Maintenance
 
