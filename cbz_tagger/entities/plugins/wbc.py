@@ -32,7 +32,7 @@ class ChapterPluginWBC(ChapterPluginEntity):
             href = item_content.get("href")
             assert isinstance(href, str), f"Expected str for href, got {type(href)}"
             chapter_id = href.split("chapters/")[-1]
-            link = href
+            link = f"{cls.entity_url}chapters/{chapter_id}"
 
             item_x_data = item.get("x-data")
             assert isinstance(item_x_data, str), f"Expected str for x-data, got {type(item_x_data)}"

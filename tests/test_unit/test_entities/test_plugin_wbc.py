@@ -64,11 +64,20 @@ def test_from_server_url(mock_sleep, mock_random, chapter_entity):
 
     assert len(result) == 5
     assert result[2].entity_id == "example_manga-01j76xz09ng81kb3c8x2v3p74y"
-    assert result[2].get_chapter_url() == "https://site.com/chapters/01J76XZ09NG81KB3C8X2V3P74Y"
+    assert (
+        result[2].get_chapter_url().replace(f"https://{ChapterPluginWBC.BASE_URL}", "https://site.com")
+        == "https://site.com/chapters/01J76XZ09NG81KB3C8X2V3P74Y"
+    )
     assert result[3].entity_id == "example_manga-01j76xz09n6jydfdpwr4r85y03"
-    assert result[3].get_chapter_url() == "https://site.com/chapters/01J76XZ09N6JYDFDPWR4R85Y03"
+    assert (
+        result[3].get_chapter_url().replace(f"https://{ChapterPluginWBC.BASE_URL}", "https://site.com")
+        == "https://site.com/chapters/01J76XZ09N6JYDFDPWR4R85Y03"
+    )
     assert result[4].entity_id == "example_manga-01j76xz09nhvbhpczrq0ytw7gs"
-    assert result[4].get_chapter_url() == "https://site.com/chapters/01J76XZ09NHVBHPCZRQ0YTW7GS"
+    assert (
+        result[4].get_chapter_url().replace(f"https://{ChapterPluginWBC.BASE_URL}", "https://site.com")
+        == "https://site.com/chapters/01J76XZ09NHVBHPCZRQ0YTW7GS"
+    )
 
 
 @patch("cbz_tagger.entities.base_entity.random.uniform", return_value=0.1)
@@ -76,6 +85,10 @@ def test_from_server_url(mock_sleep, mock_random, chapter_entity):
 def test_parse_info_feed(mock_sleep, mock_random, chapter_entity):
     _ = chapter_entity
     result = ChapterPluginWBC.parse_info_feed("example_manga")
+    for chapter in result:
+        chapter["attributes"]["url"] = chapter["attributes"]["url"].replace(
+            f"https://{ChapterPluginWBC.BASE_URL}", "https://site.com"
+        )
 
     assert result == [
         {

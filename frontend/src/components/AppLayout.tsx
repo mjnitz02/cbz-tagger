@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Dialog } from 'radix-ui'
 import { Library, Menu, X } from 'lucide-react'
