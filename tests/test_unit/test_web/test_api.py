@@ -6,8 +6,6 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
-import requests
-import requests_mock
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
@@ -194,33 +192,28 @@ class TestScannerOperations:
         api.reload_scanner_operation()
         mock_scanner.reload_scanner.assert_called_once()
 
-    @patch("cbz_tagger.web.api.env")
-    def test_check_proxy_status_operation_good(self, mock_env):
+    @patch("cbz_tagger.web.api.BaseEntity.request_with_retry")
+    def test_check_proxy_status_operation_good(self, mock_request_with_retry):
         """Test proxy status check returns good status with the external IP on success."""
-        mock_env.PROXY_URL = "http://proxy.example.com"
-        with requests_mock.Mocker() as rm:
-            rm.get(api.PROXY_CHECK_URL, text="1.2.3.4")
-            status, external_ip = api.check_proxy_status_operation()
+        mock_request_with_retry.return_value = MagicMock(text="1.2.3.4")
+        status, external_ip = api.check_proxy_status_operation()
+        mock_request_with_retry.assert_called_once_with(api.PROXY_CHECK_URL)
         assert status == "good"
         assert external_ip == "1.2.3.4"
 
-    @patch("cbz_tagger.web.api.env")
-    def test_check_proxy_status_operation_bad_status_code(self, mock_env):
-        """Test proxy status check returns bad status on a non-200 response."""
-        mock_env.PROXY_URL = "http://proxy.example.com"
-        with requests_mock.Mocker() as rm:
-            rm.get(api.PROXY_CHECK_URL, status_code=502, text="")
-            status, external_ip = api.check_proxy_status_operation()
+    @patch("cbz_tagger.web.api.BaseEntity.request_with_retry")
+    def test_check_proxy_status_operation_bad_status_code(self, mock_request_with_retry):
+        """Test proxy status check returns bad status when retries are exhausted on a non-200 response."""
+        mock_request_with_retry.side_effect = EnvironmentError("Failed to receive response")
+        status, external_ip = api.check_proxy_status_operation()
         assert status == "bad"
         assert external_ip == "0.0.0.0"
 
-    @patch("cbz_tagger.web.api.env")
-    def test_check_proxy_status_operation_request_exception(self, mock_env):
+    @patch("cbz_tagger.web.api.BaseEntity.request_with_retry")
+    def test_check_proxy_status_operation_request_exception(self, mock_request_with_retry):
         """Test proxy status check returns bad status when the request fails."""
-        mock_env.PROXY_URL = "http://proxy.example.com"
-        with requests_mock.Mocker() as rm:
-            rm.get(api.PROXY_CHECK_URL, exc=requests.exceptions.ConnectTimeout)
-            status, external_ip = api.check_proxy_status_operation()
+        mock_request_with_retry.side_effect = EnvironmentError("Failed to receive response")
+        status, external_ip = api.check_proxy_status_operation()
         assert status == "bad"
         assert external_ip == "0.0.0.0"
 

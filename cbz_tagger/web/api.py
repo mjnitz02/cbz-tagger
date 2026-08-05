@@ -5,7 +5,6 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
 
-import requests
 from fastapi import FastAPI
 from fastapi import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,6 +16,7 @@ from pydantic import BaseModel
 from cbz_tagger.common.env import AppEnv
 from cbz_tagger.common.plugins import Plugins
 from cbz_tagger.database.file_scanner import FileScanner
+from cbz_tagger.entities.base_entity import BaseEntity
 from cbz_tagger.entities.metadata_entity import MetadataEntity
 from cbz_tagger.web.file_log_reader import FileLogReader
 
@@ -303,17 +303,17 @@ def get_scanner_state_operation():
 
 
 def check_proxy_status_operation() -> tuple[str, str]:
-    """Check the configured proxy's external IP via ifconfig.me."""
+    """Check the configured proxy's external IP via ifconfig.me.
+
+    Uses BaseEntity.request_with_retry so the check exercises the same proxy
+    configuration and retry behavior as every other outbound request.
+    """
     try:
-        response = requests.get(
-            PROXY_CHECK_URL,
-            proxies={"http": env.PROXY_URL, "https": env.PROXY_URL},
-            timeout=10,
-        )
+        response = BaseEntity.request_with_retry(PROXY_CHECK_URL)
         external_ip = response.text.strip()
-        if response.status_code == 200 and external_ip:
+        if external_ip:
             return "good", external_ip
-    except requests.exceptions.RequestException as e:
+    except EnvironmentError as e:
         logger.error("Proxy status check failed: %s", e)
     return "bad", "0.0.0.0"
 
