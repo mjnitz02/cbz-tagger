@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router'
 import AppLayout from './components/AppLayout'
 import SeriesPage from './pages/SeriesPage'
 import AddSeriesPage from './pages/AddSeriesPage'
