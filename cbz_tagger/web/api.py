@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
 
+import requests
 from fastapi import FastAPI
 from fastapi import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -36,6 +37,11 @@ scanner = FileScanner(
 
 # Simple in-memory state storage
 _app_state = {"scanning_state": False, "background_timer_started": False}
+_proxy_state: dict[str, str | None] = {"status": "unknown", "external_ip": None}
+
+PROXY_CHECK_URL = "https://ifconfig.me"
+PROXY_CHECK_INTERVAL_GOOD = 1800  # 30 minutes
+PROXY_CHECK_INTERVAL_BAD = 300  # 5 minutes
 
 
 # Lifespan context manager for startup/shutdown events
@@ -68,6 +74,22 @@ async def lifespan(_: FastAPI):
         # Start the background task
         asyncio.create_task(background_refresh())
         logger.info("Background scanner timer started successfully")
+
+    if env.PROXY_URL is not None:
+
+        async def background_proxy_check():
+            """Background task that periodically re-checks the configured proxy's external IP."""
+            loop = asyncio.get_event_loop()
+            while True:
+                status, external_ip = await loop.run_in_executor(None, check_proxy_status_operation)
+                _proxy_state["status"] = status
+                _proxy_state["external_ip"] = external_ip
+
+                delay = PROXY_CHECK_INTERVAL_GOOD if status == "good" else PROXY_CHECK_INTERVAL_BAD
+                await asyncio.sleep(delay)
+
+        asyncio.create_task(background_proxy_check())
+        logger.info("Background proxy check task started successfully")
 
     yield  # Application is running
 
@@ -167,6 +189,12 @@ class SeriesStateResponse(BaseModel):
 class PluginsResponse(BaseModel):
     DEFAULT: str
     all: list[str]
+
+
+class ProxyStatusResponse(BaseModel):
+    enabled: bool
+    status: str
+    external_ip: str | None
 
 
 class EnvConfigResponse(BaseModel):
@@ -272,6 +300,22 @@ def get_scanner_state_operation():
     """Get the current state of the scanner."""
     scanner.reload_scanner()
     return scanner.to_state()
+
+
+def check_proxy_status_operation() -> tuple[str, str]:
+    """Check the configured proxy's external IP via ifconfig.me."""
+    try:
+        response = requests.get(
+            PROXY_CHECK_URL,
+            proxies={"http": env.PROXY_URL, "https": env.PROXY_URL},
+            timeout=10,
+        )
+        external_ip = response.text.strip()
+        if response.status_code == 200 and external_ip:
+            return "good", external_ip
+    except requests.exceptions.RequestException as e:
+        logger.error("Proxy status check failed: %s", e)
+    return "bad", "0.0.0.0"
 
 
 def get_series_list_operation():
@@ -436,6 +480,18 @@ async def get_plugins_enum():
 async def get_env_config():
     """Get the AppEnv configuration values."""
     return env.to_api()
+
+
+@app.get("/api/proxy/status", response_model=ProxyStatusResponse)
+async def get_proxy_status():
+    """Get the cached status of the configured proxy, if any."""
+    if env.PROXY_URL is None:
+        return {"enabled": False, "status": "unknown", "external_ip": None}
+    return {
+        "enabled": True,
+        "status": _proxy_state["status"],
+        "external_ip": _proxy_state["external_ip"],
+    }
 
 
 class ImmutableStaticFiles(StaticFiles):
