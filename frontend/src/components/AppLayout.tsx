@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
-import { Dialog } from 'radix-ui'
+import { Dialog, Tooltip } from 'radix-ui'
 import { Library, Menu, X } from 'lucide-react'
 import { apiClient } from '@/lib/api-client'
 import { cn } from '@/lib/utils'
@@ -42,6 +42,57 @@ function VersionChip({
     >
       v{version}
     </span>
+  )
+}
+
+function useProxyStatus() {
+  const { data } = useQuery({
+    queryKey: ['proxy-status'],
+    queryFn: async () => {
+      const { data, error } = await apiClient.GET('/api/proxy/status')
+      if (error) throw error
+      return data
+    },
+    refetchInterval: 60_000,
+  })
+  return data
+}
+
+function ProxyChip({ className }: { className?: string }) {
+  const proxyStatus = useProxyStatus()
+  if (!proxyStatus?.enabled) return null
+
+  const isGood = proxyStatus.status === 'good'
+  const externalIp = proxyStatus.external_ip ?? '0.0.0.0'
+
+  return (
+    <Tooltip.Provider delayDuration={200}>
+      <Tooltip.Root>
+        <Tooltip.Trigger asChild>
+          <span
+            className={cn(
+              'inline-flex items-center rounded-full border px-2 py-0.5 font-mono text-xs',
+              isGood
+                ? 'border-sky-400/40 bg-sky-400/10 text-sky-300'
+                : 'border-red-400/40 bg-red-400/10 text-red-300',
+              className,
+            )}
+          >
+            Proxy
+          </span>
+        </Tooltip.Trigger>
+        <Tooltip.Portal>
+          <Tooltip.Content
+            side="bottom"
+            sideOffset={6}
+            className="z-50 rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground shadow-md"
+          >
+            {externalIp}
+            <Tooltip.Arrow className="fill-card" />
+          </Tooltip.Content>
+        </Tooltip.Portal>
+      </Tooltip.Root>
+    </Tooltip.Provider>
   )
 }
 
@@ -93,6 +144,7 @@ export default function AppLayout() {
           </nav>
 
           <div className="ml-auto flex items-center gap-2">
+            <ProxyChip className="hidden sm:inline-flex" />
             <VersionChip version={version} className="hidden sm:inline-flex" />
 
             <Dialog.Root open={open} onOpenChange={setOpen}>

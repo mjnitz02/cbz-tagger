@@ -17,9 +17,13 @@ def reset_app_state():
     """Reset the app state before each test."""
     api._app_state["scanning_state"] = False
     api._app_state["background_timer_started"] = False
+    api._proxy_state["status"] = "unknown"
+    api._proxy_state["external_ip"] = None
     yield
     api._app_state["scanning_state"] = False
     api._app_state["background_timer_started"] = False
+    api._proxy_state["status"] = "unknown"
+    api._proxy_state["external_ip"] = None
 
 
 @pytest.fixture
@@ -187,6 +191,31 @@ class TestScannerOperations:
         """Test reload scanner operation."""
         api.reload_scanner_operation()
         mock_scanner.reload_scanner.assert_called_once()
+
+    @patch("cbz_tagger.web.api.BaseEntity.request_with_retry")
+    def test_check_proxy_status_operation_good(self, mock_request_with_retry):
+        """Test proxy status check returns good status with the external IP on success."""
+        mock_request_with_retry.return_value = MagicMock(text="1.2.3.4")
+        status, external_ip = api.check_proxy_status_operation()
+        mock_request_with_retry.assert_called_once_with(api.PROXY_CHECK_URL)
+        assert status == "good"
+        assert external_ip == "1.2.3.4"
+
+    @patch("cbz_tagger.web.api.BaseEntity.request_with_retry")
+    def test_check_proxy_status_operation_bad_status_code(self, mock_request_with_retry):
+        """Test proxy status check returns bad status when retries are exhausted on a non-200 response."""
+        mock_request_with_retry.side_effect = EnvironmentError("Failed to receive response")
+        status, external_ip = api.check_proxy_status_operation()
+        assert status == "bad"
+        assert external_ip == "0.0.0.0"
+
+    @patch("cbz_tagger.web.api.BaseEntity.request_with_retry")
+    def test_check_proxy_status_operation_request_exception(self, mock_request_with_retry):
+        """Test proxy status check returns bad status when the request fails."""
+        mock_request_with_retry.side_effect = EnvironmentError("Failed to receive response")
+        status, external_ip = api.check_proxy_status_operation()
+        assert status == "bad"
+        assert external_ip == "0.0.0.0"
 
     @patch("cbz_tagger.web.api.FileLogReader")
     def test_get_logs_operation(self, mock_log_reader_class):
@@ -538,6 +567,37 @@ class TestAPIEndpoints:
         assert response.status_code == 200
         data = response.json()
         assert data == env_config
+
+    @patch("cbz_tagger.web.api.env")
+    def test_get_proxy_status_endpoint_disabled(self, mock_env, reset_app_state, client):
+        """Test GET /api/proxy/status when no proxy is configured."""
+        mock_env.PROXY_URL = None
+
+        response = client.get("/api/proxy/status")
+        assert response.status_code == 200
+        assert response.json() == {"enabled": False, "status": "unknown", "external_ip": None}
+
+    @patch("cbz_tagger.web.api.env")
+    def test_get_proxy_status_endpoint_good(self, mock_env, reset_app_state, client):
+        """Test GET /api/proxy/status returns the cached good status."""
+        mock_env.PROXY_URL = "http://proxy.example.com"
+        api._proxy_state["status"] = "good"
+        api._proxy_state["external_ip"] = "1.2.3.4"
+
+        response = client.get("/api/proxy/status")
+        assert response.status_code == 200
+        assert response.json() == {"enabled": True, "status": "good", "external_ip": "1.2.3.4"}
+
+    @patch("cbz_tagger.web.api.env")
+    def test_get_proxy_status_endpoint_bad(self, mock_env, reset_app_state, client):
+        """Test GET /api/proxy/status returns the cached bad status."""
+        mock_env.PROXY_URL = "http://proxy.example.com"
+        api._proxy_state["status"] = "bad"
+        api._proxy_state["external_ip"] = "0.0.0.0"
+
+        response = client.get("/api/proxy/status")
+        assert response.status_code == 200
+        assert response.json() == {"enabled": True, "status": "bad", "external_ip": "0.0.0.0"}
 
 
 class TestPydanticModels:

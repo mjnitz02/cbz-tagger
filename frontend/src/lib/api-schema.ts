@@ -304,6 +304,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/proxy/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Proxy Status
+         * @description Get the cached status of the configured proxy, if any.
+         */
+        get: operations["get_proxy_status_api_proxy_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/{full_path}": {
         parameters: {
             query?: never;
@@ -413,6 +433,15 @@ export interface components {
             DEFAULT: string;
             /** All */
             all: string[];
+        };
+        /** ProxyStatusResponse */
+        ProxyStatusResponse: {
+            /** Enabled */
+            enabled: boolean;
+            /** Status */
+            status: string;
+            /** External Ip */
+            external_ip: string | null;
         };
         /** ScannerStatusResponse */
         ScannerStatusResponse: {
@@ -880,6 +909,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EnvConfigResponse"];
+                };
+            };
+        };
+    };
+    get_proxy_status_api_proxy_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProxyStatusResponse"];
                 };
             };
         };
