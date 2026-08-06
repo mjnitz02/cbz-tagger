@@ -8,7 +8,7 @@ SHELL := /usr/bin/env bash
 	lint-format lint-check lint-yaml lint-typing lint test-lint \
 	frontend-install frontend-lint frontend-typing frontend-test-lint frontend-test frontend-build frontend-generate-api \
 	test test-unit test-integration test-unit-docker test-integration-docker \
-	build-docker run-docker dev run clean-git
+	build-docker build-docker-test run-docker dev run clean-git
 
 help: ## Show this help message
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} \
@@ -75,11 +75,11 @@ frontend-generate-api: ## Regenerate the typed TS API client from FastAPI's Open
 
 ##@ Testing
 
-test: build-docker ## Run the full test suite locally and in Docker
+test: build-docker-test ## Run the full test suite locally and in Docker
 	@echo "Running tests locally"
 	uv run pytest tests/ -W ignore::DeprecationWarning
 	@echo "Running tests in Docker"
-	docker run --entrypoint "/bin/sh" cbz-tagger -c "uv run pytest /app/tests/ -W ignore::DeprecationWarning"
+	docker run --entrypoint "/bin/sh" cbz-tagger-test -c "uv run pytest /app/tests/ -W ignore::DeprecationWarning"
 
 test-unit: ## Run unit tests locally
 	uv run pytest tests/test_unit/ -W ignore::DeprecationWarning
@@ -87,16 +87,19 @@ test-unit: ## Run unit tests locally
 test-integration: ## Run integration tests locally
 	uv run pytest tests/test_integration/ -W ignore::DeprecationWarning
 
-test-unit-docker: build-docker ## Run unit tests inside a Docker container
-	docker run --entrypoint "/bin/sh" cbz-tagger -c "uv run pytest /app/tests/test_unit/ -W ignore::DeprecationWarning"
+test-unit-docker: build-docker-test ## Run unit tests inside a Docker container
+	docker run --entrypoint "/bin/sh" cbz-tagger-test -c "uv run pytest /app/tests/test_unit/ -W ignore::DeprecationWarning"
 
-test-integration-docker: build-docker ## Run integration tests inside a Docker container
-	docker run -e CBZ_TAGGER_SKIP_INTEGRATION_TESTS --entrypoint "/bin/sh" cbz-tagger -c "uv run pytest /app/tests/test_integration/ -W ignore::DeprecationWarning"
+test-integration-docker: build-docker-test ## Run integration tests inside a Docker container
+	docker run -e CBZ_TAGGER_SKIP_INTEGRATION_TESTS --entrypoint "/bin/sh" cbz-tagger-test -c "uv run pytest /app/tests/test_integration/ -W ignore::DeprecationWarning"
 
 ##@ Docker
 
-build-docker: ## Build the cbz-tagger Docker image
-	docker build -t cbz-tagger .
+build-docker: ## Build the cbz-tagger Docker image (runtime, exactly as published)
+	docker build --target runtime -t cbz-tagger .
+
+build-docker-test: ## Build the runtime image plus the dev group, for dockerised tests
+	docker build --target test -t cbz-tagger-test .
 
 run-docker: ## Run cbz-tagger via docker-compose
 	docker-compose up --build

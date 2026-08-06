@@ -1,26 +1,41 @@
 [project]
 name = "cbz_tagger"
-version = "5.1.6"
+version = "5.1.7"
 description = "CBZ Tagger is a tool to tag comic book files in CBZ format"
 authors = [
     {name = "Matt Nitzken",email = "mjnitz02@gmail.com"}
 ]
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
+# Runtime only — everything here ships in the published Docker image, so keep
+# it to what the server actually imports.
 dependencies = [
-    "pytest>=9.1.1",
-    "requests-mock>=1.12.1",
-    "ruff>=0.15.22",
     "fastapi>=0.139.2",
     "uvicorn[standard]>=0.52.1",
     "cloudscraper>=1.2.71",
     "pillow>=12.3.0",
     "requests>=2.34.2",
     "beautifulsoup4>=4.15.0",
-    "pre-commit>=4.6.1",
     "pydantic>=2.13.4",
-    "httpx>=0.28.1",
+]
+
+# Test and lint tooling. These used to sit in [project.dependencies], which
+# meant `uv sync` installed pytest, ruff and pre-commit (and their transitive
+# trees) into the published container — a chunk of attack surface, and a pile
+# of CVEs to triage, for packages the server never imports. The Dockerfile's
+# runtime stage now syncs with --no-dev; the test stage layers these back on
+# so the dockerised test targets still work.
+#
+# httpx is here because nothing imports it directly — it's what Starlette's
+# TestClient needs.
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
+    "requests-mock>=1.12.1",
+    "httpx>=0.28.1",
+    "ruff>=0.15.22",
+    "pre-commit>=4.6.1",
 ]
 
 
