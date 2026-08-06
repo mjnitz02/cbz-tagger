@@ -71,6 +71,9 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
+          # Must be named. The Dockerfile's last stage is `test` (runtime plus
+          # pytest/ruff), and an unqualified build would publish that.
+          target: runtime
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

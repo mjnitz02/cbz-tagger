@@ -12,13 +12,23 @@
 version: 2
 updates:
   # Python — uv resolves from pyproject.toml and writes uv.lock.
+  #
+  # Only the dev group is batched. Runtime packages arrive one PR each so every
+  # upgrade stays individually attributable and individually deferrable. That
+  # matters here because the integration tests that would catch a behavioural
+  # change in cloudscraper/requests/beautifulsoup4 cannot run on GitHub Actions
+  # — Cloudflare blocks the runners from reaching the live endpoints — so green
+  # CI does not mean a network-facing bump is safe. A beautifulsoup4 upgrade
+  # once passed the unit tests and still broke a plugin connector in real use;
+  # it was quick to pin down only because it arrived on its own.
   - package-ecosystem: uv
     directory: /
     schedule:
       interval: weekly
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 10
     groups:
-      python-dependencies:
+      python-dev-dependencies:
+        dependency-type: development
         patterns: ['*']
 
   # React frontend.
