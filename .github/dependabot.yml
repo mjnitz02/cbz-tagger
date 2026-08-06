@@ -1,0 +1,45 @@
+---
+# Dependabot version updates.
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+#
+# This file was deleted by accident in 478105c (the nicegui -> React rewrite)
+# on 2026-07-01, so no version updates ran for a month while CVEs were being
+# patched by hand. The npm entry covers the frontend that same commit added,
+# which never had coverage at all.
+#
+# Security updates are separate and always run regardless of what's listed
+# here; these entries are the routine version bumps.
+version: 2
+updates:
+  # Python — uv resolves from pyproject.toml and writes uv.lock.
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    groups:
+      python-dependencies:
+        patterns: ['*']
+
+  # React frontend.
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    groups:
+      frontend-dependencies:
+        patterns: ['*']
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns: ['*']
+
+  # Base image in the published container.
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
