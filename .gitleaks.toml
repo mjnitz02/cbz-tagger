@@ -1,0 +1,22 @@
+# gitleaks config — extends the built-in default ruleset.
+# https://github.com/gitleaks/gitleaks#configuration
+title = "cbz-tagger gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Generated, vendored, or binary paths — scanning them wastes time and produces false positives on compressed bytes and lockfile hashes."
+paths = [
+  '''(^|/)node_modules/''',
+  '''(^|/)\.venv/''',
+  '''(^|/)dist/''',
+  '''(^|/)__pycache__/''',
+  '''(^|/)uv\.lock$''',
+  '''(^|/)package-lock\.json$''',
+  '''\.png$''',
+  '''\.jpg$''',
+  '''\.jpeg$''',
+  '''\.ico$''',
+  '''\.cbz$''',
+]

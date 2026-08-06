@@ -3,36 +3,63 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.2.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: mixed-line-ending
       - id: check-added-large-files
       - id: check-toml
+      - id: check-yaml
+      - id: check-merge-conflict
+      - id: detect-private-key
+
+  # Catch credentials before they reach a commit, matching what CI enforces
+  # on the way in. The other two repos have had this for a while; this one
+  # had no secret scanning on either side of the push.
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+
+  # These all invoke make targets that operate on the whole tree, so filenames
+  # must not be appended — `make lint-check foo.py` would have make treat
+  # foo.py as a target rather than passing it to ruff.
   - repo: local
     hooks:
       - id: lint-format
-        name: Check codestyle format wih ruff-format
+        name: Check codestyle format with ruff-format
         entry: make lint-format
         language: system
+        pass_filenames: false
+        always_run: true
       - id: lint-check
-        name: Check code for pylint errors wih ruff-check
-        entry: make lint-format
+        name: Check code for lint errors with ruff-check
+        entry: make lint-check
         language: system
+        pass_filenames: false
+        always_run: true
       - id: lint-yaml
         name: Check YAML files with yamllint
         entry: make lint-yaml
         language: system
+        pass_filenames: false
+        always_run: true
       - id: lint-typing
-        name: Check typing errors wih ty
+        name: Check typing errors with ty
         entry: make lint-typing
         language: system
+        pass_filenames: false
+        always_run: true
       - id: frontend-lint
         name: Format and lint the frontend
         entry: make frontend-lint
         language: system
+        pass_filenames: false
+        always_run: true
       - id: frontend-typing
         name: Check frontend typing errors with tsc
         entry: make frontend-typing
         language: system
+        pass_filenames: false
+        always_run: true

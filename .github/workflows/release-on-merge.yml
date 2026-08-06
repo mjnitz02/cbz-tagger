@@ -3,12 +3,21 @@ name: Create Release on Merge to Main
 on:
   push:
     branches: [main]
+# Only what this workflow needs: contents:write to cut the GitHub release.
+# The Docker Hub push authenticates with the environment's own credentials,
+# not the workflow token.
+permissions:
+  contents: write
 jobs:
   create-release:
     runs-on: ubuntu-latest
+    # DOCKER_USERNAME / DOCKER_PASSWORD live on this environment rather than at
+    # repo level, so only this job can read them — a workflow added elsewhere
+    # in the repo can no longer reach the publish credentials.
+    environment: release
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5
       - name: Extract version from pyproject.toml
         id: get-version
         run: |

@@ -1,0 +1,19 @@
+# Normalize line endings on checkin; check out with LF everywhere.
+* text=auto eol=lf
+
+# Lockfiles are generated. Suppress them from diffs and from language stats so
+# a dependency bump doesn't bury the real change in a review.
+uv.lock                     -diff linguist-generated
+frontend/package-lock.json  -diff linguist-generated
+
+# Shell scripts and Dockerfiles break with CRLF.
+*.sh        text eol=lf
+Dockerfile  text eol=lf
+
+# Binary assets — never diff, never eol-convert.
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.ico   binary
+*.cbz   binary
+*.zip   binary
