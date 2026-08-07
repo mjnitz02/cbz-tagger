@@ -6,6 +6,8 @@ from datetime import datetime
 from zipfile import BadZipFile
 
 from cbz_tagger.database.entity_db import EntityDB
+from cbz_tagger.database.repository import JsonRepository
+from cbz_tagger.database.repository import Repository
 from cbz_tagger.entities.cbz_entity import CbzEntity
 
 logger = logging.getLogger()
@@ -13,7 +15,13 @@ logger = logging.getLogger()
 
 class FileScanner:
     def __init__(
-        self, config_path, scan_path, storage_path, add_missing=True, environment: dict[str, str] | None = None
+        self,
+        config_path,
+        scan_path,
+        storage_path,
+        add_missing=True,
+        environment: dict[str, str] | None = None,
+        repository: Repository | None = None,
     ) -> None:
         if environment is None:
             environment = {}
@@ -24,11 +32,13 @@ class FileScanner:
         self.environment = environment
 
         self.add_missing = add_missing
-        self.entity_database = EntityDB.load(root_path=self.config_path)
+        # One repository per process, shared by every EntityDB this scanner builds.
+        self.repository: Repository = JsonRepository(config_path) if repository is None else repository
+        self.entity_database = EntityDB.load(root_path=self.config_path, repository=self.repository)
         self.recently_updated = []
 
     def reload_scanner(self):
-        self.entity_database = EntityDB.load(root_path=self.config_path)
+        self.entity_database = EntityDB.load(root_path=self.config_path, repository=self.repository)
 
     def to_state(self):
         return self.entity_database.to_state()
@@ -36,7 +46,7 @@ class FileScanner:
     def run(self):
         logger.info("File scanner started. %s", datetime.now())
         # Reload the entity database at the start of a run to make sure it is up to date
-        self.entity_database = EntityDB.load(root_path=self.config_path)
+        self.reload_scanner()
         self.run_scan()
 
         # If we have tracked entities, refresh the database to scan for new downloads and manga updates
@@ -44,7 +54,7 @@ class FileScanner:
             self.entity_database.refresh(self.storage_path)
 
     def run_scan(self):
-        self.entity_database = EntityDB.load(root_path=self.config_path)
+        self.reload_scanner()
         self.recently_updated = []
         while True:
             completed = self.scan()

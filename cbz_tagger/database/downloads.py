@@ -32,6 +32,11 @@ class DownloadLedger:
     def count_for(self, entity_id: str) -> int:
         return sum(1 for (e, _) in self._downloads if e == entity_id)
 
+    def keys_for(self, entity_id: str) -> set[str]:
+        """The stored keys for one series. Callers need these only to hand them to the
+        repository — the key format itself stays an implementation detail."""
+        return {k for (e, k) in self._downloads if e == entity_id}
+
     def __len__(self) -> int:
         return len(self._downloads)
 
@@ -40,14 +45,22 @@ class DownloadLedger:
         return [tuple(item) for item in self._downloads]
 
     # -- mutation -----------------------------------------------------------
-    def mark(self, entity_id: str, chapter) -> None:
-        self._downloads.add((entity_id, self._key(chapter)))
+    # The mutators return the key(s) they touched so the caller can persist exactly that
+    # row without having to know how the key is derived.
+    def mark(self, entity_id: str, chapter) -> str:
+        key = self._key(chapter)
+        self._downloads.add((entity_id, key))
+        return key
 
-    def unmark(self, entity_id: str, chapter) -> None:
-        self._downloads.discard((entity_id, self._key(chapter)))
+    def unmark(self, entity_id: str, chapter) -> str:
+        key = self._key(chapter)
+        self._downloads.discard((entity_id, key))
+        return key
 
-    def mark_all(self, entity_id: str, chapters: Iterable) -> None:
-        self._downloads.update((entity_id, self._key(c)) for c in chapters)
+    def mark_all(self, entity_id: str, chapters: Iterable) -> list[str]:
+        keys = [self._key(c) for c in chapters]
+        self._downloads.update((entity_id, key) for key in keys)
+        return keys
 
     def clear_series(self, entity_id: str) -> None:
         for key in [k for k in self._downloads if k[0] == entity_id]:

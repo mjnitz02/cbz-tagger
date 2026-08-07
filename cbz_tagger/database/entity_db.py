@@ -3,8 +3,6 @@ import logging
 import os
 import re
 import shutil
-import tempfile
-from contextlib import suppress
 from xml.dom import minidom
 from xml.etree import ElementTree
 from zipfile import ZIP_DEFLATED
@@ -21,6 +19,10 @@ from cbz_tagger.database.chapter_entity_db import ChapterEntityDB
 from cbz_tagger.database.cover_entity_db import CoverEntityDB
 from cbz_tagger.database.downloads import DownloadLedger
 from cbz_tagger.database.metadata_entity_db import MetadataEntityDB
+from cbz_tagger.database.repository import DatabaseState
+from cbz_tagger.database.repository import JsonRepository
+from cbz_tagger.database.repository import Repository
+from cbz_tagger.database.repository import blob_payload
 from cbz_tagger.database.series import ChapterSource
 from cbz_tagger.database.series import Series
 from cbz_tagger.database.series import SeriesIndex
@@ -28,28 +30,84 @@ from cbz_tagger.database.volume_entity_db import VolumeEntityDB
 
 logger = logging.getLogger()
 
+# The blob containers keyed by series entity_id. `authors` is excluded because it is keyed
+# by author id and is shared between series.
+SERIES_BLOB_KINDS = ("metadata", "covers", "volumes", "chapters")
+
 
 class EntityDB:
-    def __init__(
-        self,
-        root_path: str,
-        series=None,
-        downloads=None,
-        metadata=None,
-        covers=None,
-        authors=None,
-        volumes=None,
-        chapters=None,
-    ):
-        self.root_path = root_path
-        self.series: SeriesIndex = SeriesIndex() if series is None else series
-        self.downloads: DownloadLedger = DownloadLedger() if downloads is None else downloads
+    """The domain aggregate. Persistence lives behind `Repository`."""
 
-        self.metadata: MetadataEntityDB = MetadataEntityDB() if metadata is None else metadata
-        self.covers: CoverEntityDB = CoverEntityDB() if covers is None else covers
-        self.authors: AuthorEntityDB = AuthorEntityDB() if authors is None else authors
-        self.volumes: VolumeEntityDB = VolumeEntityDB() if volumes is None else volumes
-        self.chapters: ChapterEntityDB = ChapterEntityDB() if chapters is None else chapters
+    def __init__(self, root_path: str, repository: Repository | None = None):
+        self.root_path = root_path
+        self._repo: Repository = JsonRepository(root_path) if repository is None else repository
+        self._state: DatabaseState = self._repo.open()
+
+    @property
+    def repository(self) -> Repository:
+        return self._repo
+
+    @property
+    def state(self) -> DatabaseState:
+        return self._state
+
+    # The containers are stored on the state object, but stay attributes of EntityDB so
+    # every existing caller (and test fixture, which assigns them directly) is unaffected.
+    @property
+    def series(self) -> SeriesIndex:
+        return self._state.series
+
+    @series.setter
+    def series(self, value: SeriesIndex) -> None:
+        self._state.series = value
+
+    @property
+    def downloads(self) -> DownloadLedger:
+        return self._state.downloads
+
+    @downloads.setter
+    def downloads(self, value: DownloadLedger) -> None:
+        self._state.downloads = value
+
+    @property
+    def metadata(self) -> MetadataEntityDB:
+        return self._state.metadata
+
+    @metadata.setter
+    def metadata(self, value: MetadataEntityDB) -> None:
+        self._state.metadata = value
+
+    @property
+    def covers(self) -> CoverEntityDB:
+        return self._state.covers
+
+    @covers.setter
+    def covers(self, value: CoverEntityDB) -> None:
+        self._state.covers = value
+
+    @property
+    def authors(self) -> AuthorEntityDB:
+        return self._state.authors
+
+    @authors.setter
+    def authors(self, value: AuthorEntityDB) -> None:
+        self._state.authors = value
+
+    @property
+    def volumes(self) -> VolumeEntityDB:
+        return self._state.volumes
+
+    @volumes.setter
+    def volumes(self, value: VolumeEntityDB) -> None:
+        self._state.volumes = value
+
+    @property
+    def chapters(self) -> ChapterEntityDB:
+        return self._state.chapters
+
+    @chapters.setter
+    def chapters(self, value: ChapterEntityDB) -> None:
+        self._state.chapters = value
 
     def __getitem__(self, manga_name) -> str | None:
         series = self.series.by_alias(manga_name)
@@ -69,115 +127,34 @@ class EntityDB:
     def has_tracked_entities(self) -> bool:
         return self.series.has_tracked()
 
-    def save(self) -> None:
-        entity_db_path = os.path.join(self.root_path, "entity_db.json")
-        entity_database_json = self.to_json()
-
-        os.makedirs(self.root_path, exist_ok=True)
-        fd, tmp_path = tempfile.mkstemp(dir=self.root_path, prefix=".entity_db.", suffix=".tmp")
-        try:
-            with os.fdopen(fd, "w", encoding="UTF-8") as write_file:
-                write_file.write(entity_database_json)
-                write_file.flush()
-                os.fsync(write_file.fileno())
-            os.replace(tmp_path, entity_db_path)
-        except BaseException:
-            with suppress(OSError):
-                os.unlink(tmp_path)
-            raise
-
-    def to_json(self):
-        entity_map = {}
-        entity_names = {}
-        entity_tracked = []
-        entity_chapter_plugin = {}
-        for series in self.series:
-            entity_names[series.entity_id] = series.canonical_name
-            for alias in series.aliases:
-                entity_map[alias] = series.entity_id
-            if series.tracked:
-                entity_tracked.append(series.entity_id)
-            # Only non-default sources are written, so the file stays legacy-compatible.
-            if not series.source.is_default:
-                entity_chapter_plugin[series.entity_id] = {
-                    "plugin_type": series.source.plugin_type,
-                    "plugin_id": series.source.plugin_id,
-                }
-
-        content = {
-            "entity_map": entity_map,
-            "entity_names": entity_names,
-            "entity_downloads": self.downloads.as_tuples(),
-            "entity_tracked": entity_tracked,
-            "entity_chapter_plugin": entity_chapter_plugin,
-            "metadata": self.metadata.to_json(),
-            "covers": self.covers.to_json(),
-            "authors": self.authors.to_json(),
-            "volumes": self.volumes.to_json(),
-            "chapters": self.chapters.to_json(),
-        }
-        return json.dumps(content)
-
     @classmethod
-    def load(cls, root_path) -> "EntityDB":
-        entity_db_path = os.path.join(root_path, "entity_db.json")
-        if os.path.exists(entity_db_path):
-            with open(entity_db_path, "r", encoding="UTF-8") as read_file:
-                json_data = read_file.read()
-            return EntityDB.from_json(root_path, json_data)
-        return EntityDB(root_path)
+    def load(cls, root_path, repository: Repository | None = None) -> "EntityDB":
+        return cls(root_path, repository)
 
-    @classmethod
-    def from_json(cls, root_path, json_data):
-        content = json.loads(json_data)
-        entity_map = content["entity_map"]
-        entity_names = content["entity_names"]
-        entity_tracked = set(content.get("entity_tracked", []))
-        entity_chapter_plugin = content.get("entity_chapter_plugin", {})
+    def _persist_entity(self, entity_id: str) -> None:
+        """Write every blob that belongs to this series — metadata, covers, volumes,
+        chapters, plus the authors reachable from its metadata — and the series row itself.
 
-        # Preserve insertion order of entity_map so `storage_name` keeps picking the same alias
-        # that the old `next(iter(...))` scan in download_chapter picked.
-        aliases_by_id: dict[str, list[str]] = {}
-        for alias, entity_id in entity_map.items():
-            aliases_by_id.setdefault(entity_id, []).append(alias)
+        A blob the series no longer has is deleted rather than left behind, so a container
+        that lost an entry during an update does not resurrect it on the next load.
+        """
+        with self._repo.transaction():
+            series = self.series.get(entity_id)
+            if series is not None:
+                self._repo.save_series(series)
 
-        series_records = {}
-        for entity_id in list(entity_map.values()) + list(entity_names.keys()):
-            if entity_id in series_records:
-                continue
-            aliases = aliases_by_id.get(entity_id, [])
-            canonical_name = entity_names.get(entity_id)
-            if canonical_name is None:
-                # Orphan: present in entity_map but never given a canonical name.
-                logger.warning("Series %s has no canonical name; using its alias.", entity_id)
-                canonical_name = aliases[0] if aliases else entity_id
-            if not aliases:
-                # Orphan: named but unreachable by any local name. Keep it so it is not silently
-                # dropped, and give it an alias so storage_name stays valid.
-                logger.warning("Series %s (%s) has no local name mapping.", canonical_name, entity_id)
-                aliases = [canonical_name]
-            plugin = entity_chapter_plugin.get(entity_id, {})
-            series_records[entity_id] = Series(
-                entity_id=entity_id,
-                canonical_name=canonical_name,
-                aliases=aliases,
-                tracked=entity_id in entity_tracked,
-                source=ChapterSource(
-                    plugin_type=plugin.get("plugin_type", Plugins.DEFAULT),
-                    plugin_id=plugin.get("plugin_id", entity_id),
-                ),
-            )
+            for kind in SERIES_BLOB_KINDS:
+                blob_db = self._state.blob_db(kind)
+                if entity_id in blob_db.database:
+                    self._repo.put_blob(kind, entity_id, blob_payload(blob_db, entity_id))
+                else:
+                    self._repo.delete_blob(kind, entity_id)
 
-        return cls(
-            root_path=root_path,
-            series=SeriesIndex(series_records),
-            downloads=DownloadLedger(set(tuple(item) for item in content.get("entity_downloads", []))),
-            metadata=MetadataEntityDB.from_json(content["metadata"]),
-            covers=CoverEntityDB.from_json(content["covers"]),
-            authors=AuthorEntityDB.from_json(content["authors"]),
-            volumes=VolumeEntityDB.from_json(content["volumes"]),
-            chapters=ChapterEntityDB.from_json(content.get("chapters", "{}")),
-        )
+            metadata = self.metadata[entity_id]
+            if metadata is not None:
+                for author_id in metadata.author_entities:
+                    if author_id in self.authors.database:
+                        self._repo.put_blob("authors", author_id, blob_payload(self.authors, author_id))
 
     def to_state(self):
         state = []
@@ -250,6 +227,10 @@ class EntityDB:
                     source=ChapterSource(plugin_id=entity_id),
                 )
             )
+            # Persist the row before the update below, which talks to the network and may
+            # fail: a half-added series is recoverable, an unrecorded one is not.
+            with self._repo.transaction():
+                self._repo.save_series(self.series[entity_id])
         else:
             logger.warning("Entity %s (%s) already exists in the database.", manga_name, entity_id)
             return
@@ -261,6 +242,7 @@ class EntityDB:
         if update:
             self.update_manga_entity_id(entity_id)
 
+        marked_keys: list[str] = []
         if track:
             logger.info("Tracking: %s (%s)", entity_name, entity_id)
             self.series[entity_id].tracked = True
@@ -268,11 +250,14 @@ class EntityDB:
                 logger.info("Marking all chapters as downloaded. %s (%s)", entity_name, entity_id)
                 chapters = self.chapters[entity_id]
                 if chapters is not None:
-                    self.downloads.mark_all(entity_id, chapters)
+                    marked_keys = self.downloads.mark_all(entity_id, chapters)
             else:
                 logger.info("No chapters marked as downloaded. %s (%s)", entity_name, entity_id)
 
-        self.save()
+        with self._repo.transaction():
+            self._repo.save_series(self.series[entity_id])
+            for key in marked_keys:
+                self._repo.add_download(entity_id, key)
 
     def remove(self):
         tracked = list(self.series.tracked())
@@ -297,31 +282,39 @@ class EntityDB:
         self.delete_entity_id(series.entity_id, series.storage_name)
 
     def remove_entity_id_from_tracking(self, entity_id):
-        series = self.series.get(entity_id)
-        if series is not None:
-            series.tracked = False
-            series.source = ChapterSource(plugin_id=entity_id)
-        logger.warning("Removed %s from tracking.", entity_id)
+        with self._repo.transaction():
+            series = self.series.get(entity_id)
+            if series is not None:
+                series.tracked = False
+                series.source = ChapterSource(plugin_id=entity_id)
+                self._repo.save_series(series)
+            logger.warning("Removed %s from tracking.", entity_id)
 
-        # Remove the downloaded chapters
-        self.downloads.clear_series(entity_id)
-        logger.warning("Removed downloaded chapters for %s from tracking.", entity_id)
-        self.save()
+            # Remove the downloaded chapters
+            self.downloads.clear_series(entity_id)
+            self._repo.clear_downloads(entity_id)
+            logger.warning("Removed downloaded chapters for %s from tracking.", entity_id)
 
     def delete_entity_id(self, entity_id_to_remove, entity_name_to_remove):
-        self.remove_entity_id_from_tracking(entity_id_to_remove)
-        self.series.remove(entity_id_to_remove)
-        self.metadata.database.pop(entity_id_to_remove, None)
-        self.covers.database.pop(entity_id_to_remove, None)
-        self.volumes.database.pop(entity_id_to_remove, None)
-        self.chapters.database.pop(entity_id_to_remove, None)
-        logger.warning("Deleted entity from database %s (%s).", entity_name_to_remove, entity_id_to_remove)
-        self.save()
+        with self._repo.transaction():
+            self.remove_entity_id_from_tracking(entity_id_to_remove)
+            self.series.remove(entity_id_to_remove)
+            self._repo.delete_series(entity_id_to_remove)
+            # remove_entity_id_from_tracking already cleared these, but the series row is
+            # only now gone; keep them together so the delete is one unit of work.
+            self._repo.clear_downloads(entity_id_to_remove)
+
+            # Author blobs are deliberately left alone: they are shared between series and
+            # have never been garbage collected.
+            for kind in SERIES_BLOB_KINDS:
+                self._state.blob_db(kind).database.pop(entity_id_to_remove, None)
+                self._repo.delete_blob(kind, entity_id_to_remove)
+            logger.warning("Deleted entity from database %s (%s).", entity_name_to_remove, entity_id_to_remove)
 
     def set_downloaded_chapters(self, entity_id, downloaded_chapter_ids):
-        """Reconcile the downloaded chapters for an entity to match the given set in a single save()."""
+        """Reconcile the downloaded chapters for an entity to match the given set in a single write."""
         self.downloads.reconcile(entity_id, self.chapters[entity_id] or [], downloaded_chapter_ids)
-        self.save()
+        self._repo.replace_downloads(entity_id, self.downloads.keys_for(entity_id))
 
     def update_manga_entity_name(self, manga_name):
         series = self.series.by_alias(manga_name)
@@ -396,9 +389,9 @@ class EntityDB:
                 # Update missing covers
                 self.covers.download(entity_id, self.image_db_path)
 
-                # Save database on successful update, this makes each call slightly slower, but more reliable
+                # Persist on successful update, this makes each call slightly slower, but more reliable
                 # since the APIs are prone to crashing
-                self.save()
+                self._persist_entity(entity_id)
 
             except EnvironmentError as err:
                 logger.info("API Down >> Unable to update %s metadata. %s", manga_name, err)
@@ -443,9 +436,9 @@ class EntityDB:
             # Build the chapter CBZ file
             self.build_chapter_cbz(chapter_filepath)
 
-            # Mark cbz creation as successful and save the database
-            self.downloads.mark(entity_id, chapter_item)
-            self.save()
+            # Mark cbz creation as successful and record it
+            download_key = self.downloads.mark(entity_id, chapter_item)
+            self._repo.add_download(entity_id, download_key)
 
             # Set the ownership of the file
             set_file_ownership(f"{chapter_filepath}.cbz")
@@ -464,8 +457,8 @@ class EntityDB:
                 os.remove(f"{chapter_filepath}.cbz")
             if self.downloads.has(entity_id, chapter_item):
                 logger.error("Removing download record: %s, %s", entity_id, chapter_item.chapter_id)
-                self.downloads.unmark(entity_id, chapter_item)
-                self.save()
+                download_key = self.downloads.unmark(entity_id, chapter_item)
+                self._repo.remove_download(entity_id, download_key)
         finally:
             # Cleanup excess
             shutil.rmtree(chapter_filepath)

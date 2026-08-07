@@ -20,6 +20,27 @@ from cbz_tagger.entities.chapter_entity import ChapterEntity
 from cbz_tagger.entities.cover_entity import CoverEntity
 from cbz_tagger.entities.metadata_entity import MetadataEntity
 from cbz_tagger.entities.volume_entity import VolumeEntity
+from tests.support.memory_repository import MemoryRepository
+from tests.support.repositories import REPOSITORY_BACKENDS
+from tests.support.repositories import build_test_repository
+
+
+@pytest.fixture
+def repository_storage_path(tmp_path):
+    """Where a repository backend would look for already-downloaded chapters."""
+    path = tmp_path / "storage"
+    path.mkdir()
+    return str(path)
+
+
+@pytest.fixture(params=REPOSITORY_BACKENDS)
+def repository(request, tmp_path, repository_storage_path):
+    """A real repository per supported backend, for the conformance and persistence suites."""
+    config_path = tmp_path / "config"
+    config_path.mkdir()
+    repo = build_test_repository(request.param, str(config_path), repository_storage_path)
+    yield repo
+    repo.close()
 
 
 @pytest.fixture
@@ -73,6 +94,7 @@ def mock_entity_db_with_saving(
     mock_volume_db,
     mock_chapter_db,
 ):
+    """A fully populated EntityDB backed by a real JsonRepository under temp_dir."""
     entity_db = EntityDB(temp_dir)
     entity_db.series = SeriesIndex(
         {
@@ -94,10 +116,33 @@ def mock_entity_db_with_saving(
 
 @pytest.fixture
 def mock_entity_db(
-    mock_entity_db_with_saving,
+    manga_name,
+    manga_request_id,
+    mock_author_db,
+    mock_cover_db,
+    mock_metadata_db,
+    mock_volume_db,
+    mock_chapter_db,
+    temp_folder_path,
 ):
-    mock_entity_db_with_saving.save = mock.MagicMock()
-    return mock_entity_db_with_saving
+    """The same populated EntityDB, but backed by MemoryRepository so nothing hits disk."""
+    entity_db = EntityDB(temp_folder_path, MemoryRepository())
+    entity_db.series = SeriesIndex(
+        {
+            manga_request_id: Series(
+                entity_id=manga_request_id,
+                canonical_name="Oshimai",
+                aliases=[manga_name],
+                source=ChapterSource(plugin_id=manga_request_id),
+            )
+        }
+    )
+    entity_db.authors = mock_author_db
+    entity_db.covers = mock_cover_db
+    entity_db.metadata = mock_metadata_db
+    entity_db.volumes = mock_volume_db
+    entity_db.chapters = mock_chapter_db
+    return entity_db
 
 
 @pytest.fixture

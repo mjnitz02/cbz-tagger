@@ -23,7 +23,8 @@ def mock_entity_db_downloader(mock_entity_db):
     mock_entity_db.build_chapter_cbz = mock.MagicMock()
     mock_entity_db.downloads = mock.MagicMock()
     mock_entity_db.downloads.has.return_value = False
-    mock_entity_db.save = mock.MagicMock()
+    mock_entity_db.downloads.mark.return_value = "mock-download-key"
+    mock_entity_db.downloads.unmark.return_value = "mock-download-key"
 
     yield mock_entity_db
 
