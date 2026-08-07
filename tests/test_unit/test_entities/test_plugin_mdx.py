@@ -77,10 +77,10 @@ def test_chapter_entity_with_triple_decimal_chapter(chapter_request_content):
     assert entity.translated_language == "en"
 
 
-@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=0.1)
-@patch("cbz_tagger.entities.base_entity.time.sleep")
+@patch("cbz_tagger.common.http_client.random.uniform", return_value=0.1)
+@patch("cbz_tagger.common.http_client.time.sleep")
 def test_chapter_from_url(mock_sleep, mock_random, chapter_request_response):
-    with mock.patch("cbz_tagger.entities.plugins.mdx.ChapterPluginMDX.unpaginate_request") as mock_request:
+    with mock.patch("cbz_tagger.entities.plugins.mdx.unpaginate_request") as mock_request:
         mock_request.return_value = chapter_request_response["data"]
         entities = ChapterEntity.from_server_url(query_params={"ids[]": ["1361d404-d03c-4fd9-97b4-2c297914b098"]})
         # This test will see the english cover
@@ -101,10 +101,10 @@ def test_cover_entity_can_store_and_load(cover_request_content, check_entity_for
     check_entity_for_save_and_load(entity)
 
 
-@patch("cbz_tagger.entities.plugins.mdx.ChapterPluginMDX.request_with_retry")
+@patch("cbz_tagger.entities.plugins.mdx.request_with_retry")
 @patch("cbz_tagger.entities.plugins.plugin_entity.Image.open")
 @patch("cbz_tagger.entities.plugins.plugin_entity.os.path.exists", return_value=False)
-@patch("cbz_tagger.entities.chapter_entity.ChapterEntity.download_file")
+@patch("cbz_tagger.entities.plugins.plugin_entity.download_file")
 def test_download_chapter(mock_download_file, mock_path_exists, mock_image_open, mock_requests_get, chapter_entity):
     _ = mock_path_exists
     mock_requests_get.return_value.json.return_value = {
@@ -125,9 +125,9 @@ def test_download_chapter(mock_download_file, mock_path_exists, mock_image_open,
     assert mock_image.save.call_count == 2
 
 
-@patch("cbz_tagger.entities.plugins.mdx.ChapterPluginMDX.request_with_retry")
+@patch("cbz_tagger.entities.plugins.mdx.request_with_retry")
 @patch("cbz_tagger.entities.plugins.plugin_entity.os.path.exists", return_value=False)
-@patch("cbz_tagger.entities.chapter_entity.ChapterEntity.download_file")
+@patch("cbz_tagger.entities.plugins.plugin_entity.download_file")
 def test_download_chapter_raises_environment_error(
     mock_download_file, mock_path_exists, mock_requests_get, chapter_entity
 ):
@@ -144,7 +144,7 @@ def test_download_chapter_raises_environment_error(
     mock_requests_get.assert_called_once_with(f"https://api.{Urls.MDX}/at-home/server/chapter_id")
 
 
-@patch("cbz_tagger.entities.plugins.mdx.ChapterPluginMDX.request_with_retry")
+@patch("cbz_tagger.entities.plugins.mdx.request_with_retry")
 def test_mdx_parse_chapter_download_links(mock_request_with_retry, chapter_entity):
     mock_response = MagicMock()
     mock_response.json.return_value = {

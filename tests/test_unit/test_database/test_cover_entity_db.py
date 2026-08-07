@@ -82,11 +82,12 @@ def test_format_content_for_entity(content, expected_locale):
 @patch("cbz_tagger.database.cover_entity_db.path.exists")
 @patch("cbz_tagger.database.cover_entity_db.Image.open")
 @patch("cbz_tagger.database.cover_entity_db.BytesIO")
-def test_download(mock_bytes_io, mock_image_open, mock_path_exists, mock_os_makedirs):
+@patch("cbz_tagger.database.cover_entity_db.download_file")
+def test_download(mock_download_file, mock_bytes_io, mock_image_open, mock_path_exists, mock_os_makedirs):
     mock_cover = MagicMock(spec=CoverEntity)
     mock_cover.local_filename = "cover1.jpg"
     mock_cover.cover_url = "http://example.com/cover1.jpg"
-    mock_cover.download_file.return_value = b"image_data"
+    mock_download_file.return_value = b"image_data"
 
     mock_image = MagicMock(spec=Image)
     mock_image.format = "JPEG"
@@ -100,7 +101,7 @@ def test_download(mock_bytes_io, mock_image_open, mock_path_exists, mock_os_make
     test_db.download("entity1", "mock_path")
 
     mock_os_makedirs.assert_called_once_with("mock_path", exist_ok=True)
-    mock_cover.download_file.assert_called_once_with("http://example.com/cover1.jpg")
+    mock_download_file.assert_called_once_with("http://example.com/cover1.jpg")
     mock_bytes_io.assert_called_once_with(b"image_data")
     mock_image_open.assert_called_once_with(mock_bytes_io())
     mock_image.save.assert_called_once_with("mock_path/cover1.jpg", quality=95, optimize=True)

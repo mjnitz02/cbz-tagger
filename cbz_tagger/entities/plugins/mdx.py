@@ -3,6 +3,8 @@ import time
 from typing import Any
 
 from cbz_tagger.common.enums import Urls
+from cbz_tagger.common.http_client import request_with_retry
+from cbz_tagger.common.http_client import unpaginate_request
 from cbz_tagger.common.plugins import Plugins
 from cbz_tagger.entities.plugins.plugin_entity import ChapterPluginEntity
 
@@ -34,7 +36,7 @@ class ChapterPluginMDX(ChapterPluginEntity):
             "chapter": "asc",
         }
         params = "&".join([f"order%5B{key}%5D={value}" for key, value in order.items()])
-        return cls.unpaginate_request(f"{cls.entity_url}/{entity_id}/feed?{params}")
+        return unpaginate_request(f"{cls.entity_url}/{entity_id}/feed?{params}")
 
     def get_chapter_url(self):
         url = f"{self.download_url}/{self.entity_id}"
@@ -45,14 +47,14 @@ class ChapterPluginMDX(ChapterPluginEntity):
         return []
 
     def parse_chapter_download_links(self, url: str) -> list[str]:
-        response = self.request_with_retry(url).json()
+        response = request_with_retry(url).json()
         pages = self.attributes.get("pages")
 
         # If we didn't retrieve enough pages, try to query again
         if len(response["chapter"][self.quality]) != pages:
             logger.error("Not enough pages returned from server. Waiting 10s and retrying query.")
             time.sleep(10)
-            response = self.request_with_retry(url).json()
+            response = request_with_retry(url).json()
             if len(response["chapter"][self.quality]) != pages:
                 raise EnvironmentError(
                     f"Failed to download chapter {self.entity_id}, not enough pages returned from server"

@@ -192,7 +192,7 @@ class TestScannerOperations:
         api.reload_scanner_operation()
         mock_scanner.reload_scanner.assert_called_once()
 
-    @patch("cbz_tagger.web.api.BaseEntity.request_with_retry")
+    @patch("cbz_tagger.web.api.request_with_retry")
     def test_check_proxy_status_operation_good(self, mock_request_with_retry):
         """Test proxy status check returns good status with the external IP on success."""
         mock_request_with_retry.return_value = MagicMock(text="1.2.3.4")
@@ -201,7 +201,7 @@ class TestScannerOperations:
         assert status == "good"
         assert external_ip == "1.2.3.4"
 
-    @patch("cbz_tagger.web.api.BaseEntity.request_with_retry")
+    @patch("cbz_tagger.web.api.request_with_retry")
     def test_check_proxy_status_operation_bad_status_code(self, mock_request_with_retry):
         """Test proxy status check returns bad status when retries are exhausted on a non-200 response."""
         mock_request_with_retry.side_effect = EnvironmentError("Failed to receive response")
@@ -209,7 +209,7 @@ class TestScannerOperations:
         assert status == "bad"
         assert external_ip == "0.0.0.0"
 
-    @patch("cbz_tagger.web.api.BaseEntity.request_with_retry")
+    @patch("cbz_tagger.web.api.request_with_retry")
     def test_check_proxy_status_operation_request_exception(self, mock_request_with_retry):
         """Test proxy status check returns bad status when the request fails."""
         mock_request_with_retry.side_effect = EnvironmentError("Failed to receive response")

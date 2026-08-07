@@ -1,5 +1,6 @@
 import math
 
+from cbz_tagger.common.http_client import request_with_retry
 from cbz_tagger.entities.base_entity import BaseEntity
 
 
@@ -13,7 +14,7 @@ class VolumeEntity(BaseEntity):
             query_params = {}
         entity_id = query_params["ids[]"][0]
 
-        response = cls.request_with_retry(f"{cls.entity_url}/{entity_id}/aggregate")
+        response = request_with_retry(f"{cls.entity_url}/{entity_id}/aggregate")
         response_json = response.json()
         return [cls(response_json)]
 

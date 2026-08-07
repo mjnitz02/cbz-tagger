@@ -3,6 +3,7 @@ import logging
 import time
 from typing import Any
 
+from cbz_tagger.common.http_client import request_with_retry
 from cbz_tagger.common.plugins import Plugins
 from cbz_tagger.entities.plugins.plugin_entity import ChapterPluginEntity
 
@@ -21,7 +22,7 @@ class ChapterPluginCMK(ChapterPluginEntity):
         total = None
         page = 1
         while True:
-            response = cls.request_with_retry(f"{page_url}{page}")
+            response = request_with_retry(f"{page_url}{page}")
             data = response.json()
             if total is None:
                 total = data["total"]
@@ -36,7 +37,7 @@ class ChapterPluginCMK(ChapterPluginEntity):
     @classmethod
     def parse_info_feed(cls, entity_id: str) -> list[Any]:
         url = f"{cls.entity_url}comic/{entity_id}?tachiyomi=true"
-        response = cls.request_with_retry(url)
+        response = request_with_retry(url)
         info = response.json()
 
         manga_id = info["comic"]["hid"]
@@ -83,7 +84,7 @@ class ChapterPluginCMK(ChapterPluginEntity):
         return content
 
     def parse_chapter_download_links(self, url: str) -> list[str]:
-        response = self.request_with_retry(url)
+        response = request_with_retry(url)
         response_json = response.json()
         chapter_content = response_json["chapter"]
         links = []

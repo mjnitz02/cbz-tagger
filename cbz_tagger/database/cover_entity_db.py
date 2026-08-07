@@ -5,6 +5,7 @@ from os import path
 
 from PIL import Image
 
+from cbz_tagger.common.http_client import download_file
 from cbz_tagger.database.base_db import BaseEntityDB
 from cbz_tagger.entities.cover_entity import CoverEntity
 
@@ -83,7 +84,7 @@ class CoverEntityDB(BaseEntityDB[list[CoverEntity]]):
             image_path = path.join(filepath, cover.local_filename)
             if not path.exists(image_path):
                 logger.info("Downloading: %s", cover.cover_url)
-                image = cover.download_file(cover.cover_url)
+                image = download_file(cover.cover_url)
                 in_memory_image = Image.open(BytesIO(image))
                 if in_memory_image.format != "JPEG":
                     in_memory_image = in_memory_image.convert("RGB")

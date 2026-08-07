@@ -13,7 +13,7 @@ def _entity_tracked(entity_db):
 
 @mock.patch("cbz_tagger.common.input.get_input")
 @mock.patch("cbz_tagger.common.input.get_raw_input")
-@mock.patch("cbz_tagger.entities.chapter_entity.ChapterEntity.download_file")
+@mock.patch("cbz_tagger.entities.plugins.plugin_entity.download_file")
 def test_download_cbz_files_with_mark_all_tracked(
     mock_download_file, mock_get_raw_input, mock_get_input, integration_scanner, manga_name, capture_input_fixture
 ):
@@ -49,7 +49,7 @@ def test_download_cbz_files_with_mark_all_tracked(
 
 @mock.patch("cbz_tagger.common.input.get_input")
 @mock.patch("cbz_tagger.common.input.get_raw_input")
-@mock.patch("cbz_tagger.entities.chapter_entity.ChapterEntity.download_file")
+@mock.patch("cbz_tagger.entities.plugins.plugin_entity.download_file")
 def test_download_cbz_files_without_mark_all_tracked(
     mock_download_file, mock_get_raw_input, mock_get_input, integration_scanner, manga_name, capture_input_fixture
 ):

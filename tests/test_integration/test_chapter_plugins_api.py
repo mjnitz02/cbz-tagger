@@ -4,6 +4,7 @@ from io import BytesIO
 import pytest
 from PIL import Image
 
+from cbz_tagger.common.http_client import request_with_retry
 from cbz_tagger.entities.chapter_entity import ChapterEntity
 
 
@@ -11,7 +12,7 @@ def check_entity_download_links(entity, entity_link_count):
     check_url = entity.get_chapter_url()
     download_links = entity.parse_chapter_download_links(check_url)
     assert len(download_links) == entity_link_count
-    response = entity.request_with_retry(download_links[0])
+    response = request_with_retry(download_links[0])
     assert response.status_code == 200
     in_memory_image = Image.open(BytesIO(response.content))
     assert in_memory_image.format in ["JPEG", "PNG", "WEBP"]

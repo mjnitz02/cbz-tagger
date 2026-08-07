@@ -11,6 +11,8 @@ from PIL import ImageFile
 from cbz_tagger.common.enums import ChapterData
 from cbz_tagger.common.enums import ChapterResponseBuilder
 from cbz_tagger.common.html_scraper import HtmlScraper
+from cbz_tagger.common.http_client import download_file
+from cbz_tagger.common.http_client import request_with_retry
 from cbz_tagger.entities.base_entity import BaseEntity
 
 logger = logging.getLogger()
@@ -47,7 +49,7 @@ class ChapterPluginEntity(BaseEntity):
         Returns:
             HtmlScraper instance ready for parsing
         """
-        response = cls.request_with_retry(url)
+        response = request_with_retry(url)
         return HtmlScraper.from_response(response)
 
     def get_chapter_url(self):
@@ -203,7 +205,7 @@ class ChapterPluginEntity(BaseEntity):
             image_path = os.path.join(filepath, f"{index + 1:03}.jpg")
             cached_images.append(image_path)
             if not os.path.exists(image_path):
-                image = self.download_file(image_url)
+                image = download_file(image_url)
                 in_memory_image = Image.open(BytesIO(image))
                 if in_memory_image.format != "JPEG":
                     in_memory_image = in_memory_image.convert("RGB")

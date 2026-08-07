@@ -3,34 +3,34 @@ from unittest.mock import patch
 import pytest
 import requests
 
-from cbz_tagger.entities.base_entity import BaseEntity
+from cbz_tagger.common.http_client import unpaginate_request
 
 
-@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=0.1)
-@patch("cbz_tagger.entities.base_entity.time.sleep")
+@patch("cbz_tagger.common.http_client.random.uniform", return_value=0.1)
+@patch("cbz_tagger.common.http_client.time.sleep")
 def test_unpaginate_request_success(mock_sleep, mock_random, requests_mock):
     url = "https://api.example.com/data"
     data = [{"id": 1}, {"id": 2}]
     requests_mock.get(url, json={"data": data, "total": 2})
 
-    result = BaseEntity.unpaginate_request(url)
+    result = unpaginate_request(url)
     assert result == data
 
 
-@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=0.1)
-@patch("cbz_tagger.entities.base_entity.time.sleep")
+@patch("cbz_tagger.common.http_client.random.uniform", return_value=0.1)
+@patch("cbz_tagger.common.http_client.time.sleep")
 def test_unpaginate_request_multiple_pages(mock_sleep, mock_random, requests_mock):
     url = "https://api.example.com/data"
     data_page_1 = [{"id": 1}, {"id": 2}]
     data_page_2 = [{"id": 3}, {"id": 4}]
     requests_mock.get(url, [{"json": {"data": data_page_1, "total": 4}}, {"json": {"data": data_page_2, "total": 4}}])
 
-    result = BaseEntity.unpaginate_request(url, limit=2)
+    result = unpaginate_request(url, limit=2)
     assert result == data_page_1 + data_page_2
 
 
-@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=0.1)
-@patch("cbz_tagger.entities.base_entity.time.sleep")
+@patch("cbz_tagger.common.http_client.random.uniform", return_value=0.1)
+@patch("cbz_tagger.common.http_client.time.sleep")
 def test_unpaginate_request_api_down(mock_sleep, mock_random, requests_mock):
     url = "https://api.example.com/data"
     requests_mock.get(url, exc=requests.exceptions.JSONDecodeError("Expecting value", "", 0))
@@ -38,11 +38,11 @@ def test_unpaginate_request_api_down(mock_sleep, mock_random, requests_mock):
     with pytest.raises(
         EnvironmentError, match="Failed to receive response from https://api.example.com/data after 3 attempts"
     ):
-        BaseEntity.unpaginate_request(url)
+        unpaginate_request(url)
 
 
-@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=0.1)
-@patch("cbz_tagger.entities.base_entity.time.sleep")
+@patch("cbz_tagger.common.http_client.random.uniform", return_value=0.1)
+@patch("cbz_tagger.common.http_client.time.sleep")
 def test_unpaginate_request_with_duplicates_single_page(mock_sleep, mock_random, requests_mock, caplog):
     """Test that duplicates in a single page response are detected and removed."""
     url = "https://api.example.com/data"
@@ -50,8 +50,8 @@ def test_unpaginate_request_with_duplicates_single_page(mock_sleep, mock_random,
     data_with_duplicates = [{"id": 1, "name": "first"}, {"id": 2, "name": "second"}, {"id": 1, "name": "duplicate"}]
     requests_mock.get(url, json={"data": data_with_duplicates, "total": 3})  # total says 3, matches data length
 
-    with patch("cbz_tagger.entities.base_entity.logger") as mock_logger:
-        result = BaseEntity.unpaginate_request(url)
+    with patch("cbz_tagger.common.http_client.logger") as mock_logger:
+        result = unpaginate_request(url)
 
         # Should have logged a warning - we have 3 items but only 2 unique IDs
         mock_logger.warning.assert_called_once_with(
@@ -65,8 +65,8 @@ def test_unpaginate_request_with_duplicates_single_page(mock_sleep, mock_random,
         assert result == expected_result
 
 
-@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=0.1)
-@patch("cbz_tagger.entities.base_entity.time.sleep")
+@patch("cbz_tagger.common.http_client.random.uniform", return_value=0.1)
+@patch("cbz_tagger.common.http_client.time.sleep")
 def test_unpaginate_request_with_duplicates_multiple_pages(mock_sleep, mock_random, requests_mock):
     """Test that duplicates across multiple pages are detected and removed."""
     url = "https://api.example.com/data"
@@ -76,8 +76,8 @@ def test_unpaginate_request_with_duplicates_multiple_pages(mock_sleep, mock_rand
     data_page_2 = [{"id": 2, "name": "duplicate"}, {"id": 3, "name": "third"}]
     requests_mock.get(url, [{"json": {"data": data_page_1, "total": 4}}, {"json": {"data": data_page_2, "total": 4}}])
 
-    with patch("cbz_tagger.entities.base_entity.logger") as mock_logger:
-        result = BaseEntity.unpaginate_request(url, limit=2)
+    with patch("cbz_tagger.common.http_client.logger") as mock_logger:
+        result = unpaginate_request(url, limit=2)
 
         # Should have logged a warning - we have 4 items but only 3 unique IDs
         mock_logger.warning.assert_called_once_with(
@@ -91,16 +91,16 @@ def test_unpaginate_request_with_duplicates_multiple_pages(mock_sleep, mock_rand
         assert result == expected_result
 
 
-@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=0.1)
-@patch("cbz_tagger.entities.base_entity.time.sleep")
+@patch("cbz_tagger.common.http_client.random.uniform", return_value=0.1)
+@patch("cbz_tagger.common.http_client.time.sleep")
 def test_unpaginate_request_no_duplicates_no_warning(mock_sleep, mock_random, requests_mock):
     """Test that no warning is logged when there are no duplicates."""
     url = "https://api.example.com/data"
     data = [{"id": 1, "name": "first"}, {"id": 2, "name": "second"}]
     requests_mock.get(url, json={"data": data, "total": 2})
 
-    with patch("cbz_tagger.entities.base_entity.logger") as mock_logger:
-        result = BaseEntity.unpaginate_request(url)
+    with patch("cbz_tagger.common.http_client.logger") as mock_logger:
+        result = unpaginate_request(url)
 
         # Should not have logged any warning
         mock_logger.warning.assert_not_called()
@@ -109,8 +109,8 @@ def test_unpaginate_request_no_duplicates_no_warning(mock_sleep, mock_random, re
         assert result == data
 
 
-@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=0.1)
-@patch("cbz_tagger.entities.base_entity.time.sleep")
+@patch("cbz_tagger.common.http_client.random.uniform", return_value=0.1)
+@patch("cbz_tagger.common.http_client.time.sleep")
 def test_unpaginate_request_preserves_order_when_deduplicating(mock_sleep, mock_random, requests_mock):
     """Test that the original order is preserved when removing duplicates."""
     url = "https://api.example.com/data"
@@ -126,8 +126,8 @@ def test_unpaginate_request_preserves_order_when_deduplicating(mock_sleep, mock_
     ]
     requests_mock.get(url, json={"data": data_with_duplicates, "total": 5})
 
-    with patch("cbz_tagger.entities.base_entity.logger") as mock_logger:
-        result = BaseEntity.unpaginate_request(url)
+    with patch("cbz_tagger.common.http_client.logger") as mock_logger:
+        result = unpaginate_request(url)
 
         # Should have logged a warning
         mock_logger.warning.assert_called_once()

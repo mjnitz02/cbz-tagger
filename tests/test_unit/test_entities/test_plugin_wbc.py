@@ -55,8 +55,8 @@ def test_from_server_url_no_plugin_id(chapter_entity):
         chapter_entity.from_server_url({"ids[]": ["example_manga"]}, plugin_type=ChapterPluginWBC.PLUGIN_TYPE)
 
 
-@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=0.1)
-@patch("cbz_tagger.entities.base_entity.time.sleep")
+@patch("cbz_tagger.common.http_client.random.uniform", return_value=0.1)
+@patch("cbz_tagger.common.http_client.time.sleep")
 def test_from_server_url(mock_sleep, mock_random, chapter_entity):
     result = chapter_entity.from_server_url(
         {"ids[]": ["example_manga"]}, plugin_type=ChapterPluginWBC.PLUGIN_TYPE, plugin_id="example_manga"
@@ -80,8 +80,8 @@ def test_from_server_url(mock_sleep, mock_random, chapter_entity):
     )
 
 
-@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=0.1)
-@patch("cbz_tagger.entities.base_entity.time.sleep")
+@patch("cbz_tagger.common.http_client.random.uniform", return_value=0.1)
+@patch("cbz_tagger.common.http_client.time.sleep")
 def test_parse_info_feed(mock_sleep, mock_random, chapter_entity):
     _ = chapter_entity
     result = ChapterPluginWBC.parse_info_feed("example_manga")
@@ -169,8 +169,8 @@ def test_parse_info_feed(mock_sleep, mock_random, chapter_entity):
     ]
 
 
-@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=0.1)
-@patch("cbz_tagger.entities.base_entity.time.sleep")
+@patch("cbz_tagger.common.http_client.random.uniform", return_value=0.1)
+@patch("cbz_tagger.common.http_client.time.sleep")
 def test_parse_chapter_download_links(mock_sleep, mock_random, chapter_entity):
     result = chapter_entity.parse_chapter_download_links("http://wbc.example.com/chapter")
 

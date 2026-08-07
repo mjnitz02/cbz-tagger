@@ -14,9 +14,9 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from cbz_tagger.common.env import AppEnv
+from cbz_tagger.common.http_client import request_with_retry
 from cbz_tagger.common.plugins import Plugins
 from cbz_tagger.database.file_scanner import FileScanner
-from cbz_tagger.entities.base_entity import BaseEntity
 from cbz_tagger.entities.metadata_entity import MetadataEntity
 from cbz_tagger.web.file_log_reader import FileLogReader
 
@@ -305,11 +305,11 @@ def get_scanner_state_operation():
 def check_proxy_status_operation() -> tuple[str, str]:
     """Check the configured proxy's external IP via ifconfig.me.
 
-    Uses BaseEntity.request_with_retry so the check exercises the same proxy
+    Uses the shared http_client so the check exercises the same proxy
     configuration and retry behavior as every other outbound request.
     """
     try:
-        response = BaseEntity.request_with_retry(PROXY_CHECK_URL)
+        response = request_with_retry(PROXY_CHECK_URL)
         external_ip = response.text.strip()
         if external_ip:
             return "good", external_ip
