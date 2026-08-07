@@ -56,7 +56,7 @@ def mock_volume_db(volume_request_response, manga_request_id):
 
 @pytest.fixture
 def mock_chapter_db(chapter_request_response, manga_request_id):
-    entities = [ChapterEntity(data) for data in chapter_request_response["data"]]
+    entities = [ChapterEntity.from_content(data) for data in chapter_request_response["data"]]
     entity_db = ChapterEntityDB()
     entity_db.database[manga_request_id] = entities
     return entity_db

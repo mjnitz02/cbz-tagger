@@ -45,7 +45,7 @@ class InputEntity:
 
     @staticmethod
     def select_a_chapter_backend():
-        plugins_types = list(Plugins._REGISTRY.keys())
+        plugins_types = list(Plugins.all())
         choice = console_selector(
             plugins_types,
             "Select a chapter backend for the series (Default: mdx)",

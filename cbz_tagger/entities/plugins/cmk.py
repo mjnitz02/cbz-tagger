@@ -5,6 +5,7 @@ from typing import Any
 
 from cbz_tagger.common.http_client import request_with_retry
 from cbz_tagger.common.plugins import Plugins
+from cbz_tagger.entities.chapter_entity import ChapterEntity
 from cbz_tagger.entities.plugins.plugin_entity import ChapterPluginEntity
 
 logger = logging.getLogger()
@@ -35,7 +36,7 @@ class ChapterPluginCMK(ChapterPluginEntity):
         return items, total
 
     @classmethod
-    def parse_info_feed(cls, entity_id: str) -> list[Any]:
+    def parse_info_feed(cls, entity_id: str) -> list[ChapterEntity]:
         url = f"{cls.entity_url}comic/{entity_id}?tachiyomi=true"
         response = request_with_retry(url)
         info = response.json()
@@ -67,23 +68,21 @@ class ChapterPluginCMK(ChapterPluginEntity):
                 group_id = item["group_name"][0]
 
             content.append(
-                cls.ResponseBuilder.build(
-                    cls.build_chapter_data(
-                        chapter_id=f"{manga_id}-{item['hid']}",
-                        entity_id=entity_id,
-                        title=item["title"],
-                        url=f"{cls.entity_url}chapter/{item['hid']}?tachiyomi=true",
-                        chapter=item["chap"],
-                        volume=item["vol"],
-                        created_at=item.get("created_at"),
-                        updated_at=item.get("created_at"),  # updatedAt is unreliable for CMK
-                        scanlation_group=group_id,
-                    )
+                cls.build_chapter(
+                    chapter_id=f"{manga_id}-{item['hid']}",
+                    title=item["title"],
+                    url=f"{cls.entity_url}chapter/{item['hid']}?tachiyomi=true",
+                    chapter=item["chap"],
+                    volume=item["vol"],
+                    created_at=item.get("created_at"),
+                    updated_at=item.get("created_at"),  # updatedAt is unreliable for CMK
+                    scanlation_group_id=group_id,
                 )
             )
         return content
 
-    def parse_chapter_download_links(self, url: str) -> list[str]:
+    @classmethod
+    def parse_chapter_download_links(cls, chapter: ChapterEntity, url: str) -> list[str]:
         response = request_with_retry(url)
         response_json = response.json()
         chapter_content = response_json["chapter"]

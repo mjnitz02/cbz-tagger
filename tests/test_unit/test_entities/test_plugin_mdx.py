@@ -13,7 +13,7 @@ from cbz_tagger.entities.cover_entity import CoverEntity
 
 @pytest.fixture
 def chapter_entity():
-    return ChapterEntity(
+    return ChapterEntity.from_content(
         {
             "id": "chapter_id",
             "attributes": {"chapter": "1", "translatedLanguage": "en", "pages": 2},
@@ -23,57 +23,57 @@ def chapter_entity():
 
 
 def test_chapter_entity(chapter_request_content):
-    entity = ChapterEntity(content=chapter_request_content)
-    assert entity.entity_id == "1361d404-d03c-4fd9-97b4-2c297914b098"
-    assert entity.entity_type == Plugins.DEFAULT
+    entity = ChapterEntity.from_content(chapter_request_content)
+    assert entity.chapter_id == "1361d404-d03c-4fd9-97b4-2c297914b098"
+    assert entity.plugin_type == Plugins.DEFAULT
 
     assert entity.volume_number == 1.0
     assert entity.chapter_number == 5
     assert entity.chapter_string == "5"
     assert entity.padded_chapter_string == "005"
-    assert entity.quality == "data"
+    assert entity.plugin.quality == "data"
     assert entity.translated_language == "en"
 
 
 def test_chapter_entity_with_decimal_chapter(chapter_request_content):
     chapter_request_content["attributes"]["chapter"] = "5.5"
-    entity = ChapterEntity(content=chapter_request_content)
-    assert entity.entity_id == "1361d404-d03c-4fd9-97b4-2c297914b098"
-    assert entity.entity_type == Plugins.DEFAULT
+    entity = ChapterEntity.from_content(chapter_request_content)
+    assert entity.chapter_id == "1361d404-d03c-4fd9-97b4-2c297914b098"
+    assert entity.plugin_type == Plugins.DEFAULT
 
     assert entity.volume_number == 1.0
     assert entity.chapter_number == 5.5
     assert entity.chapter_string == "5.5"
     assert entity.padded_chapter_string == "005.5"
-    assert entity.quality == "data"
+    assert entity.plugin.quality == "data"
     assert entity.translated_language == "en"
 
 
 def test_chapter_entity_with_double_decimal_chapter(chapter_request_content):
     chapter_request_content["attributes"]["chapter"] = "5.5.1"
-    entity = ChapterEntity(content=chapter_request_content)
-    assert entity.entity_id == "1361d404-d03c-4fd9-97b4-2c297914b098"
-    assert entity.entity_type == Plugins.DEFAULT
+    entity = ChapterEntity.from_content(chapter_request_content)
+    assert entity.chapter_id == "1361d404-d03c-4fd9-97b4-2c297914b098"
+    assert entity.plugin_type == Plugins.DEFAULT
 
     assert entity.volume_number == 1.0
     assert entity.chapter_number == 5.51
     assert entity.chapter_string == "5.51"
     assert entity.padded_chapter_string == "005.51"
-    assert entity.quality == "data"
+    assert entity.plugin.quality == "data"
     assert entity.translated_language == "en"
 
 
 def test_chapter_entity_with_triple_decimal_chapter(chapter_request_content):
     chapter_request_content["attributes"]["chapter"] = "5.5.1.2"
-    entity = ChapterEntity(content=chapter_request_content)
-    assert entity.entity_id == "1361d404-d03c-4fd9-97b4-2c297914b098"
-    assert entity.entity_type == Plugins.DEFAULT
+    entity = ChapterEntity.from_content(chapter_request_content)
+    assert entity.chapter_id == "1361d404-d03c-4fd9-97b4-2c297914b098"
+    assert entity.plugin_type == Plugins.DEFAULT
 
     assert entity.volume_number == 1.0
     assert entity.chapter_number == 5.512
     assert entity.chapter_string == "5.512"
     assert entity.padded_chapter_string == "005.512"
-    assert entity.quality == "data"
+    assert entity.plugin.quality == "data"
     assert entity.translated_language == "en"
 
 
@@ -85,10 +85,10 @@ def test_chapter_from_url(mock_sleep, mock_random, chapter_request_response):
         entities = ChapterEntity.from_server_url(query_params={"ids[]": ["1361d404-d03c-4fd9-97b4-2c297914b098"]})
         # This test will see the english cover
         assert len(entities) == 4
-        assert entities[0].entity_id == "1361d404-d03c-4fd9-97b4-2c297914b098"
-        assert entities[1].entity_id == "057c0bce-fd18-44ea-ad64-cefa92378d49"
-        assert entities[2].entity_id == "01c86808-46fb-4108-aa5d-4e87aee8b2f1"
-        assert entities[3].entity_id == "19020b28-67b1-48a2-82a6-9b7ad18a5c37"
+        assert entities[0].chapter_id == "1361d404-d03c-4fd9-97b4-2c297914b098"
+        assert entities[1].chapter_id == "057c0bce-fd18-44ea-ad64-cefa92378d49"
+        assert entities[2].chapter_id == "01c86808-46fb-4108-aa5d-4e87aee8b2f1"
+        assert entities[3].chapter_id == "19020b28-67b1-48a2-82a6-9b7ad18a5c37"
         mock_request.assert_called_once_with(
             f"{BaseEntity.base_url}/manga/1361d404-d03c-4fd9-97b4-2c297914b098/feed?"
             f"order%5BcreatedAt%5D=asc&order%5BupdatedAt%5D=asc&order%5BpublishAt%5D=asc&"

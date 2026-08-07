@@ -5,13 +5,15 @@ from typing import TypeVar
 from typing import Union
 
 from cbz_tagger.entities.base_entity import BaseEntity
-from cbz_tagger.entities.base_entity import BaseEntityObject
+from cbz_tagger.entities.chapter_entity import ChapterEntity
 
 T = TypeVar("T")
 
 
-class BaseEntityDB(BaseEntityObject, Generic[T]):
-    entity_class: type[BaseEntity]
+class BaseEntityDB(Generic[T]):
+    # ChapterEntity is no longer a BaseEntity — it is a plain model with the same
+    # from_json/to_json/from_server_url surface this class relies on.
+    entity_class: type[BaseEntity] | type[ChapterEntity]
     database: dict[str, T]
     query_param_field = "ids[]"
 
@@ -67,8 +69,10 @@ class BaseEntityDB(BaseEntityObject, Generic[T]):
             entity_ids = [entity_ids]
 
         if batch_response:
+            # batch_response is a MangaDex-API path only; chapters never take it.
             contents = self.entity_class.from_server_url(query_params={self.query_param_field: [entity_ids]}, **kwargs)
             for content in contents:
+                assert isinstance(content, BaseEntity)
                 entity_id = content.entity_id
                 if skip_on_exist and entity_id in self.database:
                     continue

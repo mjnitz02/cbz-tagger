@@ -2,11 +2,11 @@ import base64
 import re
 from datetime import datetime
 from datetime import timedelta
-from typing import Any
 
 from bs4.element import Tag
 
 from cbz_tagger.common.plugins import Plugins
+from cbz_tagger.entities.chapter_entity import ChapterEntity
 from cbz_tagger.entities.plugins.plugin_entity import ChapterPluginEntity
 
 
@@ -40,7 +40,7 @@ class ChapterPluginKAL(ChapterPluginEntity):
         return approx_date.isoformat()
 
     @classmethod
-    def parse_info_feed(cls, entity_id: str) -> list[Any]:
+    def parse_info_feed(cls, entity_id: str) -> list[ChapterEntity]:
         url = f"{cls.entity_url}/manga/{entity_id}"
         scraper = cls.fetch_and_parse(url)
 
@@ -75,23 +75,21 @@ class ChapterPluginKAL(ChapterPluginEntity):
                 chapter_updated = ChapterPluginKAL.get_approximate_date(item_time_str)
 
             content.append(
-                cls.ResponseBuilder.build(
-                    cls.build_chapter_data(
-                        chapter_id=f"{entity_id}-{chapter_id}".lower(),
-                        entity_id=entity_id,
-                        title=chapter_title,
-                        url=link,
-                        chapter=chapter_number_str,
-                        volume=None,
-                        created_at=chapter_updated,
-                        updated_at=chapter_updated,
-                    )
+                cls.build_chapter(
+                    chapter_id=f"{entity_id}-{chapter_id}".lower(),
+                    title=chapter_title,
+                    url=link,
+                    chapter=chapter_number_str,
+                    volume=None,
+                    created_at=chapter_updated,
+                    updated_at=chapter_updated,
                 )
             )
         return content
 
-    def parse_chapter_download_links(self, url: str) -> list[str]:
-        scraper = self.fetch_and_parse(url)
+    @classmethod
+    def parse_chapter_download_links(cls, chapter: ChapterEntity, url: str) -> list[str]:
+        scraper = cls.fetch_and_parse(url)
         chapter_images = scraper.extract_script_variable("chapImages", "Could not find chapter images")
 
         pages = chapter_images.split(",")

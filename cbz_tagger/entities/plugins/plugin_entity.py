@@ -1,25 +1,25 @@
 import logging
 import os
 from abc import abstractmethod
-from datetime import datetime
 from io import BytesIO
-from typing import Any
 
 from PIL import Image
 from PIL import ImageFile
 
-from cbz_tagger.common.enums import ChapterData
-from cbz_tagger.common.enums import ChapterResponseBuilder
 from cbz_tagger.common.html_scraper import HtmlScraper
 from cbz_tagger.common.http_client import download_file
 from cbz_tagger.common.http_client import request_with_retry
-from cbz_tagger.entities.base_entity import BaseEntity
+from cbz_tagger.entities.chapter_entity import ChapterEntity
 
 logger = logging.getLogger()
 
 
-class ChapterPluginEntity(BaseEntity):
+class ChapterPluginEntity:
     """Base class for chapter source plugins.
+
+    A plugin is transport only: it fetches from a source and adapts what it finds into
+    ChapterEntity. It holds no per-chapter state, so every method is a classmethod that
+    takes the chapter it is acting on.
 
     Subclasses must:
     - Define PLUGIN_TYPE class variable matching a Plugins constant
@@ -32,11 +32,10 @@ class ChapterPluginEntity(BaseEntity):
     PLUGIN_TYPE: str = ""  # Must be set by subclasses; set with @Plugins.register("type") decorator
     BASE_URL: str = ""  # Must be set by subclasses; used to set API endpoints and construct chapter URLs
     TITLE_URL: str = ""  # Must be set by subclasses; used to construct entity links
-    ResponseBuilder = ChapterResponseBuilder
     quality = "data"  # Default quality for chapter images; can be overridden by subclasses if needed
 
     @classmethod
-    def fetch_chapters(cls, entity_id: str) -> list[Any]:
+    def fetch_chapters(cls, entity_id: str) -> list[ChapterEntity]:
         return cls.parse_info_feed(entity_id)
 
     @classmethod
@@ -52,106 +51,31 @@ class ChapterPluginEntity(BaseEntity):
         response = request_with_retry(url)
         return HtmlScraper.from_response(response)
 
-    def get_chapter_url(self):
-        return self.attributes.get("url", "")
-
-    @property
-    def chapter_number(self) -> float | None:
-        chapter = str(self.attributes.get("chapter", ""))
-        if chapter[0] == ".":
-            chapter = chapter[1:]
-        if chapter.count(".") > 1:
-            chapter_split = chapter.split(".")
-            chapter = f"{chapter_split[0]}.{''.join(chapter_split[1:])}"
-        try:
-            return float(chapter)
-        except ValueError:
-            return None
-
-    @property
-    def chapter_string(self) -> str:
-        chapter_number = self.chapter_number
-        if chapter_number is None:
-            return str(chapter_number)
-        try:
-            if chapter_number.is_integer():
-                return f"{int(chapter_number)}"
-            return f"{chapter_number}"
-        except (ValueError, TypeError):
-            return str(chapter_number)
-
-    @property
-    def padded_chapter_string(self) -> str:
-        chapter_number = self.chapter_number
-        if chapter_number is None:
-            return str(chapter_number)
-        try:
-            if chapter_number.is_integer():
-                return f"{int(chapter_number):03}"
-            decimal_size = len(str(chapter_number).split(".", maxsplit=1)[-1])
-            if decimal_size == 2:
-                return f"{chapter_number:06.2f}"
-            if decimal_size == 3:
-                return f"{chapter_number:07.3f}"
-            return f"{chapter_number:05.1f}"
-        except (ValueError, TypeError):
-            return str(chapter_number)
-
-    @property
-    def volume_number(self) -> float | None:
-        volume = self.attributes.get("volume")
-        if volume is None:
-            return None
-        return float(volume)
-
-    @property
-    def translated_language(self) -> str | None:
-        return self.attributes.get("translatedLanguage")
-
-    @property
-    def pages(self) -> int | None:
-        return self.attributes.get("pages")
-
-    @property
-    def scanlation_group(self) -> str:
-        group = next(iter(rel for rel in self.relationships if rel["type"] == "scanlation_group"), {})
-        scanlation_group = group.get("id", "none")
-        if scanlation_group is None:
-            return "none"
-        return scanlation_group.lower()
-
-    @property
-    def updated(self) -> str | None:
-        return self.attributes.get("updatedAt")
-
-    @property
-    def updated_date(self) -> datetime | None:
-        if self.updated is None:
-            return None
-        try:
-            return datetime.fromisoformat(self.updated)
-        except ValueError:
-            return datetime.strptime(self.updated, "%a, %d %b %Y %H:%M:%S %z")
+    @classmethod
+    def get_chapter_url(cls, chapter: ChapterEntity) -> str:
+        return chapter.url or ""
 
     @classmethod
     @abstractmethod
-    def parse_info_feed(cls, entity_id: str) -> list[Any]:
+    def parse_info_feed(cls, entity_id: str) -> list[ChapterEntity]:
         """Fetch and parse chapter listings for an entity.
 
         Args:
             entity_id: The unique identifier for the manga/series
 
         Returns:
-            List of chapter response dicts. Use build_chapter_data() and
-            ResponseBuilder.build() for standardized formatting.
+            List of ChapterEntity. Use build_chapter() to construct them so the
+            plugin's own type is recorded on each chapter.
         """
         raise NotImplementedError
 
+    @classmethod
     @abstractmethod
-    def parse_chapter_download_links(self, url: str) -> list[str]:
+    def parse_chapter_download_links(cls, chapter: ChapterEntity, url: str) -> list[str]:
         """Parse download links for chapter images from a chapter URL.
 
         Args:
+            chapter: The chapter being downloaded
             url: The chapter page URL
 
         Returns:
@@ -160,10 +84,9 @@ class ChapterPluginEntity(BaseEntity):
         raise NotImplementedError
 
     @classmethod
-    def build_chapter_data(
+    def build_chapter(
         cls,
         chapter_id: str,
-        entity_id: str,
         title: str,
         url: str,
         chapter: str,
@@ -172,16 +95,11 @@ class ChapterPluginEntity(BaseEntity):
         volume: str | None = None,
         created_at: str | None = None,
         updated_at: str | None = None,
-        scanlation_group: str | None = None,
-    ) -> ChapterData:
-        """Create a ChapterData instance with the plugin's type.
-
-        Convenience method that automatically sets the plugin_type from
-        the class's PLUGIN_TYPE attribute.
-        """
-        return ChapterData(
+        scanlation_group_id: str | None = None,
+    ) -> ChapterEntity:
+        """Create a ChapterEntity stamped with this plugin's type."""
+        return ChapterEntity(
             chapter_id=chapter_id,
-            entity_id=entity_id,
             plugin_type=cls.PLUGIN_TYPE,
             title=title,
             url=url,
@@ -191,13 +109,14 @@ class ChapterPluginEntity(BaseEntity):
             volume=volume,
             created_at=created_at,
             updated_at=updated_at,
-            scanlation_group=scanlation_group,
+            scanlation_group_id=scanlation_group_id,
         )
 
-    def download_chapter(self, filepath) -> list[str]:
+    @classmethod
+    def download_chapter(cls, chapter: ChapterEntity, filepath) -> list[str]:
         # Get chapter image urls
-        url = self.get_chapter_url()
-        download_links = self.parse_chapter_download_links(url)
+        url = cls.get_chapter_url(chapter)
+        download_links = cls.parse_chapter_download_links(chapter, url)
 
         # Download the images for the chapter
         cached_images = []
@@ -215,11 +134,15 @@ class ChapterPluginEntity(BaseEntity):
                     ImageFile.LOAD_TRUNCATED_IMAGES = True  # type: ignore[misc]
                     in_memory_image.save(image_path, quality=95, optimize=True)
 
-        if self.pages != -1 and len(cached_images) != self.pages:
-            logger.error("Failed to download chapter %s, not enough pages saved from server", self.entity_id)
-            raise EnvironmentError(f"Failed to download chapter {self.entity_id}, not enough pages saved from server")
-        if self.pages == -1 and len(cached_images) != len(download_links):
-            logger.error("Failed to download chapter %s, not enough pages saved from server", self.entity_id)
-            raise EnvironmentError(f"Failed to download chapter {self.entity_id}, not enough pages saved from server")
+        if chapter.pages != -1 and len(cached_images) != chapter.pages:
+            logger.error("Failed to download chapter %s, not enough pages saved from server", chapter.chapter_id)
+            raise EnvironmentError(
+                f"Failed to download chapter {chapter.chapter_id}, not enough pages saved from server"
+            )
+        if chapter.pages == -1 and len(cached_images) != len(download_links):
+            logger.error("Failed to download chapter %s, not enough pages saved from server", chapter.chapter_id)
+            raise EnvironmentError(
+                f"Failed to download chapter {chapter.chapter_id}, not enough pages saved from server"
+            )
 
         return cached_images

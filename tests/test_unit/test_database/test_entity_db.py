@@ -39,7 +39,7 @@ def _entity_downloads(entity_db):
 
 
 def _chapter(chapter_id):
-    return mock.MagicMock(entity_id=chapter_id)
+    return mock.MagicMock(chapter_id=chapter_id)
 
 
 def test_entity_db_can_store_and_load(mock_entity_db, manga_request_id):
@@ -1006,9 +1006,9 @@ def test_update_manga_entity_id_metadata_and_find_updated_ids_with_multiple_enti
 
 def test_entity_db_set_downloaded_chapters_add_and_remove(simple_mock_entity_db, manga_request_id):
     """Test set_downloaded_chapters reconciles the downloaded set to match the desired chapters"""
-    chapter_1 = mock.MagicMock(entity_id="chapter-1")
-    chapter_2 = mock.MagicMock(entity_id="chapter-2")
-    chapter_3 = mock.MagicMock(entity_id="chapter-3")
+    chapter_1 = mock.MagicMock(chapter_id="chapter-1")
+    chapter_2 = mock.MagicMock(chapter_id="chapter-2")
+    chapter_3 = mock.MagicMock(chapter_id="chapter-3")
     simple_mock_entity_db.chapters.database[manga_request_id] = [chapter_1, chapter_2, chapter_3]
 
     # Chapter 1 is currently downloaded, chapter 2 and 3 are not
@@ -1025,7 +1025,7 @@ def test_entity_db_set_downloaded_chapters_add_and_remove(simple_mock_entity_db,
 
 def test_entity_db_set_downloaded_chapters_ignores_unknown_chapters(simple_mock_entity_db, manga_request_id):
     """Test set_downloaded_chapters leaves downloads for chapters outside the known list untouched"""
-    chapter_1 = mock.MagicMock(entity_id="chapter-1")
+    chapter_1 = mock.MagicMock(chapter_id="chapter-1")
     simple_mock_entity_db.chapters.database[manga_request_id] = [chapter_1]
 
     # A chapter that is downloaded but no longer present in the known chapter list (e.g. a race)

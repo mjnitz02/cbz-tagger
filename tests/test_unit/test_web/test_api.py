@@ -265,16 +265,16 @@ class TestScannerOperations:
     def test_get_chapters_operation_with_chapters(self, mock_scanner):
         """Test get chapters operation when chapters exist."""
         mock_chapter1 = MagicMock()
-        mock_chapter1.entity_id = "entity1"
+        mock_chapter1.chapter_id = "entity1"
         mock_chapter1.chapter_string = "1"
 
         mock_chapter2 = MagicMock()
-        mock_chapter2.entity_id = "entity2"
+        mock_chapter2.chapter_id = "entity2"
         mock_chapter2.chapter_string = "2"
 
         mock_scanner.entity_database.chapters.database.get.return_value = [mock_chapter1, mock_chapter2]
         mock_scanner.entity_database.downloads.has.side_effect = lambda entity_id, chapter: (
-            (entity_id, chapter.entity_id) == ("test_entity_id", "entity1")
+            (entity_id, chapter.chapter_id) == ("test_entity_id", "entity1")
         )
 
         result = api.get_chapters_operation("test_entity_id")
@@ -387,11 +387,11 @@ class TestAPIEndpoints:
     def test_get_series_chapters_endpoint(self, mock_scanner, reset_app_state, client):
         """Test GET /api/scanner/series/{entity_id}/chapters endpoint."""
         mock_chapter = MagicMock()
-        mock_chapter.entity_id = "chapter1"
+        mock_chapter.chapter_id = "chapter1"
         mock_chapter.chapter_string = "1"
         mock_scanner.entity_database.chapters.database.get.return_value = [mock_chapter]
         mock_scanner.entity_database.downloads.has.side_effect = lambda entity_id, chapter: (
-            (entity_id, chapter.entity_id) == ("test_id", "chapter1")
+            (entity_id, chapter.chapter_id) == ("test_id", "chapter1")
         )
 
         response = client.get("/api/scanner/series/test_id/chapters")

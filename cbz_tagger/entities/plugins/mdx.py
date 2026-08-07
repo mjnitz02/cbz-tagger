@@ -1,11 +1,11 @@
 import logging
 import time
-from typing import Any
 
 from cbz_tagger.common.enums import Urls
 from cbz_tagger.common.http_client import request_with_retry
 from cbz_tagger.common.http_client import unpaginate_request
 from cbz_tagger.common.plugins import Plugins
+from cbz_tagger.entities.chapter_entity import ChapterEntity
 from cbz_tagger.entities.plugins.plugin_entity import ChapterPluginEntity
 
 logger = logging.getLogger()
@@ -15,8 +15,9 @@ logger = logging.getLogger()
 class ChapterPluginMDX(ChapterPluginEntity):
     """MangaDex chapter plugin.
 
-    Note: MDX uses the standard API response format directly from the server,
-    so it doesn't use the ResponseBuilder for parse_info_feed.
+    MangaDex's API response shape happens to be the shape this database has always
+    stored on disk, so adapting it is a straight `ChapterEntity.from_content` call —
+    but it is an adapter like every other plugin's, not a privileged path.
     """
 
     BASE_URL = Urls.MDX
@@ -26,7 +27,7 @@ class ChapterPluginMDX(ChapterPluginEntity):
     chapter_url: str = f"https://uploads.{BASE_URL}"
 
     @classmethod
-    def fetch_chapters(cls, entity_id: str) -> list:
+    def parse_info_feed(cls, entity_id: str) -> list[ChapterEntity]:
         order = {
             "createdAt": "asc",
             "updatedAt": "asc",
@@ -36,32 +37,38 @@ class ChapterPluginMDX(ChapterPluginEntity):
             "chapter": "asc",
         }
         params = "&".join([f"order%5B{key}%5D={value}" for key, value in order.items()])
-        return unpaginate_request(f"{cls.entity_url}/{entity_id}/feed?{params}")
+        response = unpaginate_request(f"{cls.entity_url}/{entity_id}/feed?{params}")
 
-    def get_chapter_url(self):
-        url = f"{self.download_url}/{self.entity_id}"
-        return url
+        chapters = []
+        for item in response:
+            try:
+                chapters.append(ChapterEntity.from_content(item))
+            except (KeyError, TypeError, ValueError) as err:
+                # A single malformed entry must not take down a 400-chapter feed.
+                logger.error("Skipping unparseable chapter in feed for %s: %s", entity_id, err)
+        return chapters
 
     @classmethod
-    def parse_info_feed(cls, entity_id: str) -> list[Any]:
-        return []
+    def get_chapter_url(cls, chapter: ChapterEntity) -> str:
+        return f"{cls.download_url}/{chapter.chapter_id}"
 
-    def parse_chapter_download_links(self, url: str) -> list[str]:
+    @classmethod
+    def parse_chapter_download_links(cls, chapter: ChapterEntity, url: str) -> list[str]:
         response = request_with_retry(url).json()
-        pages = self.attributes.get("pages")
+        pages = chapter.pages
 
         # If we didn't retrieve enough pages, try to query again
-        if len(response["chapter"][self.quality]) != pages:
+        if len(response["chapter"][cls.quality]) != pages:
             logger.error("Not enough pages returned from server. Waiting 10s and retrying query.")
             time.sleep(10)
             response = request_with_retry(url).json()
-            if len(response["chapter"][self.quality]) != pages:
+            if len(response["chapter"][cls.quality]) != pages:
                 raise EnvironmentError(
-                    f"Failed to download chapter {self.entity_id}, not enough pages returned from server"
+                    f"Failed to download chapter {chapter.chapter_id}, not enough pages returned from server"
                 )
 
-        base_url = f"{self.chapter_url}/{self.quality}/{response['chapter']['hash']}"
+        base_url = f"{cls.chapter_url}/{cls.quality}/{response['chapter']['hash']}"
         links = []
-        for chapter_image_name in response["chapter"][self.quality]:
+        for chapter_image_name in response["chapter"][cls.quality]:
             links.append(f"{base_url}/{chapter_image_name}")
         return links

@@ -80,7 +80,7 @@ def chapter_entity(requests_mock):
         ),
     )
 
-    return ChapterEntity(
+    return ChapterEntity.from_content(
         {
             "id": "chapter_id",
             "attributes": {
@@ -113,11 +113,11 @@ def test_from_server_url(mock_sleep, mock_random, chapter_entity):
     )
 
     assert len(result) == 3
-    assert result[0].entity_id == "ACprvUWn-Ce82S7St"
+    assert result[0].chapter_id == "ACprvUWn-Ce82S7St"
     assert result[0].get_chapter_url() == f"https://{ChapterPluginCMK.BASE_URL}/chapter/Ce82S7St?tachiyomi=true"
-    assert result[1].entity_id == "ACprvUWn-Be82S7St"
+    assert result[1].chapter_id == "ACprvUWn-Be82S7St"
     assert result[1].get_chapter_url() == f"https://{ChapterPluginCMK.BASE_URL}/chapter/Be82S7St?tachiyomi=true"
-    assert result[2].entity_id == "ACprvUWn-Ae82S7St"
+    assert result[2].chapter_id == "ACprvUWn-Ae82S7St"
     assert result[2].get_chapter_url() == f"https://{ChapterPluginCMK.BASE_URL}/chapter/Ae82S7St?tachiyomi=true"
 
 
@@ -125,7 +125,7 @@ def test_from_server_url(mock_sleep, mock_random, chapter_entity):
 @patch("cbz_tagger.common.http_client.time.sleep")
 def test_parse_info_feed(mock_sleep, mock_random, chapter_entity):
     _ = chapter_entity
-    result = ChapterPluginCMK.parse_info_feed("example_manga")
+    result = [chapter.to_content() for chapter in ChapterPluginCMK.parse_info_feed("example_manga")]
 
     assert result == [
         {

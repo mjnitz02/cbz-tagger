@@ -11,7 +11,7 @@ class DownloadLedger:
 
     IMPORTANT: every method takes a *chapter object*, never a bare chapter id. The key
     stored internally is an implementation detail of this class. Step 5 changes that key
-    from `chapter.entity_id` (a plugin transport handle) to `chapter.padded_chapter_string`
+    from `chapter.chapter_id` (a plugin transport handle) to `chapter.padded_chapter_string`
     (the real domain identity, and the name of the file on disk) without touching any caller.
 
     In step 1 the key is unchanged, so behaviour is identical to today.
@@ -23,7 +23,7 @@ class DownloadLedger:
     @staticmethod
     def _key(chapter) -> str:
         # STEP 5: becomes `return chapter.padded_chapter_string`
-        return chapter.entity_id
+        return chapter.chapter_id
 
     # -- queries ------------------------------------------------------------
     def has(self, entity_id: str, chapter) -> bool:

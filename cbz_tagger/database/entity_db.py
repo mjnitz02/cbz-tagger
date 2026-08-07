@@ -193,14 +193,14 @@ class EntityDB:
                 {
                     "entity_id": entity_id,
                     "name": series.storage_name,
-                    "name_link": f"{Plugins.TITLE_URLS[Plugins.DEFAULT]}{entity_id}",
+                    "name_link": f"{Plugins.title_url(Plugins.DEFAULT)}{entity_id}",
                     "status": entity_metadata.status,
                     "tracked": series.tracked,
                     "latest_chapter": latest_chapter.chapter_string if latest_chapter else None,
                     "latest_chapter_date": latest_chapter.updated_date if latest_chapter else None,
                     "metadata_updated": entity_metadata.updated,
                     "plugin": plugin_type,
-                    "plugin_link": f"{Plugins.TITLE_URLS[plugin_type]}{plugin_id}",
+                    "plugin_link": f"{Plugins.title_url(plugin_type)}{plugin_id}",
                 }
             )
         state = sorted(state, key=lambda d: d["name"].lower())
@@ -438,7 +438,7 @@ class EntityDB:
             self.build_chapter_metadata(manga_name, chapter_item, chapter_filepath)
 
             # Download the chapter images and write them to the folder
-            self.chapters.download(entity_id, chapter_item.entity_id, chapter_filepath)
+            self.chapters.download(entity_id, chapter_item.chapter_id, chapter_filepath)
 
             # Build the chapter CBZ file
             self.build_chapter_cbz(chapter_filepath)
@@ -458,12 +458,12 @@ class EntityDB:
             set_file_ownership(mylar_series_json_path)
 
         except EnvironmentError as err:
-            logger.error("Could not download chapter: %s, %s, %s", entity_id, chapter_item.entity_id, err)
+            logger.error("Could not download chapter: %s, %s, %s", entity_id, chapter_item.chapter_id, err)
             if os.path.exists(f"{chapter_filepath}.cbz"):
-                logger.error("Removing CBZ: %s, %s", entity_id, chapter_item.entity_id)
+                logger.error("Removing CBZ: %s, %s", entity_id, chapter_item.chapter_id)
                 os.remove(f"{chapter_filepath}.cbz")
             if self.downloads.has(entity_id, chapter_item):
-                logger.error("Removing download record: %s, %s", entity_id, chapter_item.entity_id)
+                logger.error("Removing download record: %s, %s", entity_id, chapter_item.chapter_id)
                 self.downloads.unmark(entity_id, chapter_item)
                 self.save()
         finally:
@@ -659,5 +659,5 @@ class EntityDB:
             try:
                 self.download_chapter(entity_id, chapter_item, storage_path)
             except EnvironmentError as err:
-                logger.error("Error occurred in chapter: %s, %s, %s", entity_id, chapter_item.entity_id, err)
+                logger.error("Error occurred in chapter: %s, %s, %s", entity_id, chapter_item.chapter_id, err)
         return missing_chapters

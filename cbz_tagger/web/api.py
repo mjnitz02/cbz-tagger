@@ -331,7 +331,7 @@ def get_chapters_operation(entity_id: str):
     downloads = scanner.entity_database.downloads
     return [
         {
-            "entity_id": chapter.entity_id,
+            "entity_id": chapter.chapter_id,
             "chapter_number": chapter.chapter_string,
             "downloaded": downloads.has(entity_id, chapter),
         }

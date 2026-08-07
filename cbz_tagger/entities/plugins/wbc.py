@@ -1,10 +1,10 @@
 import base64
 import re
-from typing import Any
 
 from bs4.element import Tag
 
 from cbz_tagger.common.plugins import Plugins
+from cbz_tagger.entities.chapter_entity import ChapterEntity
 from cbz_tagger.entities.plugins.plugin_entity import ChapterPluginEntity
 
 
@@ -15,7 +15,7 @@ class ChapterPluginWBC(ChapterPluginEntity):
     entity_url = f"https://{BASE_URL}/"
 
     @classmethod
-    def parse_info_feed(cls, entity_id: str) -> list[Any]:
+    def parse_info_feed(cls, entity_id: str) -> list[ChapterEntity]:
         url = f"{cls.entity_url}series/{entity_id}/full-chapter-list"
         scraper = cls.fetch_and_parse(url)
 
@@ -50,21 +50,19 @@ class ChapterPluginWBC(ChapterPluginEntity):
             item_title = str(first_span.contents[0]) if first_span.contents else ""
 
             content.append(
-                cls.ResponseBuilder.build(
-                    cls.build_chapter_data(
-                        chapter_id=f"{entity_id}-{chapter_id}".lower(),
-                        entity_id=entity_id,
-                        title=item_title,
-                        url=link,
-                        chapter=re.sub("[^\\d.]", "", item_title),
-                        updated_at=updated,
-                    )
+                cls.build_chapter(
+                    chapter_id=f"{entity_id}-{chapter_id}".lower(),
+                    title=item_title,
+                    url=link,
+                    chapter=re.sub("[^\\d.]", "", item_title),
+                    updated_at=updated,
                 )
             )
         return content
 
-    def parse_chapter_download_links(self, url: str) -> list[str]:
-        scraper = self.fetch_and_parse(url)
+    @classmethod
+    def parse_chapter_download_links(cls, chapter: ChapterEntity, url: str) -> list[str]:
+        scraper = cls.fetch_and_parse(url)
 
         # Find the root url for the chapter
         root_element = scraper.find_one_safe("link", {"rel": "preload"}, "Could not find preload link")

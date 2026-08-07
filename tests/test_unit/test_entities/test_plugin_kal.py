@@ -72,7 +72,7 @@ def chapter_entity(requests_mock, kal_series_response, kal_chapter_response):
         text=kal_chapter_response,
     )
 
-    return ChapterEntity(
+    return ChapterEntity.from_content(
         {
             "id": "chapter_id",
             "attributes": {
@@ -105,11 +105,11 @@ def test_from_server_url(mock_sleep, mock_random, chapter_entity):
     )
 
     assert len(result) == 3
-    assert result[0].entity_id == "example_manga-example-chapter-5"
+    assert result[0].chapter_id == "example_manga-example-chapter-5"
     assert result[0].get_chapter_url() == f"https://{ChapterPluginKAL.BASE_URL}/manga/example/chapter-5"
-    assert result[1].entity_id == "example_manga-example-chapter-3.1"
+    assert result[1].chapter_id == "example_manga-example-chapter-3.1"
     assert result[1].get_chapter_url() == f"https://{ChapterPluginKAL.BASE_URL}/manga/example/chapter-3.1"
-    assert result[2].entity_id == "example_manga-example-chapter-1"
+    assert result[2].chapter_id == "example_manga-example-chapter-1"
     assert result[2].get_chapter_url() == f"https://{ChapterPluginKAL.BASE_URL}/manga/example/chapter-1"
 
 
@@ -117,7 +117,7 @@ def test_from_server_url(mock_sleep, mock_random, chapter_entity):
 @patch("cbz_tagger.common.http_client.time.sleep")
 def test_parse_info_feed(mock_sleep, mock_random, chapter_entity):
     _ = chapter_entity
-    result = ChapterPluginKAL.parse_info_feed("example_manga")
+    result = [chapter.to_content() for chapter in ChapterPluginKAL.parse_info_feed("example_manga")]
 
     assert len(result) == 3
     for chapter, expected_id, expected_chapter, expected_url in zip(

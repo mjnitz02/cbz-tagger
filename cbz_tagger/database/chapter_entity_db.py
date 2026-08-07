@@ -77,7 +77,7 @@ class ChapterEntityDB(BaseEntityDB[list[ChapterEntity]]):
         if chapters is None:
             raise EnvironmentError(f"No chapters found for entity {entity_id}")
 
-        chapter = next(iter(c for c in chapters if c.entity_id == chapter_id), None)
+        chapter = next(iter(c for c in chapters if c.chapter_id == chapter_id), None)
         if chapter is not None:
             return chapter.download_chapter(filepath)
 
