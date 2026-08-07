@@ -9,6 +9,8 @@ import pytest
 from cbz_tagger.common.enums import Urls
 from cbz_tagger.common.input import InputEntity
 from cbz_tagger.database.entity_db import EntityDB
+from cbz_tagger.database.series import ChapterSource
+from cbz_tagger.database.series import Series
 from cbz_tagger.entities.cover_entity import CoverEntity
 from cbz_tagger.entities.metadata_entity import MetadataEntity
 
@@ -20,9 +22,29 @@ def simple_mock_entity_db():
     return entity_db
 
 
+def _entity_map(entity_db):
+    return {s.storage_name: s.entity_id for s in entity_db.series}
+
+
+def _entity_names(entity_db):
+    return {s.entity_id: s.canonical_name for s in entity_db.series}
+
+
+def _entity_tracked(entity_db):
+    return {s.entity_id for s in entity_db.series.tracked()}
+
+
+def _entity_downloads(entity_db):
+    return set(entity_db.downloads.as_tuples())
+
+
+def _chapter(chapter_id):
+    return mock.MagicMock(entity_id=chapter_id)
+
+
 def test_entity_db_can_store_and_load(mock_entity_db, manga_request_id):
-    assert mock_entity_db.entity_map == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
-    assert mock_entity_db.entity_names == {manga_request_id: "Oshimai"}
+    assert _entity_map(mock_entity_db) == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
+    assert _entity_names(mock_entity_db) == {manga_request_id: "Oshimai"}
     assert len(mock_entity_db.authors) == 1
     assert len(mock_entity_db.covers) == 1
     assert len(mock_entity_db.metadata) == 1
@@ -31,8 +53,8 @@ def test_entity_db_can_store_and_load(mock_entity_db, manga_request_id):
 
     json_str = mock_entity_db.to_json()
     new_mock_entity_db = EntityDB.from_json("mock", json_str)
-    assert new_mock_entity_db.entity_map == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
-    assert new_mock_entity_db.entity_names == {manga_request_id: "Oshimai"}
+    assert _entity_map(new_mock_entity_db) == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
+    assert _entity_names(new_mock_entity_db) == {manga_request_id: "Oshimai"}
     assert len(new_mock_entity_db.authors) == 1
     assert len(new_mock_entity_db.covers) == 1
     assert len(new_mock_entity_db.metadata) == 1
@@ -44,8 +66,8 @@ def test_entity_db_can_store_and_load(mock_entity_db, manga_request_id):
 
 
 def test_entity_db_can_load_backwards_compatible(mock_entity_db, manga_request_id):
-    assert mock_entity_db.entity_map == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
-    assert mock_entity_db.entity_names == {manga_request_id: "Oshimai"}
+    assert _entity_map(mock_entity_db) == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
+    assert _entity_names(mock_entity_db) == {manga_request_id: "Oshimai"}
     assert len(mock_entity_db.authors) == 1
     assert len(mock_entity_db.covers) == 1
     assert len(mock_entity_db.metadata) == 1
@@ -53,8 +75,8 @@ def test_entity_db_can_load_backwards_compatible(mock_entity_db, manga_request_i
     assert len(mock_entity_db.chapters) == 1
 
     legacy_json_dump = {
-        "entity_map": mock_entity_db.entity_map,
-        "entity_names": mock_entity_db.entity_names,
+        "entity_map": _entity_map(mock_entity_db),
+        "entity_names": _entity_names(mock_entity_db),
         "metadata": mock_entity_db.metadata.to_json(),
         "covers": mock_entity_db.covers.to_json(),
         "authors": mock_entity_db.authors.to_json(),
@@ -62,15 +84,15 @@ def test_entity_db_can_load_backwards_compatible(mock_entity_db, manga_request_i
     }
     legacy_json_dump = json.dumps(legacy_json_dump)
     new_mock_entity_db = EntityDB.from_json("mock", legacy_json_dump)
-    assert new_mock_entity_db.entity_map == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
-    assert new_mock_entity_db.entity_names == {manga_request_id: "Oshimai"}
+    assert _entity_map(new_mock_entity_db) == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
+    assert _entity_names(new_mock_entity_db) == {manga_request_id: "Oshimai"}
     assert len(new_mock_entity_db.authors) == 1
     assert len(new_mock_entity_db.covers) == 1
     assert len(new_mock_entity_db.metadata) == 1
     assert len(new_mock_entity_db.volumes) == 1
     assert len(new_mock_entity_db.chapters) == 0
-    assert len(new_mock_entity_db.entity_downloads) == 0
-    assert len(new_mock_entity_db.entity_tracked) == 0
+    assert len(new_mock_entity_db.downloads) == 0
+    assert not new_mock_entity_db.series.has_tracked()
 
 
 def test_entity_db_to_entity_name(mock_entity_db, manga_name):
@@ -100,7 +122,6 @@ def test_entity_db_to_entity_name_cleaning(mock_entity_db, entity_name, expected
 
 
 def test_entity_db_to_entity_with_missing(mock_entity_db):
-    mock_entity_db.entity_names = {"manga_name": "something"}
     actual = mock_entity_db.to_entity_name("missing")
     assert actual is None
 
@@ -300,8 +321,8 @@ def test_entity_db_add_new_manga_without_update(
         simple_mock_entity_db.add(manga_name, update=False)
 
         # Assert the entity maps are populated
-        assert simple_mock_entity_db.entity_map == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
-        assert simple_mock_entity_db.entity_names == {manga_request_id: "Oshimai"}
+        assert _entity_map(simple_mock_entity_db) == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
+        assert _entity_names(simple_mock_entity_db) == {manga_request_id: "Oshimai"}
 
         # Assert the individual entity databases have not been updated during the add operation
         assert len(simple_mock_entity_db.authors) == 0
@@ -324,8 +345,8 @@ def test_entity_db_add_new_manga_with_update(
         simple_mock_entity_db.add(manga_name, update=True)
 
         # Assert the entity maps are populated
-        assert simple_mock_entity_db.entity_map == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
-        assert simple_mock_entity_db.entity_names == {manga_request_id: "Oshimai"}
+        assert _entity_map(simple_mock_entity_db) == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
+        assert _entity_names(simple_mock_entity_db) == {manga_request_id: "Oshimai"}
 
         simple_mock_entity_db.update_manga_entity_id.assert_called_once_with(manga_request_id)
 
@@ -354,10 +375,10 @@ def test_entity_db_add_new_manga_with_tracking_and_mark_all_downloaded(
         simple_mock_entity_db.add(manga_name, track=True)
 
         # Assert the entity maps are populated
-        assert simple_mock_entity_db.entity_map == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
-        assert simple_mock_entity_db.entity_names == {manga_request_id: "Oshimai"}
-        assert simple_mock_entity_db.entity_tracked == {"831b12b8-2d0e-4397-8719-1efee4c32f40"}
-        assert simple_mock_entity_db.entity_downloads == {
+        assert _entity_map(simple_mock_entity_db) == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
+        assert _entity_names(simple_mock_entity_db) == {manga_request_id: "Oshimai"}
+        assert _entity_tracked(simple_mock_entity_db) == {"831b12b8-2d0e-4397-8719-1efee4c32f40"}
+        assert _entity_downloads(simple_mock_entity_db) == {
             ("831b12b8-2d0e-4397-8719-1efee4c32f40", "01c86808-46fb-4108-aa5d-4e87aee8b2f1"),
             ("831b12b8-2d0e-4397-8719-1efee4c32f40", "057c0bce-fd18-44ea-ad64-cefa92378d49"),
             ("831b12b8-2d0e-4397-8719-1efee4c32f40", "1361d404-d03c-4fd9-97b4-2c297914b098"),
@@ -389,10 +410,10 @@ def test_entity_db_add_new_manga_with_tracking(
         simple_mock_entity_db.add(manga_name, track=True)
 
         # Assert the entity maps are populated
-        assert simple_mock_entity_db.entity_map == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
-        assert simple_mock_entity_db.entity_names == {manga_request_id: "Oshimai"}
-        assert simple_mock_entity_db.entity_tracked == {"831b12b8-2d0e-4397-8719-1efee4c32f40"}
-        assert simple_mock_entity_db.entity_downloads == set()
+        assert _entity_map(simple_mock_entity_db) == {"Kanojyo to Himitsu to Koimoyou": manga_request_id}
+        assert _entity_names(simple_mock_entity_db) == {manga_request_id: "Oshimai"}
+        assert _entity_tracked(simple_mock_entity_db) == {"831b12b8-2d0e-4397-8719-1efee4c32f40"}
+        assert _entity_downloads(simple_mock_entity_db) == set()
 
 
 @mock.patch("cbz_tagger.common.input.get_raw_input")
@@ -417,18 +438,18 @@ def test_entity_db_remove_manga_from_tracking(
         simple_mock_entity_db.update_manga_entity_id = mock.MagicMock()
         simple_mock_entity_db.chapters = mock_chapter_db
         simple_mock_entity_db.add(manga_name, track=True)
-        assert simple_mock_entity_db.entity_tracked == {"831b12b8-2d0e-4397-8719-1efee4c32f40"}
-        assert simple_mock_entity_db.entity_downloads == set()
-        simple_mock_entity_db.entity_downloads.add(
-            ("831b12b8-2d0e-4397-8719-1efee4c32f40", "01c86808-46fb-4108-aa5d-4e87aee8b2f1")
+        assert _entity_tracked(simple_mock_entity_db) == {"831b12b8-2d0e-4397-8719-1efee4c32f40"}
+        assert _entity_downloads(simple_mock_entity_db) == set()
+        simple_mock_entity_db.downloads.mark(
+            "831b12b8-2d0e-4397-8719-1efee4c32f40", _chapter("01c86808-46fb-4108-aa5d-4e87aee8b2f1")
         )
 
         mock_get_input.return_value = 1
         simple_mock_entity_db.remove()
 
         # Assert the entity maps are populated
-        assert simple_mock_entity_db.entity_tracked == set()
-        assert simple_mock_entity_db.entity_downloads == set()
+        assert _entity_tracked(simple_mock_entity_db) == set()
+        assert _entity_downloads(simple_mock_entity_db) == set()
 
 
 @mock.patch("cbz_tagger.common.input.get_raw_input")
@@ -453,49 +474,52 @@ def test_entity_db_delete_manga(
         simple_mock_entity_db.update_manga_entity_id = mock.MagicMock()
         simple_mock_entity_db.chapters = mock_chapter_db
         simple_mock_entity_db.add(manga_name, track=True)
-        assert simple_mock_entity_db.entity_tracked == {"831b12b8-2d0e-4397-8719-1efee4c32f40"}
-        assert simple_mock_entity_db.entity_downloads == set()
-        simple_mock_entity_db.entity_downloads.add(
-            ("831b12b8-2d0e-4397-8719-1efee4c32f40", "01c86808-46fb-4108-aa5d-4e87aee8b2f1")
+        assert _entity_tracked(simple_mock_entity_db) == {"831b12b8-2d0e-4397-8719-1efee4c32f40"}
+        assert _entity_downloads(simple_mock_entity_db) == set()
+        simple_mock_entity_db.downloads.mark(
+            "831b12b8-2d0e-4397-8719-1efee4c32f40", _chapter("01c86808-46fb-4108-aa5d-4e87aee8b2f1")
         )
 
         mock_get_input.return_value = 1
         simple_mock_entity_db.delete()
 
         # Assert the entity maps are populated
-        assert simple_mock_entity_db.entity_map == {}
-        assert simple_mock_entity_db.entity_names == {}
-        assert simple_mock_entity_db.entity_tracked == set()
-        assert simple_mock_entity_db.entity_downloads == set()
+        assert _entity_map(simple_mock_entity_db) == {}
+        assert _entity_names(simple_mock_entity_db) == {}
+        assert _entity_tracked(simple_mock_entity_db) == set()
+        assert _entity_downloads(simple_mock_entity_db) == set()
 
 
 def test_entity_db_remove_entity_id_from_tracking(simple_mock_entity_db, manga_request_id):
     """Test remove_entity_id_from_tracking function individually"""
     # Setup entity in tracking
-    simple_mock_entity_db.entity_tracked.add(manga_request_id)
-    simple_mock_entity_db.entity_chapter_plugin[manga_request_id] = {
-        "plugin_type": "mdx",
-        "plugin_id": manga_request_id,
-    }
-    simple_mock_entity_db.entity_downloads.add((manga_request_id, "chapter1"))
-    simple_mock_entity_db.entity_downloads.add((manga_request_id, "chapter2"))
-    simple_mock_entity_db.entity_downloads.add(("other_entity", "chapter3"))
+    simple_mock_entity_db.series.add(
+        Series(
+            entity_id=manga_request_id,
+            canonical_name="Test Manga",
+            aliases=["Test Manga"],
+            tracked=True,
+            source=ChapterSource(plugin_type="mdx", plugin_id=manga_request_id),
+        )
+    )
+    simple_mock_entity_db.downloads.mark(manga_request_id, _chapter("chapter1"))
+    simple_mock_entity_db.downloads.mark(manga_request_id, _chapter("chapter2"))
+    simple_mock_entity_db.downloads.mark("other_entity", _chapter("chapter3"))
 
     # Verify initial state
-    assert manga_request_id in simple_mock_entity_db.entity_tracked
-    assert manga_request_id in simple_mock_entity_db.entity_chapter_plugin
-    assert len(simple_mock_entity_db.entity_downloads) == 3
+    assert manga_request_id in simple_mock_entity_db.series.entity_ids()
+    assert simple_mock_entity_db.series[manga_request_id].tracked
+    assert len(simple_mock_entity_db.downloads) == 3
 
     # Call the function
     simple_mock_entity_db.remove_entity_id_from_tracking(manga_request_id)
 
     # Verify entity is removed from tracking
-    assert manga_request_id not in simple_mock_entity_db.entity_tracked
-    assert manga_request_id not in simple_mock_entity_db.entity_chapter_plugin
+    assert not simple_mock_entity_db.series[manga_request_id].tracked
 
     # Verify only chapters for this entity are removed from downloads
-    assert len(simple_mock_entity_db.entity_downloads) == 1
-    assert ("other_entity", "chapter3") in simple_mock_entity_db.entity_downloads
+    assert len(simple_mock_entity_db.downloads) == 1
+    assert simple_mock_entity_db.downloads.has("other_entity", _chapter("chapter3"))
 
     # Verify save was called
     simple_mock_entity_db.save.assert_called()
@@ -504,22 +528,22 @@ def test_entity_db_remove_entity_id_from_tracking(simple_mock_entity_db, manga_r
 def test_entity_db_remove_entity_id_from_tracking_not_tracked(simple_mock_entity_db, manga_request_id):
     """Test remove_entity_id_from_tracking with entity not in tracking"""
     # Setup entity not in tracking but with downloads
-    simple_mock_entity_db.entity_downloads.add((manga_request_id, "chapter1"))
-    simple_mock_entity_db.entity_downloads.add(("other_entity", "chapter2"))
+    simple_mock_entity_db.downloads.mark(manga_request_id, _chapter("chapter1"))
+    simple_mock_entity_db.downloads.mark("other_entity", _chapter("chapter2"))
 
     # Verify initial state
-    assert manga_request_id not in simple_mock_entity_db.entity_tracked
-    assert len(simple_mock_entity_db.entity_downloads) == 2
+    assert manga_request_id not in simple_mock_entity_db.series.entity_ids()
+    assert len(simple_mock_entity_db.downloads) == 2
 
     # Call the function
     simple_mock_entity_db.remove_entity_id_from_tracking(manga_request_id)
 
     # Verify entity still not in tracking (no change)
-    assert manga_request_id not in simple_mock_entity_db.entity_tracked
+    assert manga_request_id not in simple_mock_entity_db.series.entity_ids()
 
     # Verify downloads for this entity are still removed
-    assert len(simple_mock_entity_db.entity_downloads) == 1
-    assert ("other_entity", "chapter2") in simple_mock_entity_db.entity_downloads
+    assert len(simple_mock_entity_db.downloads) == 1
+    assert simple_mock_entity_db.downloads.has("other_entity", _chapter("chapter2"))
 
     # Verify save was called
     simple_mock_entity_db.save.assert_called()
@@ -530,14 +554,16 @@ def test_entity_db_delete_entity_id(simple_mock_entity_db, manga_request_id):
     manga_name = "Test Manga"
 
     # Setup entity in all databases
-    simple_mock_entity_db.entity_map[manga_name] = manga_request_id
-    simple_mock_entity_db.entity_names[manga_request_id] = "Clean Test Manga"
-    simple_mock_entity_db.entity_tracked.add(manga_request_id)
-    simple_mock_entity_db.entity_chapter_plugin[manga_request_id] = {
-        "plugin_type": "mdx",
-        "plugin_id": manga_request_id,
-    }
-    simple_mock_entity_db.entity_downloads.add((manga_request_id, "chapter1"))
+    simple_mock_entity_db.series.add(
+        Series(
+            entity_id=manga_request_id,
+            canonical_name="Clean Test Manga",
+            aliases=[manga_name],
+            tracked=True,
+            source=ChapterSource(plugin_type="mdx", plugin_id=manga_request_id),
+        )
+    )
+    simple_mock_entity_db.downloads.mark(manga_request_id, _chapter("chapter1"))
 
     # Mock the individual databases
     simple_mock_entity_db.metadata.database = {manga_request_id: mock.MagicMock()}
@@ -546,11 +572,10 @@ def test_entity_db_delete_entity_id(simple_mock_entity_db, manga_request_id):
     simple_mock_entity_db.chapters.database = {manga_request_id: mock.MagicMock()}
 
     # Verify initial state
-    assert manga_name in simple_mock_entity_db.entity_map
-    assert manga_request_id in simple_mock_entity_db.entity_names
-    assert manga_request_id in simple_mock_entity_db.entity_tracked
-    assert manga_request_id in simple_mock_entity_db.entity_chapter_plugin
-    assert len(simple_mock_entity_db.entity_downloads) == 1
+    assert simple_mock_entity_db.series.by_alias(manga_name) is not None
+    assert manga_request_id in simple_mock_entity_db.series.entity_ids()
+    assert simple_mock_entity_db.series[manga_request_id].tracked
+    assert len(simple_mock_entity_db.downloads) == 1
     assert manga_request_id in simple_mock_entity_db.metadata.database
     assert manga_request_id in simple_mock_entity_db.covers.database
     assert manga_request_id in simple_mock_entity_db.volumes.database
@@ -560,11 +585,9 @@ def test_entity_db_delete_entity_id(simple_mock_entity_db, manga_request_id):
     simple_mock_entity_db.delete_entity_id(manga_request_id, manga_name)
 
     # Verify entity is completely removed
-    assert manga_name not in simple_mock_entity_db.entity_map
-    assert manga_request_id not in simple_mock_entity_db.entity_names
-    assert manga_request_id not in simple_mock_entity_db.entity_tracked
-    assert manga_request_id not in simple_mock_entity_db.entity_chapter_plugin
-    assert len(simple_mock_entity_db.entity_downloads) == 0
+    assert simple_mock_entity_db.series.by_alias(manga_name) is None
+    assert manga_request_id not in simple_mock_entity_db.series.entity_ids()
+    assert len(simple_mock_entity_db.downloads) == 0
     assert manga_request_id not in simple_mock_entity_db.metadata.database
     assert manga_request_id not in simple_mock_entity_db.covers.database
     assert manga_request_id not in simple_mock_entity_db.volumes.database
@@ -579,9 +602,15 @@ def test_entity_db_delete_entity_id_missing_from_some_databases(simple_mock_enti
     manga_name = "Test Manga"
 
     # Setup entity in only some databases (simulating partial data)
-    simple_mock_entity_db.entity_map[manga_name] = manga_request_id
-    simple_mock_entity_db.entity_names[manga_request_id] = "Clean Test Manga"
-    simple_mock_entity_db.entity_tracked.add(manga_request_id)
+    simple_mock_entity_db.series.add(
+        Series(
+            entity_id=manga_request_id,
+            canonical_name="Clean Test Manga",
+            aliases=[manga_name],
+            tracked=True,
+            source=ChapterSource(plugin_id=manga_request_id),
+        )
+    )
 
     # Only add to metadata database, not others
     simple_mock_entity_db.metadata.database = {manga_request_id: mock.MagicMock()}
@@ -593,9 +622,8 @@ def test_entity_db_delete_entity_id_missing_from_some_databases(simple_mock_enti
     simple_mock_entity_db.delete_entity_id(manga_request_id, manga_name)
 
     # Verify entity is removed from all maps
-    assert manga_name not in simple_mock_entity_db.entity_map
-    assert manga_request_id not in simple_mock_entity_db.entity_names
-    assert manga_request_id not in simple_mock_entity_db.entity_tracked
+    assert simple_mock_entity_db.series.by_alias(manga_name) is None
+    assert manga_request_id not in simple_mock_entity_db.series.entity_ids()
     assert manga_request_id not in simple_mock_entity_db.metadata.database
 
     # Verify save was called
@@ -675,7 +703,7 @@ def test_entity_db_update_calls_each_entity_when_no_existing_metadata(
 
 def test_entity_db_refresh_calls_all_entities(mock_entity_db_with_mock_updates, manga_request_id):
     mock_entity_db_with_mock_updates.update_manga_entity_id_metadata_and_find_updated_ids = mock.MagicMock(
-        return_value=list(mock_entity_db_with_mock_updates.entity_names.keys())
+        return_value=list(_entity_names(mock_entity_db_with_mock_updates).keys())
     )
     mock_entity_db_with_mock_updates.update_manga_entity_id = mock.MagicMock()
     mock_entity_db_with_mock_updates.covers.remove_orphaned_covers = mock.MagicMock()
@@ -690,8 +718,7 @@ def test_entity_db_refresh_calls_all_entities(mock_entity_db_with_mock_updates, 
 def test_entity_db_update_does_nothing_with_unknown():
     entity_db = EntityDB("mock")
     entity_db.update_manga_entity_name("unknown")
-    assert entity_db.entity_map == {}
-    assert entity_db.entity_names == {}
+    assert len(entity_db.series) == 0
     assert len(entity_db.authors) == 0
     assert len(entity_db.covers) == 0
     assert len(entity_db.metadata) == 0
@@ -723,7 +750,7 @@ def test_entity_database_to_state(mock_entity_db, manga_name):
 
 def test_entity_database_creates_new_database_with_none_present(temp_folder_path):
     entity_database = EntityDB(temp_folder_path)
-    assert entity_database.entity_map == {}
+    assert len(entity_database.series) == 0
 
 
 def test_entity_database_can_save_and_load(mock_entity_db_with_saving, temp_dir):
@@ -740,7 +767,7 @@ def test_entity_database_no_missing_chapters_with_no_tracked_entities(mock_entit
 
 
 def test_entity_database_has_missing_chapters_with_tracked_entities(mock_entity_db, manga_request_id):
-    mock_entity_db.entity_tracked.add(manga_request_id)
+    mock_entity_db.series[manga_request_id].tracked = True
     missing_chapters = mock_entity_db.get_missing_chapters()
     assert [chapter_id for (chapter_id, _) in missing_chapters] == [
         "831b12b8-2d0e-4397-8719-1efee4c32f40",
@@ -751,7 +778,7 @@ def test_entity_database_has_missing_chapters_with_tracked_entities(mock_entity_
 
 
 def test_entity_database_calls_downloads_for_missing_chapters(mock_entity_db, manga_request_id):
-    mock_entity_db.entity_tracked.add(manga_request_id)
+    mock_entity_db.series[manga_request_id].tracked = True
     mock_entity_db.download_chapter = mock.MagicMock()
     mock_entity_db.download_missing_chapters("storage_path")
     assert mock_entity_db.download_chapter.call_count == 4
@@ -806,7 +833,7 @@ def test_update_manga_entity_id_metadata_and_find_updated_ids_with_updated_metad
 
     simple_mock_entity_db.metadata = mock_metadata
     simple_mock_entity_db.chapters = mock_chapters
-    simple_mock_entity_db.entity_chapter_plugin = {}
+    # No series record for manga_request_id -> treated as a default (non-plugin) source
 
     # Call the method being tested
     updated_ids = simple_mock_entity_db.update_manga_entity_id_metadata_and_find_updated_ids([manga_request_id])
@@ -821,7 +848,7 @@ def test_update_manga_entity_id_metadata_and_find_updated_ids_with_updated_metad
 def test_update_manga_entity_id_metadata_and_find_updated_ids_with_updated_chapters(
     simple_mock_entity_db, manga_request_id
 ):
-    """Test that entities with chapter plugins are always returned in the list of updated entity IDs."""
+    """Test that entities with a non-default chapter source are always returned in the list of updated entity IDs."""
     # Setup metadata with no changes (same hash before and after update)
     mock_metadata = mock.MagicMock()
 
@@ -836,16 +863,21 @@ def test_update_manga_entity_id_metadata_and_find_updated_ids_with_updated_chapt
 
     simple_mock_entity_db.metadata = mock_metadata
     simple_mock_entity_db.chapters = mock_chapters
-    simple_mock_entity_db.entity_chapter_plugin = {
-        manga_request_id: {"plugin_type": "mdx", "plugin_id": manga_request_id}
-    }
+    simple_mock_entity_db.series.add(
+        Series(
+            entity_id=manga_request_id,
+            canonical_name="Oshimai",
+            aliases=["Oshimai"],
+            source=ChapterSource(plugin_type="cmk", plugin_id=manga_request_id),
+        )
+    )
 
     # Call the method being tested
     updated_ids = simple_mock_entity_db.update_manga_entity_id_metadata_and_find_updated_ids([manga_request_id])
 
     # Verify the metadata and chapters were updated and the entity ID was returned
     mock_metadata.update.assert_called_once_with([manga_request_id], batch_response=True)
-    mock_chapters.update.assert_called_once_with(manga_request_id, plugin_type="mdx", plugin_id=manga_request_id)
+    mock_chapters.update.assert_called_once_with(manga_request_id, plugin_type="cmk", plugin_id=manga_request_id)
     assert updated_ids == [manga_request_id]
 
 
@@ -865,7 +897,7 @@ def test_update_manga_entity_id_metadata_and_find_updated_ids_with_no_updates(si
 
     simple_mock_entity_db.metadata = mock_metadata
     simple_mock_entity_db.chapters = mock_chapters
-    simple_mock_entity_db.entity_chapter_plugin = {}
+    # No series record for manga_request_id -> treated as a default (non-plugin) source
 
     # Call the method being tested
     updated_ids = simple_mock_entity_db.update_manga_entity_id_metadata_and_find_updated_ids([manga_request_id])
@@ -932,17 +964,23 @@ def test_update_manga_entity_id_metadata_and_find_updated_ids_with_multiple_enti
 
     simple_mock_entity_db.metadata = mock_metadata
     simple_mock_entity_db.chapters = mock_chapters
-    # Entity3 and entity4 have chapter plugins
-    simple_mock_entity_db.entity_chapter_plugin = {
-        entity_id3: {"plugin_type": "cmk", "plugin_id": entity_id3},
-        entity_id4: {"plugin_type": "cmk", "plugin_id": entity_id4},
-    }
-    simple_mock_entity_db.entity_names = {
-        entity_id1: "Entity 1",
-        entity_id2: "Entity 2",
-        entity_id3: "Entity 3",
-        entity_id4: "Entity 4",
-    }
+    # Entity3 and entity4 have non-default chapter sources
+    simple_mock_entity_db.series.add(
+        Series(
+            entity_id=entity_id3,
+            canonical_name="Entity 3",
+            aliases=["Entity 3"],
+            source=ChapterSource(plugin_type="cmk", plugin_id=entity_id3),
+        )
+    )
+    simple_mock_entity_db.series.add(
+        Series(
+            entity_id=entity_id4,
+            canonical_name="Entity 4",
+            aliases=["Entity 4"],
+            source=ChapterSource(plugin_type="cmk", plugin_id=entity_id4),
+        )
+    )
 
     # Call the method being tested with batch_size=2 to test batch processing
     updated_ids = simple_mock_entity_db.update_manga_entity_id_metadata_and_find_updated_ids(
@@ -966,129 +1004,6 @@ def test_update_manga_entity_id_metadata_and_find_updated_ids_with_multiple_enti
     assert sorted(updated_ids) == sorted([entity_id2, entity_id3])
 
 
-def test_entity_db_delete_chapter_entity_id_from_downloaded_chapters(simple_mock_entity_db, manga_request_id):
-    """Test delete_chapter_entity_id_from_downloaded_chapters function when chapter exists"""
-    chapter_id = "chapter-123"
-    other_chapter_id = "chapter-456"
-    other_entity_id = "other-entity-789"
-
-    # Setup entity downloads with multiple chapters
-    simple_mock_entity_db.entity_downloads.add((manga_request_id, chapter_id))
-    simple_mock_entity_db.entity_downloads.add((manga_request_id, other_chapter_id))
-    simple_mock_entity_db.entity_downloads.add((other_entity_id, chapter_id))
-
-    # Verify initial state
-    assert len(simple_mock_entity_db.entity_downloads) == 3
-    assert (manga_request_id, chapter_id) in simple_mock_entity_db.entity_downloads
-    assert (manga_request_id, other_chapter_id) in simple_mock_entity_db.entity_downloads
-    assert (other_entity_id, chapter_id) in simple_mock_entity_db.entity_downloads
-
-    # Call the function
-    simple_mock_entity_db.delete_chapter_entity_id_from_downloaded_chapters(manga_request_id, chapter_id)
-
-    # Verify only the specific chapter was removed
-    assert len(simple_mock_entity_db.entity_downloads) == 2
-    assert (manga_request_id, chapter_id) not in simple_mock_entity_db.entity_downloads
-    assert (manga_request_id, other_chapter_id) in simple_mock_entity_db.entity_downloads
-    assert (other_entity_id, chapter_id) in simple_mock_entity_db.entity_downloads
-
-    # Verify save was called
-    simple_mock_entity_db.save.assert_called()
-
-
-def test_entity_db_delete_chapter_entity_id_from_downloaded_chapters_not_found(simple_mock_entity_db, manga_request_id):
-    """Test delete_chapter_entity_id_from_downloaded_chapters function when chapter doesn't exist"""
-    chapter_id = "non-existent-chapter"
-    existing_chapter_id = "existing-chapter"
-
-    # Setup entity downloads with only one chapter
-    simple_mock_entity_db.entity_downloads.add((manga_request_id, existing_chapter_id))
-
-    # Verify initial state
-    assert len(simple_mock_entity_db.entity_downloads) == 1
-    assert (manga_request_id, existing_chapter_id) in simple_mock_entity_db.entity_downloads
-    assert (manga_request_id, chapter_id) not in simple_mock_entity_db.entity_downloads
-
-    # Call the function with non-existent chapter
-    simple_mock_entity_db.delete_chapter_entity_id_from_downloaded_chapters(manga_request_id, chapter_id)
-
-    # Verify no changes were made
-    assert len(simple_mock_entity_db.entity_downloads) == 1
-    assert (manga_request_id, existing_chapter_id) in simple_mock_entity_db.entity_downloads
-
-    # Verify save was not called since no changes were made
-    simple_mock_entity_db.save.assert_not_called()
-
-
-def test_entity_db_delete_chapter_entity_id_from_downloaded_chapters_empty_downloads(
-    simple_mock_entity_db, manga_request_id
-):
-    """Test delete_chapter_entity_id_from_downloaded_chapters function when downloads set is empty"""
-    chapter_id = "chapter-123"
-
-    # Verify downloads set is empty
-    assert len(simple_mock_entity_db.entity_downloads) == 0
-
-    # Call the function
-    simple_mock_entity_db.delete_chapter_entity_id_from_downloaded_chapters(manga_request_id, chapter_id)
-
-    # Verify downloads set remains empty
-    assert len(simple_mock_entity_db.entity_downloads) == 0
-
-    # Verify save was not called since no changes were made
-    simple_mock_entity_db.save.assert_not_called()
-
-
-def test_entity_db_delete_chapter_entity_id_from_downloaded_chapters_multiple_same_chapter(simple_mock_entity_db):
-    """Test delete_chapter_entity_id_from_downloaded_chapters function with same chapter ID for different entities"""
-    entity_id_1 = "entity-1"
-    entity_id_2 = "entity-2"
-    chapter_id = "shared-chapter-id"
-
-    # Setup downloads with same chapter ID for different entities
-    simple_mock_entity_db.entity_downloads.add((entity_id_1, chapter_id))
-    simple_mock_entity_db.entity_downloads.add((entity_id_2, chapter_id))
-
-    # Verify initial state
-    assert len(simple_mock_entity_db.entity_downloads) == 2
-    assert (entity_id_1, chapter_id) in simple_mock_entity_db.entity_downloads
-    assert (entity_id_2, chapter_id) in simple_mock_entity_db.entity_downloads
-
-    # Call the function for entity_1 only
-    simple_mock_entity_db.delete_chapter_entity_id_from_downloaded_chapters(entity_id_1, chapter_id)
-
-    # Verify only entity_1's chapter was removed
-    assert len(simple_mock_entity_db.entity_downloads) == 1
-    assert (entity_id_1, chapter_id) not in simple_mock_entity_db.entity_downloads
-    assert (entity_id_2, chapter_id) in simple_mock_entity_db.entity_downloads
-
-    # Verify save was called
-    simple_mock_entity_db.save.assert_called()
-
-
-def test_entity_db_add_chapter_entity_id_to_downloaded_chapters(simple_mock_entity_db, manga_request_id):
-    """Test add_chapter_entity_id_to_downloaded_chapters adds a chapter that is not yet downloaded"""
-    chapter_id = "chapter-123"
-
-    assert (manga_request_id, chapter_id) not in simple_mock_entity_db.entity_downloads
-
-    simple_mock_entity_db.add_chapter_entity_id_to_downloaded_chapters(manga_request_id, chapter_id)
-
-    assert (manga_request_id, chapter_id) in simple_mock_entity_db.entity_downloads
-    simple_mock_entity_db.save.assert_called_once()
-
-
-def test_entity_db_add_chapter_entity_id_to_downloaded_chapters_idempotent(simple_mock_entity_db, manga_request_id):
-    """Test add_chapter_entity_id_to_downloaded_chapters is a no-op if the chapter is already downloaded"""
-    chapter_id = "chapter-123"
-    simple_mock_entity_db.entity_downloads.add((manga_request_id, chapter_id))
-
-    simple_mock_entity_db.add_chapter_entity_id_to_downloaded_chapters(manga_request_id, chapter_id)
-
-    assert len(simple_mock_entity_db.entity_downloads) == 1
-    simple_mock_entity_db.save.assert_not_called()
-
-
 def test_entity_db_set_downloaded_chapters_add_and_remove(simple_mock_entity_db, manga_request_id):
     """Test set_downloaded_chapters reconciles the downloaded set to match the desired chapters"""
     chapter_1 = mock.MagicMock(entity_id="chapter-1")
@@ -1097,14 +1012,14 @@ def test_entity_db_set_downloaded_chapters_add_and_remove(simple_mock_entity_db,
     simple_mock_entity_db.chapters.database[manga_request_id] = [chapter_1, chapter_2, chapter_3]
 
     # Chapter 1 is currently downloaded, chapter 2 and 3 are not
-    simple_mock_entity_db.entity_downloads.add((manga_request_id, "chapter-1"))
+    simple_mock_entity_db.downloads.mark(manga_request_id, _chapter("chapter-1"))
 
     # Desired state: keep chapter 1, add chapter 2, leave chapter 3 out
     simple_mock_entity_db.set_downloaded_chapters(manga_request_id, ["chapter-1", "chapter-2"])
 
-    assert (manga_request_id, "chapter-1") in simple_mock_entity_db.entity_downloads
-    assert (manga_request_id, "chapter-2") in simple_mock_entity_db.entity_downloads
-    assert (manga_request_id, "chapter-3") not in simple_mock_entity_db.entity_downloads
+    assert simple_mock_entity_db.downloads.has(manga_request_id, _chapter("chapter-1"))
+    assert simple_mock_entity_db.downloads.has(manga_request_id, _chapter("chapter-2"))
+    assert not simple_mock_entity_db.downloads.has(manga_request_id, _chapter("chapter-3"))
     simple_mock_entity_db.save.assert_called_once()
 
 
@@ -1114,9 +1029,23 @@ def test_entity_db_set_downloaded_chapters_ignores_unknown_chapters(simple_mock_
     simple_mock_entity_db.chapters.database[manga_request_id] = [chapter_1]
 
     # A chapter that is downloaded but no longer present in the known chapter list (e.g. a race)
-    simple_mock_entity_db.entity_downloads.add((manga_request_id, "unknown-chapter"))
+    simple_mock_entity_db.downloads.mark(manga_request_id, _chapter("unknown-chapter"))
 
     simple_mock_entity_db.set_downloaded_chapters(manga_request_id, [])
 
-    assert (manga_request_id, "unknown-chapter") in simple_mock_entity_db.entity_downloads
+    assert simple_mock_entity_db.downloads.has(manga_request_id, _chapter("unknown-chapter"))
     simple_mock_entity_db.save.assert_called_once()
+
+
+def test_entity_db_json_round_trip_is_unchanged(tests_fixtures_path, temp_dir):
+    with open(os.path.join(tests_fixtures_path, "entity_db_legacy.json"), encoding="UTF-8") as f:
+        original = f.read()
+
+    def normalize(payload: str) -> dict:
+        content = json.loads(payload)
+        content["entity_downloads"] = sorted(tuple(x) for x in content["entity_downloads"])
+        content["entity_tracked"] = sorted(content["entity_tracked"])
+        return content
+
+    db = EntityDB.from_json(temp_dir, original)
+    assert normalize(db.to_json()) == normalize(original)

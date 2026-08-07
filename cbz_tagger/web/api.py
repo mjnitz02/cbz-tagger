@@ -321,19 +321,19 @@ def check_proxy_status_operation() -> tuple[str, str]:
 def get_series_list_operation():
     """Get the list of all series in the database."""
     scanner.reload_scanner()
-    return list(scanner.entity_database.entity_map.items())
+    return [(s.storage_name, s.entity_id) for s in scanner.entity_database.series]
 
 
 def get_chapters_operation(entity_id: str):
     """Get chapters for a specific series."""
     scanner.reload_scanner()
     chapters = scanner.entity_database.chapters.database.get(entity_id, [])
-    entity_downloads = scanner.entity_database.entity_downloads
+    downloads = scanner.entity_database.downloads
     return [
         {
             "entity_id": chapter.entity_id,
             "chapter_number": chapter.chapter_string,
-            "downloaded": (entity_id, chapter.entity_id) in entity_downloads,
+            "downloaded": downloads.has(entity_id, chapter),
         }
         for chapter in (chapters if chapters is not None else [])
     ]

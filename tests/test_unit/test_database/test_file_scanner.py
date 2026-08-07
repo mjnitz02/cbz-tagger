@@ -51,10 +51,10 @@ def test_run_without_tracked_entities(scanner):
     scanner.entity_database.refresh.assert_not_called()
 
 
-def test_run_with_tracked_entities(scanner):
+def test_run_with_tracked_entities(scanner, manga_request_id):
     scanner.run_scan = mock.MagicMock()
     scanner.entity_database.refresh = mock.MagicMock()
-    scanner.entity_database.entity_tracked.add("series name")
+    scanner.entity_database.series[manga_request_id].tracked = True
     with patch("cbz_tagger.database.entity_db.EntityDB.load", return_value=scanner.entity_database) as mock_load:
         scanner.run()
 

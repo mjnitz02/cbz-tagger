@@ -3,7 +3,8 @@ import logging
 import os
 import re
 import shutil
-from typing import Any
+import tempfile
+from contextlib import suppress
 from xml.dom import minidom
 from xml.etree import ElementTree
 from zipfile import ZIP_DEFLATED
@@ -18,7 +19,11 @@ from cbz_tagger.common.plugins import Plugins
 from cbz_tagger.database.author_entity_db import AuthorEntityDB
 from cbz_tagger.database.chapter_entity_db import ChapterEntityDB
 from cbz_tagger.database.cover_entity_db import CoverEntityDB
+from cbz_tagger.database.downloads import DownloadLedger
 from cbz_tagger.database.metadata_entity_db import MetadataEntityDB
+from cbz_tagger.database.series import ChapterSource
+from cbz_tagger.database.series import Series
+from cbz_tagger.database.series import SeriesIndex
 from cbz_tagger.database.volume_entity_db import VolumeEntityDB
 
 logger = logging.getLogger()
@@ -28,11 +33,8 @@ class EntityDB:
     def __init__(
         self,
         root_path: str,
-        entity_map=None,
-        entity_names=None,
-        entity_downloads=None,
-        entity_tracked=None,
-        entity_chapter_plugin=None,
+        series=None,
+        downloads=None,
         metadata=None,
         covers=None,
         authors=None,
@@ -40,27 +42,24 @@ class EntityDB:
         chapters=None,
     ):
         self.root_path = root_path
-
-        self.entity_map: dict[str, str] = {} if entity_map is None else entity_map
-        self.entity_names: dict[str, str] = {} if entity_names is None else entity_names
-        self.entity_downloads = set() if entity_downloads is None else entity_downloads
-        self.entity_tracked = set() if entity_tracked is None else entity_tracked
-        self.entity_chapter_plugin: dict[str, Any] = {} if entity_chapter_plugin is None else entity_chapter_plugin
+        self.series: SeriesIndex = SeriesIndex() if series is None else series
+        self.downloads: DownloadLedger = DownloadLedger() if downloads is None else downloads
 
         self.metadata: MetadataEntityDB = MetadataEntityDB() if metadata is None else metadata
         self.covers: CoverEntityDB = CoverEntityDB() if covers is None else covers
         self.authors: AuthorEntityDB = AuthorEntityDB() if authors is None else authors
         self.volumes: VolumeEntityDB = VolumeEntityDB() if volumes is None else volumes
-        self.chapters: ChapterEntityDB = ChapterEntityDB() if volumes is None else chapters
+        self.chapters: ChapterEntityDB = ChapterEntityDB() if chapters is None else chapters
 
     def __getitem__(self, manga_name) -> str | None:
-        return self.entity_map.get(manga_name)
+        series = self.series.by_alias(manga_name)
+        return series.entity_id if series is not None else None
 
     def __len__(self):
-        return len(self.entity_map)
+        return len(self.series)
 
     def keys(self):
-        return self.entity_map.keys()
+        return self.series.aliases()
 
     @property
     def image_db_path(self) -> str:
@@ -68,23 +67,49 @@ class EntityDB:
 
     @property
     def has_tracked_entities(self) -> bool:
-        return len(self.entity_tracked) > 0
+        return self.series.has_tracked()
 
     def save(self) -> None:
         entity_db_path = os.path.join(self.root_path, "entity_db.json")
         entity_database_json = self.to_json()
 
         os.makedirs(self.root_path, exist_ok=True)
-        with open(entity_db_path, "w", encoding="UTF-8") as write_file:
-            write_file.write(entity_database_json)
+        fd, tmp_path = tempfile.mkstemp(dir=self.root_path, prefix=".entity_db.", suffix=".tmp")
+        try:
+            with os.fdopen(fd, "w", encoding="UTF-8") as write_file:
+                write_file.write(entity_database_json)
+                write_file.flush()
+                os.fsync(write_file.fileno())
+            os.replace(tmp_path, entity_db_path)
+        except BaseException:
+            with suppress(OSError):
+                os.unlink(tmp_path)
+            raise
 
     def to_json(self):
+        entity_map = {}
+        entity_names = {}
+        entity_tracked = []
+        entity_chapter_plugin = {}
+        for series in self.series:
+            entity_names[series.entity_id] = series.canonical_name
+            for alias in series.aliases:
+                entity_map[alias] = series.entity_id
+            if series.tracked:
+                entity_tracked.append(series.entity_id)
+            # Only non-default sources are written, so the file stays legacy-compatible.
+            if not series.source.is_default:
+                entity_chapter_plugin[series.entity_id] = {
+                    "plugin_type": series.source.plugin_type,
+                    "plugin_id": series.source.plugin_id,
+                }
+
         content = {
-            "entity_map": self.entity_map,
-            "entity_names": self.entity_names,
-            "entity_downloads": list(self.entity_downloads),
-            "entity_tracked": list(self.entity_tracked),
-            "entity_chapter_plugin": self.entity_chapter_plugin,
+            "entity_map": entity_map,
+            "entity_names": entity_names,
+            "entity_downloads": self.downloads.as_tuples(),
+            "entity_tracked": entity_tracked,
+            "entity_chapter_plugin": entity_chapter_plugin,
             "metadata": self.metadata.to_json(),
             "covers": self.covers.to_json(),
             "authors": self.authors.to_json(),
@@ -105,13 +130,48 @@ class EntityDB:
     @classmethod
     def from_json(cls, root_path, json_data):
         content = json.loads(json_data)
+        entity_map = content["entity_map"]
+        entity_names = content["entity_names"]
+        entity_tracked = set(content.get("entity_tracked", []))
+        entity_chapter_plugin = content.get("entity_chapter_plugin", {})
+
+        # Preserve insertion order of entity_map so `storage_name` keeps picking the same alias
+        # that the old `next(iter(...))` scan in download_chapter picked.
+        aliases_by_id: dict[str, list[str]] = {}
+        for alias, entity_id in entity_map.items():
+            aliases_by_id.setdefault(entity_id, []).append(alias)
+
+        series_records = {}
+        for entity_id in list(entity_map.values()) + list(entity_names.keys()):
+            if entity_id in series_records:
+                continue
+            aliases = aliases_by_id.get(entity_id, [])
+            canonical_name = entity_names.get(entity_id)
+            if canonical_name is None:
+                # Orphan: present in entity_map but never given a canonical name.
+                logger.warning("Series %s has no canonical name; using its alias.", entity_id)
+                canonical_name = aliases[0] if aliases else entity_id
+            if not aliases:
+                # Orphan: named but unreachable by any local name. Keep it so it is not silently
+                # dropped, and give it an alias so storage_name stays valid.
+                logger.warning("Series %s (%s) has no local name mapping.", canonical_name, entity_id)
+                aliases = [canonical_name]
+            plugin = entity_chapter_plugin.get(entity_id, {})
+            series_records[entity_id] = Series(
+                entity_id=entity_id,
+                canonical_name=canonical_name,
+                aliases=aliases,
+                tracked=entity_id in entity_tracked,
+                source=ChapterSource(
+                    plugin_type=plugin.get("plugin_type", Plugins.DEFAULT),
+                    plugin_id=plugin.get("plugin_id", entity_id),
+                ),
+            )
+
         return cls(
             root_path=root_path,
-            entity_map=content["entity_map"],
-            entity_names=content["entity_names"],
-            entity_downloads=set(tuple(item) for item in content.get("entity_downloads", [])),
-            entity_tracked=set(content.get("entity_tracked", [])),
-            entity_chapter_plugin=content.get("entity_chapter_plugin", {}),
+            series=SeriesIndex(series_records),
+            downloads=DownloadLedger(set(tuple(item) for item in content.get("entity_downloads", []))),
             metadata=MetadataEntityDB.from_json(content["metadata"]),
             covers=CoverEntityDB.from_json(content["covers"]),
             authors=AuthorEntityDB.from_json(content["authors"]),
@@ -121,20 +181,21 @@ class EntityDB:
 
     def to_state(self):
         state = []
-        for entity_name, entity_id in self.entity_map.items():
+        for series in self.series:
+            entity_id = series.entity_id
             entity_metadata = self.metadata[entity_id]
             if entity_metadata is None:
                 continue  # Skip entities without metadata
             latest_chapter = self.chapters.get_latest_chapter(entity_id)
-            plugin_type = self.entity_chapter_plugin.get(entity_id, {}).get("plugin_type", Plugins.DEFAULT)
-            plugin_id = self.entity_chapter_plugin.get(entity_id, {}).get("plugin_id", entity_id)
+            plugin_type = series.source.plugin_type
+            plugin_id = series.source.plugin_id
             state.append(
                 {
                     "entity_id": entity_id,
-                    "name": entity_name,
+                    "name": series.storage_name,
                     "name_link": f"{Plugins.TITLE_URLS[Plugins.DEFAULT]}{entity_id}",
                     "status": entity_metadata.status,
-                    "tracked": entity_id in self.entity_tracked,
+                    "tracked": series.tracked,
                     "latest_chapter": latest_chapter.chapter_string if latest_chapter else None,
                     "latest_chapter_date": latest_chapter.updated_date if latest_chapter else None,
                     "metadata_updated": entity_metadata.updated,
@@ -146,7 +207,7 @@ class EntityDB:
         return state
 
     def check_manga_missing(self, manga_name):
-        return manga_name not in self.keys()
+        return self.series.by_alias(manga_name) is None
 
     @staticmethod
     def search(manga_name: str | None = None):
@@ -179,74 +240,77 @@ class EntityDB:
         if manga_name is None:
             manga_name = self.clean_entity_name(entity_name)
 
-        if manga_name not in self.entity_map:
-            self.entity_map[manga_name] = entity_id
-            self.entity_names[entity_id] = self.clean_entity_name(entity_name)
+        if self.series.by_alias(manga_name) is None:
+            canonical_name = self.clean_entity_name(entity_name)
+            self.series.add(
+                Series(
+                    entity_id=entity_id,
+                    canonical_name=canonical_name,
+                    aliases=[manga_name],
+                    source=ChapterSource(plugin_id=entity_id),
+                )
+            )
         else:
             logger.warning("Entity %s (%s) already exists in the database.", manga_name, entity_id)
             return
 
         if track:
             if backend is not None:
-                self.entity_chapter_plugin[entity_id] = backend
+                self.series[entity_id].source = ChapterSource(**backend)
 
         if update:
             self.update_manga_entity_id(entity_id)
 
         if track:
             logger.info("Tracking: %s (%s)", entity_name, entity_id)
-            self.entity_tracked.add(entity_id)
+            self.series[entity_id].tracked = True
             if mark_as_tracked:
                 logger.info("Marking all chapters as downloaded. %s (%s)", entity_name, entity_id)
                 chapters = self.chapters[entity_id]
                 if chapters is not None:
-                    self.entity_downloads.update((entity_id, chapter.entity_id) for chapter in chapters)
+                    self.downloads.mark_all(entity_id, chapters)
             else:
                 logger.info("No chapters marked as downloaded. %s (%s)", entity_name, entity_id)
 
         self.save()
 
     def remove(self):
-        tracked_ids = list(self.entity_tracked)
-        choices = list(f"{self.entity_names[entity_id]} ({entity_id})" for entity_id in tracked_ids)
+        tracked = list(self.series.tracked())
+        choices = list(f"{s.canonical_name} ({s.entity_id})" for s in tracked)
         choice = console_selector(
             choices, "Select a manga to remove tracking for", "Please select the local and storage name number"
         )
 
         # Remove the entity from tracking
-        entity_id_to_remove = tracked_ids[choice - 1]
+        entity_id_to_remove = tracked[choice - 1].entity_id
         self.remove_entity_id_from_tracking(entity_id_to_remove)
 
     def delete(self):
-        all_ids = list(self.entity_map.items())
-        choices = list(f"{name} ({entity_id})" for name, entity_id in all_ids)
+        all_series = list(self.series)
+        choices = list(f"{s.storage_name} ({s.entity_id})" for s in all_series)
         choice = console_selector(
             choices, "Select a manga to delete", "Please select the local and storage name number"
         )
 
         # Remove the entity from tracking
-        entity_name_to_remove, entity_id_to_remove = all_ids[choice - 1]
-        self.delete_entity_id(entity_id_to_remove, entity_name_to_remove)
+        series = all_series[choice - 1]
+        self.delete_entity_id(series.entity_id, series.storage_name)
 
     def remove_entity_id_from_tracking(self, entity_id):
-        self.entity_tracked.discard(entity_id)
-        self.entity_chapter_plugin.pop(entity_id, None)
+        series = self.series.get(entity_id)
+        if series is not None:
+            series.tracked = False
+            series.source = ChapterSource(plugin_id=entity_id)
         logger.warning("Removed %s from tracking.", entity_id)
 
         # Remove the downloaded chapters
-        downloaded_chapters = []
-        for chapter in self.entity_downloads:
-            if chapter[0] == entity_id:
-                downloaded_chapters.append(chapter)
-        for chapter in downloaded_chapters:
-            self.entity_downloads.discard(chapter)
+        self.downloads.clear_series(entity_id)
         logger.warning("Removed downloaded chapters for %s from tracking.", entity_id)
         self.save()
 
     def delete_entity_id(self, entity_id_to_remove, entity_name_to_remove):
         self.remove_entity_id_from_tracking(entity_id_to_remove)
-        self.entity_map.pop(entity_name_to_remove, None)
-        self.entity_names.pop(entity_id_to_remove, None)
+        self.series.remove(entity_id_to_remove)
         self.metadata.database.pop(entity_id_to_remove, None)
         self.covers.database.pop(entity_id_to_remove, None)
         self.volumes.database.pop(entity_id_to_remove, None)
@@ -254,39 +318,14 @@ class EntityDB:
         logger.warning("Deleted entity from database %s (%s).", entity_name_to_remove, entity_id_to_remove)
         self.save()
 
-    def delete_chapter_entity_id_from_downloaded_chapters(self, entity_id, chapter_id):
-        """Remove a chapter entity ID from the downloaded chapters."""
-        if (entity_id, chapter_id) in self.entity_downloads:
-            self.entity_downloads.discard((entity_id, chapter_id))
-            logger.info("Removed chapter %s from downloaded chapters for %s.", chapter_id, entity_id)
-            self.save()
-        else:
-            logger.warning("Chapter %s not found in downloaded chapters for %s.", chapter_id, entity_id)
-
-    def add_chapter_entity_id_to_downloaded_chapters(self, entity_id, chapter_id):
-        """Add a chapter entity ID to the downloaded chapters."""
-        if (entity_id, chapter_id) not in self.entity_downloads:
-            self.entity_downloads.add((entity_id, chapter_id))
-            logger.info("Added chapter %s to downloaded chapters for %s.", chapter_id, entity_id)
-            self.save()
-        else:
-            logger.warning("Chapter %s already in downloaded chapters for %s.", chapter_id, entity_id)
-
     def set_downloaded_chapters(self, entity_id, downloaded_chapter_ids):
         """Reconcile the downloaded chapters for an entity to match the given set in a single save()."""
-        known = {c.entity_id for c in (self.chapters[entity_id] or [])}
-        desired = set(downloaded_chapter_ids) & known
-        current = {c for (e, c) in self.entity_downloads if e == entity_id}
-        to_add = desired - current
-        to_remove = (current & known) - desired
-        for c in to_add:
-            self.entity_downloads.add((entity_id, c))
-        for c in to_remove:
-            self.entity_downloads.discard((entity_id, c))
+        self.downloads.reconcile(entity_id, self.chapters[entity_id] or [], downloaded_chapter_ids)
         self.save()
 
     def update_manga_entity_name(self, manga_name):
-        entity_id = self.entity_map.get(manga_name)
+        series = self.series.by_alias(manga_name)
+        entity_id = series.entity_id if series is not None else None
         self.update_manga_entity_id(entity_id)
 
     def update_manga_entity_id_metadata_and_find_updated_ids(
@@ -310,10 +349,10 @@ class EntityDB:
             # Check if non-plugin chapter updates are available, update if metadata changed
             updated_metadata = self.metadata.to_hash(entity_id)
             metadata_changed = updated_metadata != previous_metadata.get(entity_id, "0")
-            # Check if chapter uses plugin, always update when plugin present
-            chapter_plugin = self.entity_chapter_plugin.get(entity_id, {})
-            if chapter_plugin or metadata_changed:
-                self.chapters.update(entity_id, **chapter_plugin)
+            # Check if the series uses a non-default source, always update in that case
+            series = self.series.get(entity_id)
+            if (series is not None and not series.source.is_default) or metadata_changed:
+                self.chapters.update(entity_id, **(series.source.to_update_kwargs() if series else {}))
 
         # There are extra verbose checks here, but this makes debugging easier if breakpoints are set
         updated_entity_ids = []
@@ -324,15 +363,21 @@ class EntityDB:
                 updated_chapters != previous_chapters.get(entity_id, "0")
             ):
                 updated_entity_ids.append(entity_id)
-                logger.debug("Updated metadata for %s: %s", self.entity_names.get(entity_id, "Unknown"), entity_id)
+                series = self.series.get(entity_id)
+                logger.debug(
+                    "Updated metadata for %s: %s",
+                    series.canonical_name if series else "Unknown",
+                    entity_id,
+                )
 
         return updated_entity_ids
 
     def update_manga_entity_id(self, entity_id, update_metadata=True):
-        manga_name = self.entity_names.get(entity_id)
+        series = self.series.get(entity_id)
+        manga_name = series.canonical_name if series is not None else None
         if entity_id is not None:
             try:
-                chapter_plugin = self.entity_chapter_plugin.get(entity_id, {})
+                chapter_plugin = series.source.to_update_kwargs() if series is not None else {}
                 logger.debug("Checking for updates %s: %s", manga_name, entity_id)
 
                 if update_metadata:
@@ -379,10 +424,10 @@ class EntityDB:
         self.covers.download_missing_covers(self.image_db_path)
 
     def download_chapter(self, entity_id, chapter_item, storage_path):
-        if (entity_id, chapter_item.entity_id) in self.entity_downloads:
+        if self.downloads.has(entity_id, chapter_item):
             return
 
-        manga_name = next(iter(name for name, id in self.entity_map.items() if id == entity_id))
+        manga_name = self.series[entity_id].storage_name
         chapter_name = f"{manga_name} - Chapter {chapter_item.padded_chapter_string}"
 
         chapter_filepath = os.path.join(storage_path, manga_name, chapter_name)
@@ -399,7 +444,7 @@ class EntityDB:
             self.build_chapter_cbz(chapter_filepath)
 
             # Mark cbz creation as successful and save the database
-            self.entity_downloads.add((entity_id, chapter_item.entity_id))
+            self.downloads.mark(entity_id, chapter_item)
             self.save()
 
             # Set the ownership of the file
@@ -417,9 +462,9 @@ class EntityDB:
             if os.path.exists(f"{chapter_filepath}.cbz"):
                 logger.error("Removing CBZ: %s, %s", entity_id, chapter_item.entity_id)
                 os.remove(f"{chapter_filepath}.cbz")
-            if (entity_id, chapter_item.entity_id) in self.entity_downloads:
+            if self.downloads.has(entity_id, chapter_item):
                 logger.error("Removing download record: %s, %s", entity_id, chapter_item.entity_id)
-                self.entity_downloads.discard((entity_id, chapter_item.entity_id))
+                self.downloads.unmark(entity_id, chapter_item)
                 self.save()
         finally:
             # Cleanup excess
@@ -454,15 +499,16 @@ class EntityDB:
         return entity_name
 
     def to_entity_name(self, manga_name) -> str | None:
-        entity_id = self.entity_map.get(manga_name)
-        if entity_id is None:
+        series = self.series.by_alias(manga_name)
+        if series is None:
             return None
-        return self.entity_names.get(entity_id)
+        return series.canonical_name
 
     def to_local_image_file(self, manga_name, chapter_number, chapter_is_volume=False) -> str | None:
-        entity_id = self.entity_map.get(manga_name)
-        if entity_id is None:
+        series = self.series.by_alias(manga_name)
+        if series is None:
             return None
+        entity_id = series.entity_id
 
         metadata = self.metadata[entity_id]
         if metadata is None:
@@ -483,9 +529,10 @@ class EntityDB:
         return cover_entity.local_filename if cover_entity else None
 
     def to_xml_tree(self, manga_name, chapter_number, chapter_is_volume=False) -> ElementTree.Element:
-        entity_id = self.entity_map.get(manga_name)
-        if entity_id is None:
+        series = self.series.by_alias(manga_name)
+        if series is None:
             raise ValueError(f"Could not find an entity for {manga_name}")
+        entity_id = series.entity_id
 
         metadata = self.metadata[entity_id]
         if metadata is None:
@@ -550,9 +597,10 @@ class EntityDB:
 
     def to_mylar_series_json(self, manga_name) -> str:
         """Construct a Komga compatible series.json file"""
-        entity_id = self.entity_map.get(manga_name)
-        if entity_id is None:
+        series = self.series.by_alias(manga_name)
+        if series is None:
             raise ValueError(f"Could not find an entity for {manga_name}")
+        entity_id = series.entity_id
 
         metadata = self.metadata[entity_id]
         if metadata is None:
@@ -597,11 +645,11 @@ class EntityDB:
     def get_missing_chapters(self):
         missing_chapters = []
         for entity_id, chapter_items in self.chapters.database.items():
-            if entity_id not in self.entity_tracked:
+            series = self.series.get(entity_id)
+            if series is None or not series.tracked:
                 continue
             for chapter_item in chapter_items:
-                key = (entity_id, chapter_item.entity_id)
-                if key not in self.entity_downloads:
+                if not self.downloads.has(entity_id, chapter_item):
                     missing_chapters.append((entity_id, chapter_item))
         return missing_chapters
 

@@ -31,10 +31,10 @@ def mock_scanner():
     """Create a mock scanner object."""
     scanner = MagicMock()
     scanner.entity_database = MagicMock()
-    scanner.entity_database.entity_map = {"test_series": "test_id"}
+    scanner.entity_database.series = [MagicMock(storage_name="test_series", entity_id="test_id")]
     scanner.entity_database.chapters = MagicMock()
     scanner.entity_database.chapters.database = {}
-    scanner.entity_database.entity_downloads = set()
+    scanner.entity_database.downloads.has.return_value = False
     return scanner
 
 
@@ -253,7 +253,10 @@ class TestScannerOperations:
     @patch("cbz_tagger.web.api.scanner")
     def test_get_series_list_operation(self, mock_scanner):
         """Test get series list operation."""
-        mock_scanner.entity_database.entity_map.items.return_value = [("Series1", "id1"), ("Series2", "id2")]
+        mock_scanner.entity_database.series = [
+            MagicMock(storage_name="Series1", entity_id="id1"),
+            MagicMock(storage_name="Series2", entity_id="id2"),
+        ]
         result = api.get_series_list_operation()
         mock_scanner.reload_scanner.assert_called_once()
         assert result == [("Series1", "id1"), ("Series2", "id2")]
@@ -270,7 +273,9 @@ class TestScannerOperations:
         mock_chapter2.chapter_string = "2"
 
         mock_scanner.entity_database.chapters.database.get.return_value = [mock_chapter1, mock_chapter2]
-        mock_scanner.entity_database.entity_downloads = {("test_entity_id", "entity1")}
+        mock_scanner.entity_database.downloads.has.side_effect = lambda entity_id, chapter: (
+            (entity_id, chapter.entity_id) == ("test_entity_id", "entity1")
+        )
 
         result = api.get_chapters_operation("test_entity_id")
 
@@ -366,7 +371,10 @@ class TestAPIEndpoints:
     @patch("cbz_tagger.web.api.scanner")
     def test_get_series_list_endpoint(self, mock_scanner, reset_app_state, client):
         """Test GET /api/scanner/series endpoint."""
-        mock_scanner.entity_database.entity_map.items.return_value = [("Series1", "id1"), ("Series2", "id2")]
+        mock_scanner.entity_database.series = [
+            MagicMock(storage_name="Series1", entity_id="id1"),
+            MagicMock(storage_name="Series2", entity_id="id2"),
+        ]
         response = client.get("/api/scanner/series")
         assert response.status_code == 200
         data = response.json()
@@ -382,7 +390,9 @@ class TestAPIEndpoints:
         mock_chapter.entity_id = "chapter1"
         mock_chapter.chapter_string = "1"
         mock_scanner.entity_database.chapters.database.get.return_value = [mock_chapter]
-        mock_scanner.entity_database.entity_downloads = {("test_id", "chapter1")}
+        mock_scanner.entity_database.downloads.has.side_effect = lambda entity_id, chapter: (
+            (entity_id, chapter.entity_id) == ("test_id", "chapter1")
+        )
 
         response = client.get("/api/scanner/series/test_id/chapters")
         assert response.status_code == 200

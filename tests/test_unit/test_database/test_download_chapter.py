@@ -21,7 +21,8 @@ def mock_entity_db_downloader(mock_entity_db):
     mock_entity_db.build_chapter_metadata = mock.MagicMock()
     mock_entity_db.chapters.download = mock.MagicMock()
     mock_entity_db.build_chapter_cbz = mock.MagicMock()
-    mock_entity_db.entity_downloads = mock.MagicMock()
+    mock_entity_db.downloads = mock.MagicMock()
+    mock_entity_db.downloads.has.return_value = False
     mock_entity_db.save = mock.MagicMock()
 
     yield mock_entity_db
@@ -37,10 +38,9 @@ def test_download_chapter_fails_with_page_download_failure(
     mock_entity_db_downloader.build_chapter_metadata.assert_called_once()
     mock_entity_db_downloader.chapters.download.assert_called_once()
     mock_entity_db_downloader.build_chapter_cbz.assert_not_called()
-    mock_entity_db_downloader.entity_downloads.add.assert_not_called()
-    mock_entity_db_downloader.entity_downloads.save.assert_not_called()
+    mock_entity_db_downloader.downloads.mark.assert_not_called()
 
-    manga_name = next(iter(name for name, id in mock_entity_db_downloader.entity_map.items() if id == manga_request_id))
+    manga_name = mock_entity_db_downloader.series[manga_request_id].storage_name
     chapter_name = f"{manga_name} - Chapter {chapter_item.padded_chapter_string}"
     assert not os.path.exists(os.path.join(storage_path, manga_name, chapter_name))
 
@@ -55,9 +55,8 @@ def test_download_chapter_fails_with_missing_cbz_file_failure(
     mock_entity_db_downloader.build_chapter_metadata.assert_called_once()
     mock_entity_db_downloader.chapters.download.assert_called_once()
     mock_entity_db_downloader.build_chapter_cbz.assert_called_once()
-    mock_entity_db_downloader.entity_downloads.add.assert_not_called()
-    mock_entity_db_downloader.entity_downloads.save.assert_not_called()
+    mock_entity_db_downloader.downloads.mark.assert_not_called()
 
-    manga_name = next(iter(name for name, id in mock_entity_db_downloader.entity_map.items() if id == manga_request_id))
+    manga_name = mock_entity_db_downloader.series[manga_request_id].storage_name
     chapter_name = f"{manga_name} - Chapter {chapter_item.padded_chapter_string}"
     assert not os.path.exists(os.path.join(storage_path, manga_name, chapter_name))

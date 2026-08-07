@@ -11,6 +11,9 @@ from cbz_tagger.database.chapter_entity_db import ChapterEntityDB
 from cbz_tagger.database.cover_entity_db import CoverEntityDB
 from cbz_tagger.database.entity_db import EntityDB
 from cbz_tagger.database.metadata_entity_db import MetadataEntityDB
+from cbz_tagger.database.series import ChapterSource
+from cbz_tagger.database.series import Series
+from cbz_tagger.database.series import SeriesIndex
 from cbz_tagger.database.volume_entity_db import VolumeEntityDB
 from cbz_tagger.entities.author_entity import AuthorEntity
 from cbz_tagger.entities.chapter_entity import ChapterEntity
@@ -71,8 +74,16 @@ def mock_entity_db_with_saving(
     mock_chapter_db,
 ):
     entity_db = EntityDB(temp_dir)
-    entity_db.entity_map = {manga_name: manga_request_id}
-    entity_db.entity_names = {manga_request_id: "Oshimai"}
+    entity_db.series = SeriesIndex(
+        {
+            manga_request_id: Series(
+                entity_id=manga_request_id,
+                canonical_name="Oshimai",
+                aliases=[manga_name],
+                source=ChapterSource(plugin_id=manga_request_id),
+            )
+        }
+    )
     entity_db.authors = mock_author_db
     entity_db.covers = mock_cover_db
     entity_db.metadata = mock_metadata_db
