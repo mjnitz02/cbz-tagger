@@ -1,6 +1,6 @@
 [project]
 name = "cbz_tagger"
-version = "5.2.1"
+version = "5.2.2"
 description = "CBZ Tagger is a tool to tag comic book files in CBZ format"
 authors = [
     {name = "Matt Nitzken",email = "mjnitz02@gmail.com"}
@@ -34,7 +34,7 @@ dev = [
     "pytest-asyncio>=1.4.0",
     "requests-mock>=1.12.1",
     "httpx>=0.28.1",
-    "ruff>=0.15.22",
+    "ruff>=0.16.2",
     "pre-commit>=4.6.1",
 ]
 
