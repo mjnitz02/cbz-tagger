@@ -128,10 +128,7 @@ class CbzEntity:
     def get_mylar_series_json_path(self, entity_name):
         return os.path.join(self.storage_path, entity_name, "series.json")
 
-    def build(
-        self, entity_name, entity_xml, entity_image_path, mylar_series_json, remove_on_write=True, environment=None
-    ):
-        _ = environment
+    def build(self, entity_name, entity_xml, entity_image_path, mylar_series_json, remove_on_write=True):
         read_path = self.get_entity_read_path()
         write_path = self.get_entity_write_path(entity_name, self.chapter_number)
         cover_image_path = self.get_entity_cover_image_path(entity_image_path)

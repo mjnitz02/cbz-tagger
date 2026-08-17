@@ -6,11 +6,16 @@ RUN npm ci
 COPY frontend/ ./
 RUN npm run build
 
-### Runtime image — this is what gets published to Docker Hub. It carries the
+### Runtime image — this is what gets published to GHCR. It carries the
 ### [project.dependencies] only; test and lint tooling is excluded via --no-dev.
 FROM python:3.13-alpine AS runtime
 
 LABEL maintainer="mjnitz02@gmail.com"
+# image.source is what links the GHCR package back to this repository, which is
+# also what makes the package page render the README instead of an empty shell.
+LABEL org.opencontainers.image.source="https://github.com/mjnitz02/cbz-tagger"
+LABEL org.opencontainers.image.description="Tag and organize CBZ comic/manga files with ComicInfo.xml metadata."
+LABEL org.opencontainers.image.licenses="MIT"
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \

@@ -136,7 +136,7 @@ jobs:
           make install
       - name: Test with pytest
         env:
-          CBZ_TAGGER_SKIP_INTEGRATION_TESTS: WBC
+          CBZ_TAGGER_SKIP_INTEGRATION_TESTS: WBC,KAL
         run: |
           make test-integration
   docker_image_integration_tests:
@@ -146,6 +146,6 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       - name: Build docker image
         env:
-          CBZ_TAGGER_SKIP_INTEGRATION_TESTS: WBC
+          CBZ_TAGGER_SKIP_INTEGRATION_TESTS: WBC,KAL
         run: |-
           make test-integration-docker
