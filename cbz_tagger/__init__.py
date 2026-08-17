@@ -3,9 +3,14 @@ import os
 from logging.handlers import RotatingFileHandler
 
 from cbz_tagger.common.env import AppEnv
+from cbz_tagger.common.permissions import apply_process_umask
 
 env = AppEnv()
 logger = logging.getLogger()
+
+# Must happen before anything creates a file or directory, otherwise the first
+# writes land with whatever umask the process inherited.
+apply_process_umask()
 
 # Configure console logging
 logging.basicConfig(level=env.LOG_LEVEL)
