@@ -32,7 +32,6 @@ scanner = FileScanner(
     config_path=os.path.abspath(env.CONFIG_PATH),
     scan_path=os.path.abspath(env.SCAN_PATH),
     storage_path=os.path.abspath(env.STORAGE_PATH),
-    environment=env.get_user_environment(),
 )
 
 # Simple in-memory state storage

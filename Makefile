@@ -32,7 +32,7 @@ lint-check: ## Run ruff checks and auto-fix issues
 	uv run ruff check . --fix
 
 lint-yaml: ## Fix YAML formatting across the repo
-	uvx yamlfix .github cbz_tagger tests docker-compose.yaml .pre-commit-config.yaml
+	uvx yamlfix .github cbz_tagger tests docker-compose.example.yaml .pre-commit-config.yaml
 
 lint-typing: ## Run static type checking with ty
 	uvx ty@0.0.14 check cbz_tagger
@@ -42,7 +42,7 @@ lint: lint-format lint-check lint-typing lint-yaml frontend-lint ## Run all lint
 test-lint: ## Check formatting/lint/types without modifying files (CI mode)
 	uv run ruff format . --check
 	uv run ruff check .
-	uvx yamlfix .github cbz_tagger tests docker-compose.yaml .pre-commit-config.yaml --check
+	uvx yamlfix .github cbz_tagger tests docker-compose.example.yaml .pre-commit-config.yaml --check
 	uvx ty@0.0.14 check cbz_tagger
 	$(MAKE) frontend-test-lint
 
@@ -101,8 +101,15 @@ build-docker: ## Build the cbz-tagger Docker image (runtime, exactly as publishe
 build-docker-test: ## Build the runtime image plus the dev group, for dockerised tests
 	docker build --target test -t cbz-tagger-test .
 
-run-docker: ## Run cbz-tagger via docker-compose
-	docker-compose up --build
+run-docker: build-docker ## Build and run the runtime image locally
+	docker run --rm -it \
+		-p 8080:8080 \
+		-e TIMER_DELAY=600 \
+		-e LOG_LEVEL=INFO \
+		-v ~/Downloads/cbz_tagger/config:/config \
+		-v ~/Downloads/cbz_tagger/scan:/scan \
+		-v ~/Downloads/cbz_tagger/storage:/storage \
+		cbz-tagger
 
 ##@ Local development
 

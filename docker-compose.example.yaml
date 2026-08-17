@@ -1,0 +1,34 @@
+---
+# Example deployment of CBZ Tagger. Copy this to `docker-compose.yaml`, edit the
+# volume paths, and run `docker compose up -d`.
+#
+# `docker-compose.yaml` is gitignored, so your edited copy will not be picked up
+# as a repo change.
+services:
+  cbztagger:
+    image: ghcr.io/mjnitz02/cbz-tagger:latest
+    container_name: cbztagger
+    restart: unless-stopped
+    ports: [8080:8080]
+    environment:
+      # Seconds between library scans. Several hours or more is recommended.
+      - TIMER_DELAY=43200
+      - LOG_LEVEL=INFO
+      # Ownership and mode applied to everything written to /storage. Match
+      # PUID/PGID to the user that owns the host directories mounted below.
+      # UMASK=002 gives directories 775 and files 664 so other containers in
+      # the same group can manage the library; use 022 for 755/644.
+      - PUID=1000
+      - PGID=1000
+      - UMASK=002
+      - TZ=Etc/UTC
+      # Optional. All outbound requests are routed through this proxy, which
+      # must be reachable whenever it is set.
+      # - PROXY_URL=http://proxy:3128
+    volumes:
+      # Persistent database, config and logs.
+      - /path/to/cbz_tagger/config:/config
+      # Watched for new files to import on each scan.
+      - /path/to/import:/scan
+      # Where tagged files are written.
+      - /path/to/storage:/storage
