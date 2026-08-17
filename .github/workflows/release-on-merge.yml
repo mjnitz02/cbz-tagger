@@ -3,18 +3,15 @@ name: Create Release on Merge to Main
 on:
   push:
     branches: [main]
-# Only what this workflow needs: contents:write to cut the GitHub release.
-# The Docker Hub push authenticates with the environment's own credentials,
-# not the workflow token.
+# Only what this workflow needs: contents:write to cut the GitHub release and
+# packages:write to push the image to GHCR. Both are covered by the workflow's
+# own GITHUB_TOKEN, so there are no registry credentials stored in the repo.
 permissions:
   contents: write
+  packages: write
 jobs:
   create-release:
     runs-on: ubuntu-latest
-    # DOCKER_USERNAME / DOCKER_PASSWORD live on this environment rather than at
-    # repo level, so only this job can read them — a workflow added elsewhere
-    # in the repo can no longer reach the publish credentials.
-    environment: release
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -49,18 +46,21 @@ jobs:
         if: steps.check-release.outputs.exists == 'true'
         run: |-
           echo "Skipping release creation - v${{ steps.get-version.outputs.version }} already exists"
-      - name: Log in to Docker Hub
+      - name: Log in to GitHub Container Registry
         if: steps.check-release.outputs.exists == 'false'
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Extract metadata (tags, labels) for Docker
         if: steps.check-release.outputs.exists == 'false'
         id: meta
         uses: docker/metadata-action@703896b4f30f62d53f5530a80bcdc589a3f702bc
         with:
-          images: mjnitz02/cbz_tagger
+          images: ghcr.io/${{ github.repository }}
+          # `latest` comes for free: metadata-action's default flavor is
+          # latest=auto, which tags the highest semver build as latest.
           tags: |
             type=semver,pattern={{version}},value=v${{ steps.get-version.outputs.version }}
             type=semver,pattern={{major}}.{{minor}},value=v${{ steps.get-version.outputs.version }}

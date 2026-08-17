@@ -1,0 +1,92 @@
+<?xml version="1.0"?>
+<!--
+  Unraid container template for CBZ Tagger.
+
+  This is not published to Community Applications. To use it, go to the Unraid
+  Docker tab, click "Add Container", and paste this URL into the Template field:
+
+  https://raw.githubusercontent.com/mjnitz02/cbz-tagger/main/unraid-template.xml
+-->
+<Container version="2">
+  <Name>cbz-tagger</Name>
+  <Repository>ghcr.io/mjnitz02/cbz-tagger:latest</Repository>
+  <Registry>https://github.com/mjnitz02/cbz-tagger/pkgs/container/cbz-tagger</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/mjnitz02/cbz-tagger/issues</Support>
+  <Project>https://github.com/mjnitz02/cbz-tagger</Project>
+  <Overview>
+    CBZ Tagger tags comic book files in CBZ format so they are compatible with the
+    ComicInfo.xml (ComicRack) metadata standard, using public metadata sources. It
+    embeds cover images and normalises the archive structure for readers such as
+    Komga.&#13;&#13;
+    Files placed in the /scan directory are imported, tagged and moved into
+    /storage on a recurring timer. A web UI on port 8080 is used to browse tracked
+    series, add new ones, and manage configuration.&#13;&#13;
+    Set PUID and PGID to the user that owns your share directories, otherwise the
+    files CBZ Tagger writes may not be readable by your other containers.
+  </Overview>
+  <Category>MediaApp:Books Tools:</Category>
+  <WebUI>http://[IP]:[PORT:8080]/</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/mjnitz02/cbz-tagger/main/unraid-template.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/mjnitz02/cbz-tagger/main/icon/manga.png</Icon>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled/>
+  <DonateText/>
+  <DonateLink/>
+  <Requires/>
+
+  <Config Name="WebUI" Target="8080" Default="8080" Mode="tcp"
+          Description="Port for the CBZ Tagger web interface."
+          Type="Port" Display="always" Required="true" Mask="false">8080</Config>
+
+  <Config Name="Config" Target="/config" Default="/mnt/user/appdata/cbz-tagger" Mode="rw"
+          Description="Persistent storage for the series database, settings and logs."
+          Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/cbz-tagger</Config>
+
+  <Config Name="Scan" Target="/scan" Default="" Mode="rw"
+          Description="Directory watched for new CBZ files to import. Files are moved out into /storage once processed."
+          Type="Path" Display="always" Required="true" Mask="false"></Config>
+
+  <Config Name="Storage" Target="/storage" Default="" Mode="rw"
+          Description="Directory where tagged files are written. Point your comic reader at this."
+          Type="Path" Display="always" Required="true" Mask="false"></Config>
+
+  <Config Name="Timer Delay" Target="TIMER_DELAY" Default="43200" Mode=""
+          Description="Seconds to wait between scans. Several hours or more is recommended; 43200 is 12 hours."
+          Type="Variable" Display="always" Required="true" Mask="false">43200</Config>
+
+  <Config Name="PUID" Target="PUID" Default="99" Mode=""
+          Description="User ID applied to files CBZ Tagger writes. 99 is the Unraid 'nobody' user."
+          Type="Variable" Display="always" Required="true" Mask="false">99</Config>
+
+  <Config Name="PGID" Target="PGID" Default="100" Mode=""
+          Description="Group ID applied to files CBZ Tagger writes. 100 is the Unraid 'users' group."
+          Type="Variable" Display="always" Required="true" Mask="false">100</Config>
+
+  <Config Name="UMASK" Target="UMASK" Default="002" Mode=""
+          Description="File mode creation mask for everything written to /storage. 002 gives directories 775 and files 664, so other containers running in the same group can manage the library. Use 022 (755/644) if you want the library group-readable but not group-writable."
+          Type="Variable" Display="always" Required="false" Mask="false">002</Config>
+
+  <Config Name="Log Level" Target="LOG_LEVEL" Default="INFO" Mode=""
+          Description="Logging verbosity. One of DEBUG, INFO, WARNING, ERROR."
+          Type="Variable" Display="advanced" Required="false" Mask="false">INFO</Config>
+
+  <Config Name="Proxy URL" Target="PROXY_URL" Default="" Mode=""
+          Description="Optional. Routes all outbound metadata requests through this HTTP proxy. The proxy must be reachable whenever this is set."
+          Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
+
+  <Config Name="Timezone" Target="TZ" Default="Etc/UTC" Mode=""
+          Description="Timezone used for log timestamps and scheduling."
+          Type="Variable" Display="advanced" Required="false" Mask="false">Etc/UTC</Config>
+
+  <Config Name="Delay Per Request" Target="DELAY_PER_REQUEST" Default="0.5" Mode=""
+          Description="Seconds to wait between outbound metadata requests. Raise this if you are being rate limited by the metadata source; lowering it risks getting blocked."
+          Type="Variable" Display="advanced" Required="false" Mask="false">0.5</Config>
+
+  <TailscaleStateDir/>
+</Container>

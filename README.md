@@ -1,7 +1,9 @@
 # CBZ-Tagger
-![](https://img.shields.io/badge/python-3670A0?logo=python&logoColor=ffdd54)
-![Docker Image Version](https://img.shields.io/docker/v/mjnitz02/cbz_tagger)
-![GitHub License](https://img.shields.io/github/license/mjnitz02/cbz-tagger)
+[![Release](https://img.shields.io/github/v/release/mjnitz02/cbz-tagger?label=release)](https://github.com/mjnitz02/cbz-tagger/releases)
+[![Container](https://img.shields.io/badge/ghcr.io-cbz--tagger-2496ED?logo=docker&logoColor=white)](https://github.com/mjnitz02/cbz-tagger/pkgs/container/cbz-tagger)
+[![CI](https://img.shields.io/github/actions/workflow/status/mjnitz02/cbz-tagger/pull-request-tests.yml?branch=main&label=ci)](https://github.com/mjnitz02/cbz-tagger/actions/workflows/pull-request-tests.yml)
+[![License](https://img.shields.io/github/license/mjnitz02/cbz-tagger)](LICENSE.txt)
+![Python](https://img.shields.io/badge/python-3.13-3670A0?logo=python&logoColor=ffdd54)
 
 
 CBZ Tagger is a tool to tag comic book files in CBZ format. Many cbz based files are incorrectly formatted
@@ -21,8 +23,9 @@ the code base and keep the tool functional and reliable!**
 
 ## Usage
 
-CBZ tagger is best run as a docker image. It is available on [Docker Hub](https://hub.docker.com/r/mjnitz02/cbz_tagger).
-It can also be installed with the command `docker pull mjnitz02/cbz_tagger`. CBZ Tagger can be run locally through
+CBZ tagger is best run as a docker image. It is published to the
+[GitHub Container Registry](https://github.com/mjnitz02/cbz-tagger/pkgs/container/cbz-tagger) and can be installed
+with `docker pull ghcr.io/mjnitz02/cbz-tagger:latest`. CBZ Tagger can be run locally through
 python by executing `python cbz-tagger/run.py` and specifying the environment variables defined below. If no variables
 are specified everything will be run in the root directory of the project. Because CBZ Tagger is designed to run
 continuously 24/7, it is recommended to run it as a docker container on some sort of always on infrastructure (e.g. a
@@ -32,20 +35,30 @@ system.
 >[!NOTE]
 >Unless a parameter is flaged as 'optional', it is *mandatory* and a value must be provided.
 
+>[!IMPORTANT]
+>As of v5.2.0 images are published to `ghcr.io/mjnitz02/cbz-tagger`. The old Docker Hub repository
+>(`mjnitz02/cbz_tagger`) is deprecated and will not receive new releases — update your image reference to keep
+>getting updates.
+
 ### docker-compose (recommended, [click here for more info](https://docs.linuxserver.io/general/docker-compose))
+
+A ready-to-edit file is provided in the repo as
+[`docker-compose.example.yaml`](docker-compose.example.yaml). Copy it to `docker-compose.yaml`, adjust the volume
+paths, and run `docker compose up -d`.
 
 ```yaml
 ---
 services:
   cbztagger:
-    image: mjnitz02/cbz_tagger:latest
+    image: ghcr.io/mjnitz02/cbz-tagger:latest
     container_name: cbztagger
+    restart: unless-stopped
     environment:
       - TIMER_DELAY=43200
       - PROXY_URL=http://proxy:3128
       - PUID=1000
       - PGID=1000
-      - UMASK=022
+      - UMASK=002
     volumes:
       - /path/to/cbz_tagger/config:/config
       - /path/to/import:/scan
@@ -63,12 +76,26 @@ docker run -d \
   -e PROXY_URL=http://proxy:3128 \
   -e PUID=1000 \
   -e PGID=1000 \
-  -e UMASK=022 \
+  -e UMASK=002 \
   -v /path/to/cbz_tagger/config:/config \
   -v /path/to/import:/scan \
   -v /path/to/storage:/storage \
-  mjnitz02/cbz_tagger:latest
+  ghcr.io/mjnitz02/cbz-tagger:latest
 ```
+
+### Unraid
+
+A container template is kept in the repo at [`unraid-template.xml`](unraid-template.xml). It is not published to
+Community Applications, so add it manually: on the Unraid **Docker** tab choose **Add Container**, then paste the
+following into the *Template* field:
+
+```
+https://raw.githubusercontent.com/mjnitz02/cbz-tagger/main/unraid-template.xml
+```
+
+The template pre-fills the ports, paths and environment variables described below, defaulting `PUID`/`PGID` to
+Unraid's `nobody`/`users` (99/100). Point **Scan** and **Storage** at the shares you use for imports and your
+tagged library.
 
 ## Parameters
 
@@ -83,7 +110,7 @@ inside the container to be accessible from the host's IP on port `8080` outside 
 |  `-e PROXY_URL=None`  | Specify the URL of the http proxy.<br/>All requests will be redirected, proxy must be available if defined.      |
 |    `-e PUID=1000`     | for UserID - see below for explanation                                                                      |
 |    `-e PGID=1000`     | for GroupID - see below for explanation                                                                     |
-|    `-e UMASK=022`     | for file UMASK                                                                                              |
+|    `-e UMASK=002`     | File mode creation mask for everything written to `/storage`.<br/>`002` gives directories `775` and files `664`; `022` gives `755`/`644`. |
 |    `-e TZ=Etc/UTC`    | specify a timezone to use, see this [list](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List). |
 |     `-v /config`      | Persistent config files                                                                                     |
 |      `-v /scan`       | Path to scan for new files that will be imported on scan.                                                   |
@@ -100,6 +127,16 @@ In this instance `PUID=1000` and `PGID=1000`, to find yours use `id your_user` a
 ```bash
 id your_user
 ```
+
+`PUID`, `PGID` and `UMASK` apply to `/storage` only. That directory is your library — it is shared with readers and
+other containers, so everything written there is given the ownership and mode you specify. `/config` holds the
+container's own database and cover cache and is left owned by whoever the container runs as.
+
+>[!NOTE]
+>Before v5.2.0 `UMASK` was read but never applied, so directories were always created `755` regardless of what you
+>set, and ownership was only applied to directories at the moment they were created. Existing folders are now
+>re-checked as the library is processed, so a library with wrong permissions will heal itself over subsequent scans
+>rather than needing a manual `chown -R`.
 
 ## Development and Contributions
 Development and contribution to the project is welcome. Please feel free to fork the project and submit a pull request.
