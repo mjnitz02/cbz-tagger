@@ -12,16 +12,10 @@ logger = logging.getLogger()
 
 
 class FileScanner:
-    def __init__(
-        self, config_path, scan_path, storage_path, add_missing=True, environment: dict[str, str] | None = None
-    ) -> None:
-        if environment is None:
-            environment = {}
-
+    def __init__(self, config_path, scan_path, storage_path, add_missing=True) -> None:
         self.config_path = config_path
         self.scan_path = scan_path
         self.storage_path = storage_path
-        self.environment = environment
 
         self.add_missing = add_missing
         self.entity_database = EntityDB.load(root_path=self.config_path)
@@ -89,9 +83,7 @@ class FileScanner:
         cbz_entity = CbzEntity(filepath, self.config_path, self.scan_path, self.storage_path)
         entity_name, entity_xml, entity_image_path, mylar_series_json = self.get_cbz_comicinfo_and_image(cbz_entity)
         if entity_name:
-            cbz_entity.build(
-                entity_name, entity_xml, entity_image_path, mylar_series_json, environment=self.environment
-            )
+            cbz_entity.build(entity_name, entity_xml, entity_image_path, mylar_series_json)
 
     def get_cbz_comicinfo_and_image(self, cbz_entity: CbzEntity):
         manga_name, chapter_number = cbz_entity.get_name_and_chapter()

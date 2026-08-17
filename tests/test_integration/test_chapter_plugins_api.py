@@ -30,7 +30,7 @@ def test_chapter_plugins_api_connection_test(
     test_key, entity_id, plugin_type, plugin_id, entity_count, first_entity_count, second_entity_count
 ):
     """This is a smoke test to make sure that chapter plugins can connect to their respective APIs"""
-    skip_keys = os.getenv("CBZ_TAGGER_SKIP_INTEGRATION_TESTS", "").split(",")
+    skip_keys = [key.strip() for key in os.getenv("CBZ_TAGGER_SKIP_INTEGRATION_TESTS", "").split(",")]
     if test_key in skip_keys:
         pytest.skip(f"Skipping integration test for {test_key}")
 

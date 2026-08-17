@@ -45,13 +45,6 @@ class AppEnv:
         else:
             LOG_LEVEL = logging.INFO
 
-    def get_user_environment(self):
-        return {
-            "PUID": self.PUID,
-            "PGID": self.PGID,
-            "UMASK": self.UMASK,
-        }
-
     def to_api(self):
         """Return all environment variables as a dictionary for the API."""
         return {
