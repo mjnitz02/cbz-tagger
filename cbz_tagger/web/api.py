@@ -502,13 +502,30 @@ class ImmutableStaticFiles(StaticFiles):
         return response
 
 
+def resolve_frontend_file(full_path: str) -> Path | None:
+    """Resolve a request path to a file inside the built SPA.
+
+    The path comes from the URL, so it is normalized and confirmed to stay inside
+    FRONTEND_DIST. Returns None when it escapes the directory or is not a real file.
+    """
+    if not full_path:
+        return None
+    root = os.path.realpath(FRONTEND_DIST)
+    candidate = os.path.realpath(os.path.join(root, full_path))
+    if candidate != root and not candidate.startswith(root + os.sep):
+        return None
+    if not os.path.isfile(candidate):
+        return None
+    return Path(candidate)
+
+
 if FRONTEND_DIST.is_dir():
     app.mount("/assets", ImmutableStaticFiles(directory=FRONTEND_DIST / "assets"), name="frontend-assets")
 
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):
         """Serve the built React SPA, falling back to index.html for client-side routes."""
-        candidate = FRONTEND_DIST / full_path
-        if full_path and candidate.is_file():
+        candidate = resolve_frontend_file(full_path)
+        if candidate is not None:
             return FileResponse(candidate)
         return FileResponse(FRONTEND_DIST / "index.html")
