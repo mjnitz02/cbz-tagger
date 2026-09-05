@@ -678,3 +678,45 @@ class TestConcurrency:
 
         # Now scanner should be available again
         assert api.is_scanner_busy() is False
+
+
+class TestResolveFrontendFile:
+    """Test path containment for the SPA static file resolver."""
+
+    @pytest.fixture
+    def frontend_dist(self, tmp_path):
+        """Create a fake built frontend directory and point the api module at it."""
+        dist = tmp_path / "dist"
+        (dist / "assets").mkdir(parents=True)
+        (dist / "index.html").write_text("<html></html>")
+        (dist / "assets" / "app.js").write_text("console.log(1)")
+        (tmp_path / "secret.txt").write_text("secret")
+        with patch.object(api, "FRONTEND_DIST", dist):
+            yield dist
+
+    def test_resolves_file_in_dist(self, frontend_dist):
+        assert api.resolve_frontend_file("index.html") == frontend_dist / "index.html"
+
+    def test_resolves_nested_file(self, frontend_dist):
+        assert api.resolve_frontend_file("assets/app.js") == frontend_dist / "assets" / "app.js"
+
+    def test_empty_path_returns_none(self, frontend_dist):
+        assert api.resolve_frontend_file("") is None
+
+    def test_missing_file_returns_none(self, frontend_dist):
+        assert api.resolve_frontend_file("series/123") is None
+
+    def test_directory_returns_none(self, frontend_dist):
+        assert api.resolve_frontend_file("assets") is None
+
+    @pytest.mark.parametrize(
+        "path",
+        [
+            "../secret.txt",
+            "assets/../../secret.txt",
+            "./../../secret.txt",
+            "/etc/passwd",
+        ],
+    )
+    def test_traversal_returns_none(self, frontend_dist, path):
+        assert api.resolve_frontend_file(path) is None
