@@ -512,7 +512,7 @@ def resolve_frontend_file(full_path: str) -> Path | None:
         return None
     root = os.path.realpath(FRONTEND_DIST)
     candidate = os.path.realpath(os.path.join(root, full_path))
-    if candidate != root and not candidate.startswith(root + os.sep):
+    if not candidate.startswith(root + os.sep):
         return None
     if not os.path.isfile(candidate):
         return None
