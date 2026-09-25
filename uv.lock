@@ -47,7 +47,7 @@ wheels = [
 
 [[package]]
 name = "cbz-tagger"
-version = "5.2.15"
+version = "5.2.16"
 source = { virtual = "." }
 dependencies = [
     { name = "beautifulsoup4" },
