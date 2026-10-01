@@ -43,6 +43,13 @@ COPY . .
 COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
 RUN uv sync --no-cache --no-dev --locked
 
+# The release version, passed in by the release workflow and shown in the UI.
+# Declared this late so a new version number doesn't invalidate the layers
+# above. Left empty on a local build, where the app falls back to
+# pyproject.toml.
+ARG VERSION=""
+ENV CBZ_TAGGER_VERSION=${VERSION}
+
 # Define volume mappings
 VOLUME /config /scan /storage
 
