@@ -2,8 +2,12 @@
 name: Dependabot auto-merge
 # Turns on GitHub's native auto-merge for Dependabot PRs. This workflow doesn't
 # merge anything itself: GitHub does, and only once the `main` ruleset is
-# satisfied — the required checks are green and the branch is up to date with
-# main. A red PR just sits open like it always did.
+# satisfied — the required checks from pull-request-tests.yml and codeql.yml
+# are green. A red PR just sits open like it always did.
+#
+# The ruleset deliberately does not require the branch to be up to date with
+# main: with that on, two Dependabot PRs open at once leave the second one
+# stranded behind the first until Dependabot's next weekly run.
 on: pull_request
 permissions: {}
 jobs:
