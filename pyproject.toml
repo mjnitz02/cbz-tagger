@@ -1,6 +1,10 @@
+# `version` is major.minor only. The patch number is assigned by the release
+# workflow from the git tags, so it never needs touching for an ordinary
+# change. To cut a new minor or major release, run `make bump-minor` or
+# `make bump-major` in the PR that earns it.
 [project]
 name = "cbz_tagger"
-version = "5.2.20"
+version = "5.3.0"
 description = "CBZ Tagger is a tool to tag comic book files in CBZ format"
 authors = [
     {name = "Matt Nitzken",email = "mjnitz02@gmail.com"}
