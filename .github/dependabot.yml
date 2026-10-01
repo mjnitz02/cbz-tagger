@@ -2,54 +2,81 @@
 # Dependabot version updates.
 # https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 #
-# This file was deleted by accident in 478105c (the nicegui -> React rewrite)
-# on 2026-07-01, so no version updates ran for a month while CVEs were being
-# patched by hand. The npm entry covers the frontend that same commit added,
-# which never had coverage at all.
+# The aim is one pull request a week that nobody has to touch: the three
+# ecosystems below share a multi-ecosystem group, so their updates arrive
+# together, and dependabot-automerge.yml merges that PR once the required
+# checks pass. The release workflow then publishes a new image.
 #
 # Security updates are separate and always run regardless of what's listed
-# here; these entries are the routine version bumps.
+# here. They still arrive one PR per advisory, but they auto-merge too.
 version: 2
-updates:
-  # Python — uv resolves from pyproject.toml and writes uv.lock.
-  #
-  # Only the dev group is batched. Runtime packages arrive one PR each so every
-  # upgrade stays individually attributable and individually deferrable. That
-  # matters here because the integration tests that would catch a behavioural
-  # change in cloudscraper/requests/beautifulsoup4 cannot run on GitHub Actions
-  # — Cloudflare blocks the runners from reaching the live endpoints — so green
-  # CI does not mean a network-facing bump is safe. A beautifulsoup4 upgrade
-  # once passed the unit tests and still broke a plugin connector in real use;
-  # it was quick to pin down only because it arrived on its own.
-  - package-ecosystem: uv
-    directory: /
+multi-ecosystem-groups:
+  dependencies:
     schedule:
       interval: weekly
-    open-pull-requests-limit: 10
-    groups:
-      python-dev-dependencies:
-        dependency-type: development
-        patterns: ['*']
+updates:
+  # Python — uv resolves from pyproject.toml and writes uv.lock.
+  - package-ecosystem: uv
+    directory: /
+    # `patterns` is required on every member of a multi-ecosystem group.
+    patterns: ['*']
+    multi-ecosystem-group: dependencies
+    # Nobody reviews these PRs before they merge, so wait a week after a
+    # release: time for a compromised or broken version to be yanked upstream.
+    # Security updates ignore the cooldown.
+    cooldown:
+      default-days: 7
+    # The network-facing libraries stay out of the unattended flow. The
+    # integration tests that would catch a behavioural change in them cannot
+    # run on GitHub Actions — Cloudflare blocks the runners from reaching the
+    # live endpoints — so green CI does not mean a bump is safe. A
+    # beautifulsoup4 upgrade once passed the unit tests and still broke a
+    # plugin connector in real use. Bump these by hand with `make update-latest`
+    # and run the integration tests locally. Naming update-types keeps this to
+    # version updates; security fixes for them still come through.
+    ignore:
+      - dependency-name: cloudscraper
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+          - version-update:semver-patch
+      - dependency-name: requests
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+          - version-update:semver-patch
+      - dependency-name: beautifulsoup4
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+          - version-update:semver-patch
 
   # React frontend.
   - package-ecosystem: npm
     directory: /frontend
-    schedule:
-      interval: weekly
-    open-pull-requests-limit: 3
-    groups:
-      frontend-dependencies:
-        patterns: ['*']
+    patterns: ['*']
+    multi-ecosystem-group: dependencies
+    cooldown:
+      default-days: 7
   - package-ecosystem: github-actions
     directory: /
-    schedule:
-      interval: weekly
-    groups:
-      github-actions:
-        patterns: ['*']
+    patterns: ['*']
+    multi-ecosystem-group: dependencies
+    cooldown:
+      default-days: 7
 
-  # Base image in the published container.
+  # Base images in the published container. Deliberately not in the group and
+  # not auto-merged: the tags are `3.13-alpine` and `25-alpine`, so every
+  # update here is a new interpreter or Node release rather than a patch, and
+  # that wants a look before it ships.
   - package-ecosystem: docker
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
+    ignore:
+      # pyproject.toml pins requires-python to 3.13, so a newer Python image
+      # cannot build. Move the two together by hand.
+      - dependency-name: python
+        update-types: [version-update:semver-major, version-update:semver-minor]

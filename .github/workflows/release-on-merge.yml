@@ -1,60 +1,74 @@
 ---
-name: Create Release on Merge to Main
+name: Release
+# Publishes whatever is at the tip of main as the next version: a GHCR image
+# and a GitHub release. Nothing in a pull request has to bump a version — the
+# number is worked out here, from the existing tags.
 on:
   push:
     branches: [main]
+  schedule:
+    # Daily, 06:23 UTC. A merge performed with a workflow's GITHUB_TOKEN does
+    # not fire `push` workflows, and that is exactly how Dependabot PRs land
+    # (see dependabot-automerge.yml). This sweep picks those up. When the tip
+    # of main is already released it does nothing.
+    - cron: 23 6 * * *
+  workflow_dispatch:
 # Only what this workflow needs: contents:write to cut the GitHub release and
 # packages:write to push the image to GHCR. Both are covered by the workflow's
 # own GITHUB_TOKEN, so there are no registry credentials stored in the repo.
 permissions:
   contents: write
   packages: write
+# One release at a time, so two merges in quick succession cannot both claim
+# the same version number.
+concurrency:
+  group: release
+  cancel-in-progress: false
 jobs:
-  create-release:
+  release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-      - name: Extract version from pyproject.toml
-        id: get-version
+        with:
+          # Always the current tip of main rather than the commit that
+          # triggered the run, so a queued run never releases a stale commit.
+          ref: main
+          fetch-depth: 0  # all tags, to find the latest release
+      - name: Work out the next version
+        id: plan
         run: |
-          VERSION=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Found version: $VERSION"
-      - name: Check if release exists
-        id: check-release
-        run: |
-          RELEASE_EXISTS=$(gh release view "v${{ steps.get-version.outputs.version }}" --json tagName --jq '.tagName' 2>/dev/null || echo "")
-          if [ -n "$RELEASE_EXISTS" ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-            echo "Release v${{ steps.get-version.outputs.version }} already exists"
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-            echo "Release v${{ steps.get-version.outputs.version }} does not exist"
+          if [ -n "$(git tag --points-at HEAD --list 'v*')" ]; then
+            echo "$(git rev-parse --short HEAD) is already released. Nothing to do."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Create Release
-        if: steps.check-release.outputs.exists == 'false'
-        run: |
-          gh release create "v${{ steps.get-version.outputs.version }}" \
-            --title "${{ steps.get-version.outputs.version }}" \
-            --generate-notes
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Skip Release Creation
-        if: steps.check-release.outputs.exists == 'true'
-        run: |-
-          echo "Skipping release creation - v${{ steps.get-version.outputs.version }} already exists"
+
+          # Next patch after the newest release tag...
+          LATEST=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n1)
+          NEXT=""
+          if [ -n "$LATEST" ]; then
+            IFS='.' read -r MAJOR MINOR PATCH <<< "${LATEST#v}"
+            NEXT="${MAJOR}.${MINOR}.$((PATCH + 1))"
+          fi
+
+          # ...unless pyproject.toml asks for something higher, which is how a
+          # minor or major release is made.
+          FLOOR=$(grep -E '^version = ' pyproject.toml | sed -E 's/version = "(.*)"/\1/')
+          VERSION=$(printf '%s\n' "$NEXT" "$FLOOR" | sort -V | tail -n1)
+          echo "Latest release: ${LATEST:-none}, pyproject.toml: $FLOOR, releasing: $VERSION"
+          echo "release=true" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - name: Log in to GitHub Container Registry
-        if: steps.check-release.outputs.exists == 'false'
+        if: steps.plan.outputs.release == 'true'
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Extract metadata (tags, labels) for Docker
-        if: steps.check-release.outputs.exists == 'false'
+        if: steps.plan.outputs.release == 'true'
         id: meta
         uses: docker/metadata-action@8e671d84a3bd81afdfc4fdbb96a42b07c2a80934
         with:
@@ -62,11 +76,11 @@ jobs:
           # `latest` comes for free: metadata-action's default flavor is
           # latest=auto, which tags the highest semver build as latest.
           tags: |
-            type=semver,pattern={{version}},value=v${{ steps.get-version.outputs.version }}
-            type=semver,pattern={{major}}.{{minor}},value=v${{ steps.get-version.outputs.version }}
-            type=semver,pattern={{major}},value=v${{ steps.get-version.outputs.version }}
+            type=semver,pattern={{version}},value=v${{ steps.plan.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=v${{ steps.plan.outputs.version }}
+            type=semver,pattern={{major}},value=v${{ steps.plan.outputs.version }}
       - name: Build and push Docker image
-        if: steps.check-release.outputs.exists == 'false'
+        if: steps.plan.outputs.release == 'true'
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc
         with:
           context: .
@@ -74,6 +88,22 @@ jobs:
           # Must be named. The Dockerfile's last stage is `test` (runtime plus
           # pytest/ruff), and an unqualified build would publish that.
           target: runtime
+          # The version the app reports. It is not in the source tree any more.
+          build-args: |
+            VERSION=${{ steps.plan.outputs.version }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+      # Last, so the tag only exists once the image does. The tag is what marks
+      # a commit as released; if the build fails, the next run tries again.
+      - name: Create release
+        if: steps.plan.outputs.release == 'true'
+        run: |
+          gh release create "v$VERSION" \
+            --target "$SHA" \
+            --title "$VERSION" \
+            --generate-notes
+        env:
+          VERSION: ${{ steps.plan.outputs.version }}
+          SHA: ${{ steps.plan.outputs.sha }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
