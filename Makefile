@@ -8,7 +8,8 @@ SHELL := /usr/bin/env bash
 	lint-format lint-check lint-yaml lint-typing lint test-lint \
 	frontend-install frontend-lint frontend-typing frontend-test-lint frontend-test frontend-build frontend-generate-api \
 	test test-unit test-integration test-unit-docker test-integration-docker \
-	build-docker build-docker-test run-docker dev run clean-git
+	build-docker build-docker-test run-docker dev run clean-git \
+	bump-minor bump-major
 
 help: ## Show this help message
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} \
@@ -163,6 +164,18 @@ audit-python: ## Report known vulnerabilities in Python dependencies
 audit-frontend: ## Report known vulnerabilities in frontend dependencies
 	@echo "== Frontend =="
 	@cd frontend && npm audit || true
+
+##@ Release
+
+# Patch releases need nothing: the release workflow assigns the patch number
+# from the git tags on every merge to main. These raise the version in
+# pyproject.toml (and uv.lock), which makes the next release start a new
+# minor or major series.
+bump-minor: ## Make the next release a new minor version (e.g. 5.2.x -> 5.3.0)
+	uv version --bump minor
+
+bump-major: ## Make the next release a new major version (e.g. 5.2.x -> 6.0.0)
+	uv version --bump major
 
 ##@ Maintenance
 
