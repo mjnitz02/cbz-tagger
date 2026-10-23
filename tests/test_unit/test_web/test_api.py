@@ -538,11 +538,11 @@ class TestAPIEndpoints:
     @patch("cbz_tagger.common.plugins.Plugins.to_api")
     def test_get_plugins_enum_endpoint(self, mock_to_api, reset_app_state, client):
         """Test GET /api/enums/plugins endpoint."""
-        mock_to_api.return_value = {"DEFAULT": "mdx", "all": ["mdx", "kal"]}
+        mock_to_api.return_value = {"DEFAULT": "mdx", "all": ["mdx", "wbc"]}
         response = client.get("/api/enums/plugins")
         assert response.status_code == 200
         data = response.json()
-        assert data == {"DEFAULT": "mdx", "all": ["mdx", "kal"]}
+        assert data == {"DEFAULT": "mdx", "all": ["mdx", "wbc"]}
 
     @patch("cbz_tagger.web.api.env")
     def test_get_env_config_endpoint(self, mock_env, reset_app_state, client):

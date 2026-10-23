@@ -22,7 +22,6 @@ def check_entity_download_links(entity, entity_link_count):
     "test_key,entity_id,plugin_type,plugin_id,entity_count,first_entity_count,second_entity_count",
     [
         ("MDX", "f2def508-4407-471c-bf2c-86bea3e4e592", "mdx", "", 14, 4, 1),
-        ("KAL", "example_manga", "kal", "23032-umbella", 3, 3, 3),
         ("WBC", "example_manga", "wbc", "01J76XY9B20J1KHJ1FWVZ8N1PK", 5, 21, 20),
     ],
 )

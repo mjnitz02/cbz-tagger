@@ -57,7 +57,7 @@ const SERIES = [
     latest_chapter: '50',
     latest_chapter_date: daysAgo(200),
     metadata_updated: daysAgo(200),
-    plugin: 'kal',
+    plugin: 'wbc',
     plugin_link: 'https://example.com/title/gamma-id',
   },
   {
@@ -190,7 +190,7 @@ describe('SeriesPage', () => {
 
     await screen.findByText('Alpha Manga')
     await user.click(screen.getByLabelText('Plugin'))
-    await user.click(await screen.findByRole('option', { name: 'kal' }))
+    await user.click(await screen.findByRole('option', { name: 'wbc' }))
 
     expect(screen.getByText('Gamma Manga')).toBeInTheDocument()
     expect(screen.queryByText('Alpha Manga')).not.toBeInTheDocument()
