@@ -1,0 +1,56 @@
+<section
+	id="chapter-images"
+	class="w-full flex-1 flex flex-col pb-4 cursor-pointer"
+	style="gap: var(--strip-gap, 0px)"
+	x-data="{
+		scrollDown() { window.scrollBy({ top: window.innerHeight * 0.75, behavior: 'smooth' }); },
+		scrollUp() { window.scrollBy({ top: -window.innerHeight * 0.75, behavior: 'smooth' }); },
+		handleClick(e) {
+			const clickX = e.clientX;
+			const sectionWidth = e.currentTarget.getBoundingClientRect().width;
+			const isLeftHalf = clickX < sectionWidth / 2;
+
+			if (isLeftHalf) {
+				this.scrollUp();
+			} else {
+				this.scrollDown();
+			}
+		},
+	}"
+	hx-get="https://site.com/chapters/01J76XZ09NWPN7PMB237QVJYP2/images"
+	hx-trigger="change from:[name='reading_style']"
+	hx-include="[name='reading_style'],[name='current_page']"
+	hx-swap="outerHTML"
+	@click="handleClick">
+
+	<img
+		src="https://site.us/manga/example_manga/0005-001.png"
+		class="max-w-full h-auto mx-auto"
+		style="min-height: 50vh"
+		alt="Page 1"
+		decoding="async"
+		loading="lazy"
+		onload="this.style.minHeight=''"
+		onerror="this.onerror=null; this.style.minHeight=''; this.src='/static/images/broken_image.jpg'" />
+
+	<img
+		src="https://site.us/manga/example_manga/0005-002.png"
+		class="max-w-full h-auto mx-auto"
+		style="min-height: 50vh"
+		alt="Page 2"
+		decoding="async"
+		loading="lazy"
+		onload="this.style.minHeight=''"
+		onerror="this.onerror=null; this.style.minHeight=''; this.src='/static/images/broken_image.jpg'" />
+
+	<img
+		src="https://site.us/manga/example_manga/0005-003.png"
+		class="max-w-full h-auto mx-auto"
+		style="min-height: 50vh"
+		alt="Page 3"
+		decoding="async"
+		loading="lazy"
+		onload="this.style.minHeight=''"
+		onerror="this.onerror=null; this.style.minHeight=''; this.src='/static/images/broken_image.jpg'" />
+
+</section>

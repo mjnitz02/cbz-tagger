@@ -1,0 +1,70 @@
+{
+  "items": [
+    {
+      "id": 7683844,
+      "number": 108,
+      "name": "ANY INTEREST IN GOING PRO?",
+      "language": "en",
+      "type": "official",
+      "createdAt": 1783305145
+    },
+    {
+      "id": 3806990,
+      "number": 108,
+      "name": "",
+      "language": "en",
+      "type": "unofficial",
+      "createdAt": 1730455166
+    },
+    {
+      "id": 7683843,
+      "number": 107,
+      "name": "",
+      "language": "en",
+      "type": "official",
+      "createdAt": 1783305145
+    },
+    {
+      "id": 3716755,
+      "number": 107,
+      "name": "Une simple provocation",
+      "language": "fr",
+      "type": "unofficial",
+      "createdAt": 1726937488
+    },
+    {
+      "id": 3430482,
+      "number": 107,
+      "name": " È Apenas Uma Provocação ",
+      "language": "pt-br",
+      "type": "unofficial",
+      "createdAt": 1714691484
+    },
+    {
+      "id": 2451117,
+      "number": 107,
+      "name": "",
+      "language": "en",
+      "type": "unofficial",
+      "createdAt": 1708395100
+    },
+    {
+      "id": 5434355,
+      "number": 105.6,
+      "name": "",
+      "language": "en",
+      "type": "unofficial",
+      "createdAt": 1759939273
+    }
+  ],
+  "meta": {
+    "total": 508,
+    "perPage": 200,
+    "page": 1,
+    "lastPage": 3,
+    "from": 1,
+    "to": 200,
+    "hasNext": true,
+    "hasPrev": false
+  }
+}

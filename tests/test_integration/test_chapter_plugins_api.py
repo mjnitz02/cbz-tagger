@@ -11,7 +11,7 @@ def check_entity_download_links(entity, entity_link_count):
     check_url = entity.get_chapter_url()
     download_links = entity.parse_chapter_download_links(check_url)
     assert len(download_links) == entity_link_count
-    response = entity.request_with_retry(download_links[0])
+    response = entity.request_with_retry(download_links[0], headers=entity.image_headers())
     assert response.status_code == 200
     in_memory_image = Image.open(BytesIO(response.content))
     assert in_memory_image.format in ["JPEG", "PNG", "WEBP"]
@@ -23,6 +23,7 @@ def check_entity_download_links(entity, entity_link_count):
     [
         ("MDX", "f2def508-4407-471c-bf2c-86bea3e4e592", "mdx", "", 14, 4, 1),
         ("WBC", "example_manga", "wbc", "01J76XY9B20J1KHJ1FWVZ8N1PK", 5, 21, 20),
+        ("MFI", "example_manga", "mfi", "ywy40", 3, 10, 5),
     ],
 )
 def test_chapter_plugins_api_connection_test(

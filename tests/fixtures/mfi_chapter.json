@@ -1,0 +1,53 @@
+{
+  "data": {
+    "id": 7683844,
+    "number": 108,
+    "name": "ANY INTEREST IN GOING PRO?",
+    "language": "en",
+    "type": "official",
+    "latest": 108,
+    "title": {
+      "id": 18515,
+      "hid": "1n9qw",
+      "slug": "manga-name",
+      "name": "Manga Name",
+      "url": "/title/1n9qw-manga-name",
+      "type": "manga",
+      "languages": [
+        "en",
+        "es-la",
+        "fr",
+        "ja",
+        "pt-br"
+      ],
+      "hasVolumes": true,
+      "malId": "125052",
+      "anilistId": "109501",
+      "mangabakaId": "1215"
+    },
+    "pages": [
+      {
+        "url": "https://pw6.imagesite.com/mf/12a3db61fa0e4f41a6d579198fa7e8069039ae405dbaa1b34b5a37edf329c58d235ddf1e496423eaff35/h/p.jpg",
+        "width": 1080,
+        "height": 1546
+      },
+      {
+        "url": "https://pw6.imagesite.com/mf/12a3db61fa0e4f41a6d579198fa7e8069039ae405dbaa1b3485a37edf329c58d235ddf1e496423eaff35/h/p.jpg",
+        "width": 1080,
+        "height": 1534
+      },
+      {
+        "url": "https://pw6.imagesite.com/mf/12a3db61fa0e4f41a6d579198fa7e8069039ae405dbaa1b3495a37edf329c58d235ddf1e496423eaff35/h/p.jpg",
+        "width": 1080,
+        "height": 1532
+      }
+    ],
+    "prev": {
+      "id": 7683843,
+      "number": 107,
+      "language": "en",
+      "url": "/title/1n9qw-manga-name/chapter/7683843"
+    },
+    "next": null
+  }
+}

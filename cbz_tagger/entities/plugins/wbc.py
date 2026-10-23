@@ -2,8 +2,6 @@ import base64
 import re
 from typing import Any
 
-from bs4.element import Tag
-
 from cbz_tagger.common.plugins import Plugins
 from cbz_tagger.entities.plugins.plugin_entity import ChapterPluginEntity
 
@@ -12,42 +10,27 @@ from cbz_tagger.entities.plugins.plugin_entity import ChapterPluginEntity
 class ChapterPluginWBC(ChapterPluginEntity):
     BASE_URL = base64.b64decode("d2VlYmNlbnRyYWwuY29t").decode("utf-8")
     TITLE_URL = f"https://{BASE_URL}/series/"
+    HARU_SOURCE = base64.b64decode("V2VlYkNlbnRyYWwudHM=").decode("utf-8")
     entity_url = f"https://{BASE_URL}/"
 
     @classmethod
     def parse_info_feed(cls, entity_id: str) -> list[Any]:
+        # haruneko FetchChapters: 'a[href*="/chapters/"]' on {series}/full-chapter-list, title from 'span.grow span'
         url = f"{cls.entity_url}series/{entity_id}/full-chapter-list"
         scraper = cls.fetch_and_parse(url)
 
-        items = scraper.find_all("div", {"class": "flex"})
-
         content = []
-        for item in items:
-            assert isinstance(item, Tag), f"Expected Tag, got {type(item)}"
-            item_content_list = item.find_all("a", {"class": "flex-1"}, href=True)
-            assert len(item_content_list) > 0, "No anchor tags found"
-            item_content = item_content_list[0]
-            assert isinstance(item_content, Tag), f"Expected Tag, got {type(item_content)}"
+        for item in scraper.select_safe('a[href*="/chapters/"]', "Could not find chapter links"):
+            link = cls.absolute_url(str(item["href"]))
+            chapter_id = link.split("/chapters/")[-1]
 
-            href = item_content.get("href")
-            assert isinstance(href, str), f"Expected str for href, got {type(href)}"
-            chapter_id = href.split("chapters/")[-1]
-            link = f"{cls.entity_url}chapters/{chapter_id}"
+            title_element = item.select_one("span.grow span")
+            if title_element is None:
+                raise EnvironmentError("Could not find chapter title")
+            item_title = title_element.get_text(strip=True)
 
-            item_x_data = item.get("x-data")
-            assert isinstance(item_x_data, str), f"Expected str for x-data, got {type(item_x_data)}"
-            updated = item_x_data[item_x_data.index("('") + 2 : item_x_data.index("')")]
-
-            # Find spans with empty class attribute - compatible with BS4 4.13 where class="" is not
-            # findable with find_all and is now represented as an empty list
-            all_spans = item_content.find_all("span")
-            item_chapter_spans = [span for span in all_spans if isinstance(span, Tag) and span.get("class") == []]
-
-            if len(item_chapter_spans) == 0:
-                raise EnvironmentError("Could not find chapter spans")
-            first_span = item_chapter_spans[0]
-            assert isinstance(first_span, Tag), f"Expected Tag, got {type(first_span)}"
-            item_title = str(first_span.contents[0]) if first_span.contents else ""
+            time_element = item.select_one("time")
+            updated = time_element.get_text(strip=True) if time_element is not None else None
 
             content.append(
                 cls.ResponseBuilder.build(
@@ -64,22 +47,10 @@ class ChapterPluginWBC(ChapterPluginEntity):
         return content
 
     def parse_chapter_download_links(self, url: str) -> list[str]:
-        scraper = self.fetch_and_parse(url)
-
-        # Find the root url for the chapter
-        root_element = scraper.find_one_safe("link", {"rel": "preload"}, "Could not find preload link")
-        root_url = root_element.get("href")
-        assert isinstance(root_url, str), "href attribute not found on preload link"
-        base_url = "/".join(root_url.split("/")[:-1])
-        base_chapter = root_url.split("/")[-1].split("-")[0]
-
-        # Find the list of pages
-        page_select_modal = scraper.find_one_safe(
-            "dialog", {"id": "page_select_modal"}, "Could not find page_select_modal dialog"
+        # haruneko FetchPages runs 'main section img[alt*="Page"]:not([x-show])' in a browser after the chapter
+        # page has loaded its images. Those images come from an htmx fragment, so request that directly instead.
+        scraper = self.fetch_and_parse(
+            f"{url}/images", params={"is_prev": "False", "current_page": 1, "reading_style": "long_strip"}
         )
-        page_tags = list(page_select_modal.find_all("button", {"class": "w-full btn"}))
-        pages = [
-            int(str(p.contents[0])) for p in page_tags if isinstance(p, Tag) and p.contents and len(p.contents) > 0
-        ]
-
-        return [f"{base_url}/{base_chapter}-{page:03}.png" for page in pages]
+        pages = scraper.select_safe('section img[alt*="Page"]:not([x-show])', "Could not find chapter images")
+        return [self.absolute_url(str(page["src"])) for page in pages]
