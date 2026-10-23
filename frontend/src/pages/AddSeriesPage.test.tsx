@@ -32,7 +32,7 @@ const SEARCH_RESULTS = [
 function mockPlugins() {
   server.use(
     http.get('*/api/enums/plugins', () =>
-      HttpResponse.json({ DEFAULT: 'mdx', all: ['mdx', 'kal'] }),
+      HttpResponse.json({ DEFAULT: 'mdx', all: ['mdx', 'wbc'] }),
     ),
   )
 }
@@ -147,7 +147,7 @@ describe('AddSeriesPage', () => {
         name: 'Select a series backend (Default: MDX)',
       }),
     )
-    await user.click(await screen.findByRole('option', { name: 'kal' }))
+    await user.click(await screen.findByRole('option', { name: 'wbc' }))
 
     expect(
       screen.getByRole('button', { name: 'Add New Series' }),
@@ -157,7 +157,7 @@ describe('AddSeriesPage', () => {
       screen.getByLabelText(
         'Backend id for the series (Only for non-MDX backends)',
       ),
-      'kal-id',
+      'wbc-id',
     )
 
     expect(screen.getByRole('button', { name: 'Add New Series' })).toBeEnabled()
