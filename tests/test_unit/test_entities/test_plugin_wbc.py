@@ -14,20 +14,20 @@ def wbc_series_response(tests_fixtures_path):
 
 
 @pytest.fixture
-def wbc_chapter_response(tests_fixtures_path):
-    with open(os.path.join(tests_fixtures_path, "wbc_chapter.txt"), encoding="utf-8") as file:
+def wbc_chapter_images_response(tests_fixtures_path):
+    with open(os.path.join(tests_fixtures_path, "wbc_chapter_images.txt"), encoding="utf-8") as file:
         return file.read()
 
 
 @pytest.fixture
-def chapter_entity(requests_mock, wbc_series_response, wbc_chapter_response):
+def chapter_entity(requests_mock, wbc_series_response, wbc_chapter_images_response):
     requests_mock.get(
         f"https://{ChapterPluginWBC.BASE_URL}/series/example_manga/full-chapter-list",
         text=wbc_series_response,
     )
     requests_mock.get(
-        "http://wbc.example.com/chapter",
-        text=wbc_chapter_response,
+        "http://wbc.example.com/chapter/images",
+        text=wbc_chapter_images_response,
     )
 
     return ChapterEntity(
@@ -171,11 +171,17 @@ def test_parse_info_feed(mock_sleep, mock_random, chapter_entity):
 
 @patch("cbz_tagger.entities.base_entity.random.uniform", return_value=0.1)
 @patch("cbz_tagger.entities.base_entity.time.sleep")
-def test_parse_chapter_download_links(mock_sleep, mock_random, chapter_entity):
+def test_parse_chapter_download_links(mock_sleep, mock_random, requests_mock, chapter_entity):
     result = chapter_entity.parse_chapter_download_links("http://wbc.example.com/chapter")
 
+    assert requests_mock.last_request.qs == {
+        "is_prev": ["false"],
+        "current_page": ["1"],
+        "reading_style": ["long_strip"],
+    }
+
     assert result == [
-        "https://site.us/manga/example_manga/0001-001.png",
-        "https://site.us/manga/example_manga/0001-002.png",
-        "https://site.us/manga/example_manga/0001-003.png",
+        "https://site.us/manga/example_manga/0005-001.png",
+        "https://site.us/manga/example_manga/0005-002.png",
+        "https://site.us/manga/example_manga/0005-003.png",
     ]

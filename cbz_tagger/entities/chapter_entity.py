@@ -44,5 +44,8 @@ class ChapterEntity(ChapterPluginEntity):
     def get_chapter_url(self):
         return self.entity_plugin.get_chapter_url()
 
+    def image_headers(self) -> dict[str, str]:
+        return self.entity_plugin.image_headers()
+
     def parse_chapter_download_links(self, url: str) -> list[str]:
         return self.entity_plugin.parse_chapter_download_links(url)

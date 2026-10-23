@@ -83,6 +83,38 @@ class HtmlScraper:
             return list(self.soup.find_all(tag))
         return list(self.soup.find_all(tag, attrs))
 
+    def select(self, css: str) -> list[Tag]:
+        """Find all elements matching a CSS selector.
+
+        CSS selectors are the same query strings haruneko uses, so a recipe's
+        selector can be copied across verbatim.
+
+        Args:
+            css: CSS selector to match
+
+        Returns:
+            List of matching BeautifulSoup Tags (may be empty)
+        """
+        return list(self.soup.select(css))
+
+    def select_safe(self, css: str, error_msg: str) -> list[Tag]:
+        """Find all elements matching a CSS selector, raising an error if none found.
+
+        Args:
+            css: CSS selector to match
+            error_msg: Error message if no elements found
+
+        Returns:
+            List of matching BeautifulSoup Tags
+
+        Raises:
+            EnvironmentError: If no matching elements are found
+        """
+        elements = self.select(css)
+        if len(elements) == 0:
+            raise EnvironmentError(error_msg)
+        return elements
+
     def extract_script_variable(self, var_name: str, error_msg: str) -> str:
         """Extract the value of a JavaScript variable from script tags.
 

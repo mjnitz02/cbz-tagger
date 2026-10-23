@@ -4,6 +4,7 @@ from abc import abstractmethod
 from datetime import datetime
 from io import BytesIO
 from typing import Any
+from urllib.parse import urljoin
 
 from PIL import Image
 from PIL import ImageFile
@@ -19,6 +20,13 @@ logger = logging.getLogger()
 class ChapterPluginEntity(BaseEntity):
     """Base class for chapter source plugins.
 
+    A plugin mirrors the steps of a haruneko website recipe, minus the parts cbz-tagger
+    handles itself (series metadata, search):
+    - parse_info_feed()              <-> FetchChapters: list the chapters for a series slug
+    - parse_chapter_download_links() <-> FetchPages: list the image URLs for one chapter
+    - download_chapter()             <-> FetchImage: shared here; set IMAGE_HEADERS if the
+                                         image host needs e.g. a Referer
+
     Subclasses must:
     - Define PLUGIN_TYPE class variable matching a Plugins constant
     - Implement parse_info_feed() to fetch chapter listings
@@ -30,6 +38,10 @@ class ChapterPluginEntity(BaseEntity):
     PLUGIN_TYPE: str = ""  # Must be set by subclasses; set with @Plugins.register("type") decorator
     BASE_URL: str = ""  # Must be set by subclasses; used to set API endpoints and construct chapter URLs
     TITLE_URL: str = ""  # Must be set by subclasses; used to construct entity links
+    # Optional: the recipe this plugin follows (web/src/engine/websites/<file>). When the site
+    # changes, the upstream file's history is the first place to look for the fix.
+    HARU_SOURCE: str = ""
+    IMAGE_HEADERS: dict[str, str] = {}  # Extra headers sent when downloading chapter images
     ResponseBuilder = ChapterResponseBuilder
     quality = "data"  # Default quality for chapter images; can be overridden by subclasses if needed
 
@@ -38,20 +50,29 @@ class ChapterPluginEntity(BaseEntity):
         return cls.parse_info_feed(entity_id)
 
     @classmethod
-    def fetch_and_parse(cls, url: str) -> HtmlScraper:
+    def fetch_and_parse(cls, url: str, params: dict[str, Any] | None = None) -> HtmlScraper:
         """Fetch a URL and return an HtmlScraper for parsing.
 
         Args:
             url: The URL to fetch
+            params: Optional query parameters
 
         Returns:
             HtmlScraper instance ready for parsing
         """
-        response = cls.request_with_retry(url)
+        response = cls.request_with_retry(url, params=params)
         return HtmlScraper.from_response(response)
+
+    @classmethod
+    def absolute_url(cls, href: str) -> str:
+        """Resolve a link scraped from the site (relative or absolute) against BASE_URL."""
+        return urljoin(f"https://{cls.BASE_URL}/", href)
 
     def get_chapter_url(self):
         return self.attributes.get("url", "")
+
+    def image_headers(self) -> dict[str, str]:
+        return self.IMAGE_HEADERS
 
     @property
     def chapter_number(self) -> float | None:
@@ -203,7 +224,7 @@ class ChapterPluginEntity(BaseEntity):
             image_path = os.path.join(filepath, f"{index + 1:03}.jpg")
             cached_images.append(image_path)
             if not os.path.exists(image_path):
-                image = self.download_file(image_url)
+                image = self.download_file(image_url, headers=self.image_headers())
                 in_memory_image = Image.open(BytesIO(image))
                 if in_memory_image.format != "JPEG":
                     in_memory_image = in_memory_image.convert("RGB")

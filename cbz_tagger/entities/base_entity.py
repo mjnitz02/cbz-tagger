@@ -129,8 +129,12 @@ class BaseEntity(BaseEntityObject):
         ]
 
     @classmethod
-    def request_with_retry(cls, url, params=None, retries=3, timeout=30):
-        """Enhanced request with browser fingerprinting rotation and improved 403 handling."""
+    def request_with_retry(cls, url, params=None, retries=3, timeout=30, headers=None):
+        """Enhanced request with browser fingerprinting rotation and improved 403 handling.
+
+        Args:
+            headers: Extra headers merged over the rotated browser headers (e.g. a Referer)
+        """
         env = AppEnv()
         configs = cls._get_request_configs()
 
@@ -147,7 +151,7 @@ class BaseEntity(BaseEntityObject):
                         "url": url,
                         "params": params,
                         "timeout": timeout,
-                        "headers": config["headers"],
+                        "headers": {**config["headers"], **(headers or {})},
                     }
 
                     if env.PROXY_URL is not None:
@@ -186,8 +190,8 @@ class BaseEntity(BaseEntityObject):
         raise EnvironmentError(f"Failed to receive response from {url} after {retries} attempts")
 
     @classmethod
-    def download_file(cls, url):
-        return cls.request_with_retry(url).content
+    def download_file(cls, url, headers=None):
+        return cls.request_with_retry(url, headers=headers).content
 
     @classmethod
     def unpaginate_request(cls, url, query_params=None, limit=100) -> list[dict[str, Any]]:
