@@ -93,7 +93,7 @@ def test_parse_info_feed(mock_sleep, mock_random, requests_mock, chapter_entity)
         "id": "1n9qw-7683844",
         "type": ChapterPluginMFI.PLUGIN_TYPE,
         "attributes": {
-            "title": "Chapter 108: ANY INTEREST IN GOING PRO?",
+            "title": "Chapter 108: Example Chapter Name",
             "url": CHAPTER_URL,
             "chapter": "108",
             "translatedLanguage": "en",
