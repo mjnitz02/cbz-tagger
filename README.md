@@ -6,17 +6,35 @@
 ![Python](https://img.shields.io/badge/python-3.13-3670A0?logo=python&logoColor=ffdd54)
 
 
-CBZ Tagger is a tool to tag comic book files in CBZ format. Many cbz based files are incorrectly formatted
-in ways that are not compatible with the ComicInfo.xml format. This tool utilizes public metadata sources to tag
-the files correctly. It populates the majority of fields specified by the
-[ComicRack metadata format](https://anansi-project.github.io/docs/category/schemas). Additionally, it is capable of
-retrieving the cover image from the metadata source and embedding it into the CBZ file along with correctly formatting
-the file structure to be compatible with readers such as [Komga](https://komga.org/).
+CBZ Tagger cleans up, tags and organizes comic and manga files in CBZ format.
 
-CBZ Tagger ships with a web UI (React, served by the same container on port `8080`) for browsing tracked series,
-adding new series, and managing configuration. The command line interface is also available for scripted or
-one-off usage. CBZ Tagger implements a tracking and refresh system to help keep your library up to date, and this
-has been undergoing continuous revisions to try and make the API processing more robust.
+CBZ files come from all over the place: digital storefronts, personal scans, older archives. Most of them don't work
+well in a library reader. The metadata is missing or wrong, there's no usable cover, the author and artist aren't
+recorded, and the files aren't laid out the way readers such as [Komga](https://komga.org/) expect. The result is a
+library that is hard to browse and sorts badly.
+
+CBZ Tagger matches each series against a public metadata database and rewrites the files so they're consistent:
+
+- **ComicInfo.xml** is written into every file. It fills most of the fields in the
+  [ComicRack metadata format](https://anansi-project.github.io/docs/category/schemas): series and alternate titles,
+  volume and chapter numbers, chapter count, release date, authors and artists, genres, summary, language and age
+  rating.
+- **Cover art** for the right volume is fetched and embedded in each file.
+- **Library layout**: files are renamed and filed into one folder per series with consistent naming, so Komga and
+  similar readers pick them up correctly.
+- **Series metadata**, including publication status, is also written as a Mylar-style `series.json`, which Komga
+  and other tools can read.
+- **Metadata refresh**: series in your catalog are re-checked on a schedule, so status changes, new volume
+  information and new covers carry through to files you have already imported.
+
+CBZ Tagger ships with a web UI (React, served by the same container on port `8080`) for browsing your catalog,
+adding series, and managing configuration. A command line interface is also available for scripted or one-off use.
+
+### Scope
+
+CBZ Tagger is a library organizer. It doesn't host, index or distribute any content, and it is intended for files
+you have the right to keep. Please respect the terms of any service you use it with and the copyright laws where
+you live.
 
 **If you discover issues while using CBZ Tagger, please feel free to file an issue in github. This helps to improve
 the code base and keep the tool functional and reliable!**

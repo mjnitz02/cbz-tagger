@@ -18,13 +18,13 @@
   <Support>https://github.com/mjnitz02/cbz-tagger/issues</Support>
   <Project>https://github.com/mjnitz02/cbz-tagger</Project>
   <Overview>
-    CBZ Tagger tags comic book files in CBZ format so they are compatible with the
-    ComicInfo.xml (ComicRack) metadata standard, using public metadata sources. It
-    embeds cover images and normalises the archive structure for readers such as
+    CBZ Tagger cleans up, tags and organizes comic and manga files in CBZ format.
+    It writes ComicInfo.xml (ComicRack) metadata from public metadata sources,
+    embeds cover images, and lays the library out for readers such as
     Komga.&#13;&#13;
     Files placed in the /scan directory are imported, tagged and moved into
-    /storage on a recurring timer. A web UI on port 8080 is used to browse tracked
-    series, add new ones, and manage configuration.&#13;&#13;
+    /storage on a recurring timer. A web UI on port 8080 is used to browse your
+    catalog, add series, and manage configuration.&#13;&#13;
     Set PUID and PGID to the user that owns your share directories, otherwise the
     files CBZ Tagger writes may not be readable by your other containers.
   </Overview>
