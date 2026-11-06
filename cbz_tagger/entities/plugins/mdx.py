@@ -54,9 +54,7 @@ class ChapterPluginMDX(ChapterPluginEntity):
             time.sleep(10)
             response = self.request_with_retry(url).json()
             if len(response["chapter"][self.quality]) != pages:
-                raise EnvironmentError(
-                    f"Failed to download chapter {self.entity_id}, not enough pages returned from server"
-                )
+                raise OSError(f"Failed to download chapter {self.entity_id}, not enough pages returned from server")
 
         base_url = f"{self.chapter_url}/{self.quality}/{response['chapter']['hash']}"
         links = []

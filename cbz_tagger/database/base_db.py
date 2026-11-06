@@ -1,16 +1,11 @@
 import hashlib
 import json
-from typing import Generic
-from typing import TypeVar
-from typing import Union
 
 from cbz_tagger.entities.base_entity import BaseEntity
 from cbz_tagger.entities.base_entity import BaseEntityObject
 
-T = TypeVar("T")
 
-
-class BaseEntityDB(BaseEntityObject, Generic[T]):
+class BaseEntityDB[T](BaseEntityObject):
     entity_class: type[BaseEntity]
     database: dict[str, T]
     query_param_field = "ids[]"
@@ -32,7 +27,7 @@ class BaseEntityDB(BaseEntityObject, Generic[T]):
         content = {}
         for key, value in self.database.items():
             if isinstance(value, list):
-                content[key] = [v.to_json() for v in value]  # type: ignore
+                content[key] = [v.to_json() for v in value]
             else:
                 content[key] = value.to_json()  # type: ignore
         return json.dumps(content)
@@ -57,12 +52,12 @@ class BaseEntityDB(BaseEntityObject, Generic[T]):
         if isinstance(entity_content, list):
             sha_1 = hashlib.sha1()
             for item in entity_content:
-                sha_1.update(item.to_hash().encode("utf-8"))  # type: ignore
+                sha_1.update(item.to_hash().encode("utf-8"))
             return sha_1.hexdigest()
         else:
             return entity_content.to_hash()  # type: ignore
 
-    def update(self, entity_ids: Union[list[str], str], skip_on_exist=False, batch_response=False, **kwargs):
+    def update(self, entity_ids: list[str] | str, skip_on_exist=False, batch_response=False, **kwargs):
         if not isinstance(entity_ids, list):
             entity_ids = [entity_ids]
 

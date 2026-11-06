@@ -231,14 +231,14 @@ class ChapterPluginEntity(BaseEntity):
                 try:
                     in_memory_image.save(image_path, quality=95, optimize=True)
                 except OSError:
-                    ImageFile.LOAD_TRUNCATED_IMAGES = True  # type: ignore[misc]
+                    ImageFile.LOAD_TRUNCATED_IMAGES = True  # ty: ignore[invalid-assignment]
                     in_memory_image.save(image_path, quality=95, optimize=True)
 
         if self.pages != -1 and len(cached_images) != self.pages:
             logger.error("Failed to download chapter %s, not enough pages saved from server", self.entity_id)
-            raise EnvironmentError(f"Failed to download chapter {self.entity_id}, not enough pages saved from server")
+            raise OSError(f"Failed to download chapter {self.entity_id}, not enough pages saved from server")
         if self.pages == -1 and len(cached_images) != len(download_links):
             logger.error("Failed to download chapter %s, not enough pages saved from server", self.entity_id)
-            raise EnvironmentError(f"Failed to download chapter {self.entity_id}, not enough pages saved from server")
+            raise OSError(f"Failed to download chapter {self.entity_id}, not enough pages saved from server")
 
         return cached_images

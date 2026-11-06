@@ -39,7 +39,15 @@ dev = [
     "requests-mock>=1.12.1",
     "httpx>=0.28.1",
     "ruff>=0.16.2",
-    "pre-commit>=4.6.1",
+    # prek, not pre-commit: a single Rust binary that reads the same
+    # .pre-commit-config.yaml, so no virtualenv/filelock/nodeenv chain in the lock.
+    "prek>=0.5.10",
+    # Exact pin, and Dependabot ignores it: ty is pre-1.0 and a bump can add new
+    # errors across the tree. Bump it by hand and fix what it finds in the same PR.
+    "ty==0.0.99",
+    # Copy-paste detection (`make lint-dupes`, settings in .jscpd.json). Exact pin
+    # for the same reason: a new release can find clones the old one missed.
+    "jscpd==5.4.2",
 ]
 
 
@@ -58,14 +66,14 @@ exclude = [
 # Same as Black.
 line-length = 120
 
-# Assume Python 3.12
-target-version = "py312"
+# target-version is left unset: ruff reads it from requires-python.
 
 [tool.ruff.lint]
 # Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
 # Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
 # McCabe complexity (`C901`) by default.
-select = ["C", "E", "W", "F", "B", "I"]
+# UP (pyupgrade) keeps syntax current with requires-python.
+select = ["C", "E", "W", "F", "B", "I", "UP"]
 ignore = ["C400", "C401", "C901"]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
@@ -104,3 +112,9 @@ docstring-code-line-length = "dynamic"
 
 [tool.ruff.lint.isort]
 force-single-line = true
+
+[tool.ty.src]
+# ty reads the Python version from requires-python. tests/ is held out until
+# its ~17 findings (mostly Optional returns indexed without a None check) are
+# fixed in a follow-up.
+exclude = ["tests/"]

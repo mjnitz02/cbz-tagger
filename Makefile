@@ -3,9 +3,9 @@ SHELL := /usr/bin/env bash
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install pre-commit-install \
+.PHONY: help install pre-commit-install pre-commit \
 	update update-latest audit audit-python audit-frontend \
-	lint-format lint-check lint-yaml lint-typing lint test-lint \
+	lint-format lint-check lint-yaml lint-typing lint-dupes lint test-lint \
 	frontend-install frontend-lint frontend-typing frontend-test-lint frontend-test frontend-build frontend-generate-api \
 	test test-unit test-integration test-unit-docker test-integration-docker \
 	build-docker build-docker-test run-docker dev run clean-git \
@@ -21,8 +21,13 @@ help: ## Show this help message
 install: ## Install project dependencies with uv
 	uv sync
 
-pre-commit-install: ## Install pre-commit git hooks
-	pre-commit install
+# prek reads .pre-commit-config.yaml as-is. --force replaces a hook script left
+# by the old pre-commit, which prek would otherwise keep chaining to.
+pre-commit-install: ## Install the git pre-commit hooks (prek)
+	uv run prek install --force
+
+pre-commit: ## Run every pre-commit hook against all files, not just staged ones
+	uv run prek run --all-files
 
 ##@ Linting
 
@@ -35,16 +40,22 @@ lint-check: ## Run ruff checks and auto-fix issues
 lint-yaml: ## Fix YAML formatting across the repo
 	uvx yamlfix .github cbz_tagger tests docker-compose.example.yaml .pre-commit-config.yaml
 
+# Scope lives in [tool.ty.src] in pyproject.toml; the version is pinned in uv.lock.
 lint-typing: ## Run static type checking with ty
-	uvx ty@0.0.14 check cbz_tagger
+	uv run ty check
 
-lint: lint-format lint-check lint-typing lint-yaml frontend-lint ## Run all linters and auto-fix issues
+lint-dupes: ## Check backend and frontend source for copy-pasted code (jscpd)
+	uv run jscpd --no-tips --config .jscpd.json
+
+lint: lint-format lint-check lint-typing lint-yaml lint-dupes frontend-lint ## Run all linters and auto-fix issues
 
 test-lint: ## Check formatting/lint/types without modifying files (CI mode)
 	uv run ruff format . --check
 	uv run ruff check .
 	uvx yamlfix .github cbz_tagger tests docker-compose.example.yaml .pre-commit-config.yaml --check
-	uvx ty@0.0.14 check cbz_tagger
+	uv run ty check
+	uv run jscpd --no-tips --config .jscpd.json
+	uv lock --check
 	$(MAKE) frontend-test-lint
 
 ##@ Frontend

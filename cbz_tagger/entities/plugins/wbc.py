@@ -26,7 +26,7 @@ class ChapterPluginWBC(ChapterPluginEntity):
 
             title_element = item.select_one("span.grow span")
             if title_element is None:
-                raise EnvironmentError("Could not find chapter title")
+                raise OSError("Could not find chapter title")
             item_title = title_element.get_text(strip=True)
 
             time_element = item.select_one("time")

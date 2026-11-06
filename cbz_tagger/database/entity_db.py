@@ -51,7 +51,7 @@ class EntityDB:
         self.covers: CoverEntityDB = CoverEntityDB() if covers is None else covers
         self.authors: AuthorEntityDB = AuthorEntityDB() if authors is None else authors
         self.volumes: VolumeEntityDB = VolumeEntityDB() if volumes is None else volumes
-        self.chapters: ChapterEntityDB = ChapterEntityDB() if volumes is None else chapters
+        self.chapters: ChapterEntityDB = ChapterEntityDB() if chapters is None else chapters
 
     def __getitem__(self, manga_name) -> str | None:
         return self.entity_map.get(manga_name)
@@ -97,7 +97,7 @@ class EntityDB:
     def load(cls, root_path) -> "EntityDB":
         entity_db_path = os.path.join(root_path, "entity_db.json")
         if os.path.exists(entity_db_path):
-            with open(entity_db_path, "r", encoding="UTF-8") as read_file:
+            with open(entity_db_path, encoding="UTF-8") as read_file:
                 json_data = read_file.read()
             return EntityDB.from_json(root_path, json_data)
         return EntityDB(root_path)
@@ -142,7 +142,7 @@ class EntityDB:
                     "plugin_link": f"{Plugins.TITLE_URLS[plugin_type]}{plugin_id}",
                 }
             )
-        state = sorted(state, key=lambda d: d["name"].lower())
+        state = sorted(state, key=lambda d: str(d["name"]).lower())
         return state
 
     def check_manga_missing(self, manga_name):
@@ -355,7 +355,7 @@ class EntityDB:
                 # since the APIs are prone to crashing
                 self.save()
 
-            except EnvironmentError as err:
+            except OSError as err:
                 logger.info("API Down >> Unable to update %s metadata. %s", manga_name, err)
 
     def refresh(self, storage_path):
@@ -412,7 +412,7 @@ class EntityDB:
                 json_file.write(mylar_series_json)
             set_file_ownership(mylar_series_json_path)
 
-        except EnvironmentError as err:
+        except OSError as err:
             logger.error("Could not download chapter: %s, %s, %s", entity_id, chapter_item.entity_id, err)
             if os.path.exists(f"{chapter_filepath}.cbz"):
                 logger.error("Removing CBZ: %s, %s", entity_id, chapter_item.entity_id)
@@ -443,7 +443,7 @@ class EntityDB:
         with ZipFile(f"{chapter_filepath}.cbz", "w", ZIP_DEFLATED) as zip_write:
             for cbz_file in cbz_files:
                 if not os.path.exists(os.path.join(chapter_filepath, cbz_file)):
-                    raise EnvironmentError(f"Could not find file to add to CBZ: {cbz_file}")
+                    raise OSError(f"Could not find file to add to CBZ: {cbz_file}")
                 zip_write.write(os.path.join(chapter_filepath, cbz_file), cbz_file)
 
     @staticmethod
@@ -610,6 +610,6 @@ class EntityDB:
         for entity_id, chapter_item in missing_chapters:
             try:
                 self.download_chapter(entity_id, chapter_item, storage_path)
-            except EnvironmentError as err:
+            except OSError as err:
                 logger.error("Error occurred in chapter: %s, %s, %s", entity_id, chapter_item.entity_id, err)
         return missing_chapters

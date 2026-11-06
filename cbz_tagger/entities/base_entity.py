@@ -187,7 +187,7 @@ class BaseEntity(BaseEntityObject):
                 logger.error("Unexpected error downloading %s: %s. Attempt: %s/%s", url, str(e), attempt + 1, retries)
                 time.sleep(10 * (attempt + 1))
 
-        raise EnvironmentError(f"Failed to receive response from {url} after {retries} attempts")
+        raise OSError(f"Failed to receive response from {url} after {retries} attempts")
 
     @classmethod
     def download_file(cls, url, headers=None):
@@ -240,4 +240,4 @@ class BaseEntity(BaseEntityObject):
                 # Only make 2 queries per second
                 time.sleep(AppEnv.DELAY_PER_REQUEST)
         except JSONDecodeError as err:
-            raise EnvironmentError("API is down! Please try again later!") from err
+            raise OSError("API is down! Please try again later!") from err

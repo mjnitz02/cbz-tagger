@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Dialog } from 'radix-ui'
-import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Modal } from '@/components/ui/modal'
 import { apiClient } from '@/lib/api-client'
 
 const BUSY_MESSAGE = 'Scanner is busy. Please wait and try again.'
@@ -126,114 +126,97 @@ function ChapterDownloadsDialog({
   }
 
   return (
-    <Dialog.Root
+    <Modal
       open={series !== null}
       onOpenChange={(open) => {
         if (!open) onOpenChange(false)
       }}
+      title={<>Manage downloads — {series?.name}</>}
+      description={
+        <>
+          Checked = downloaded (won&apos;t re-download). Unchecked = will be
+          re-downloaded on next refresh.
+        </>
+      }
+      className="max-w-md"
     >
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 data-[state=closed]:animate-out data-[state=open]:animate-in data-[state=closed]:fade-out data-[state=open]:fade-in" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 z-50 flex max-h-[85vh] w-full max-w-md -translate-x-1/2 -translate-y-1/2 flex-col rounded-lg border border-border bg-card p-6 shadow-xl duration-200 data-[state=closed]:animate-out data-[state=open]:animate-in data-[state=closed]:fade-out data-[state=open]:fade-in">
-          <div className="flex items-start justify-between gap-4">
-            <Dialog.Title className="text-lg font-medium">
-              Manage downloads — {series?.name}
-            </Dialog.Title>
-            <Dialog.Close asChild>
-              <button
-                type="button"
-                aria-label="Close"
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <X className="size-5" />
-              </button>
-            </Dialog.Close>
-          </div>
+      <div className="mt-4 flex items-center gap-2">
+        <Input
+          placeholder="Search chapters"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="flex-1"
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={selectAllFiltered}
+        >
+          Select all
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={clearAllFiltered}
+        >
+          Clear all
+        </Button>
+      </div>
 
-          <Dialog.Description className="mt-2 text-sm text-muted-foreground">
-            Checked = downloaded (won&apos;t re-download). Unchecked = will be
-            re-downloaded on next refresh.
-          </Dialog.Description>
+      <p className="mt-2 text-xs text-muted-foreground">
+        {working.size} of {chapters.length} downloaded
+      </p>
 
-          <div className="mt-4 flex items-center gap-2">
-            <Input
-              placeholder="Search chapters"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="flex-1"
+      {chaptersQuery.isLoading && (
+        <p className="mt-4 text-sm text-muted-foreground">Loading...</p>
+      )}
+      {chaptersQuery.error && (
+        <p className="mt-4 text-sm text-destructive">
+          Failed to load chapters.
+        </p>
+      )}
+
+      <div className="mt-2 max-h-72 flex-1 overflow-y-auto rounded-md border border-border">
+        {filteredChapters.map((chapter) => (
+          <label
+            key={chapter.entity_id}
+            className="flex cursor-pointer items-center gap-2 border-b border-border px-3 py-2 text-sm last:border-b-0 hover:bg-muted/50"
+          >
+            <input
+              type="checkbox"
+              checked={working.has(chapter.entity_id)}
+              onChange={() => toggleChapter(chapter.entity_id)}
             />
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={selectAllFiltered}
-            >
-              Select all
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={clearAllFiltered}
-            >
-              Clear all
-            </Button>
-          </div>
-
-          <p className="mt-2 text-xs text-muted-foreground">
-            {working.size} of {chapters.length} downloaded
+            Chapter {chapter.chapter_number}
+          </label>
+        ))}
+        {!chaptersQuery.isLoading && filteredChapters.length === 0 && (
+          <p className="px-3 py-2 text-sm text-muted-foreground">
+            No chapters found.
           </p>
+        )}
+      </div>
 
-          {chaptersQuery.isLoading && (
-            <p className="mt-4 text-sm text-muted-foreground">Loading...</p>
-          )}
-          {chaptersQuery.error && (
-            <p className="mt-4 text-sm text-destructive">
-              Failed to load chapters.
-            </p>
-          )}
+      {setDownloads.isError && (
+        <p className="mt-2 text-sm text-destructive">
+          Failed to update downloaded chapters.
+        </p>
+      )}
 
-          <div className="mt-2 max-h-72 flex-1 overflow-y-auto rounded-md border border-border">
-            {filteredChapters.map((chapter) => (
-              <label
-                key={chapter.entity_id}
-                className="flex cursor-pointer items-center gap-2 border-b border-border px-3 py-2 text-sm last:border-b-0 hover:bg-muted/50"
-              >
-                <input
-                  type="checkbox"
-                  checked={working.has(chapter.entity_id)}
-                  onChange={() => toggleChapter(chapter.entity_id)}
-                />
-                Chapter {chapter.chapter_number}
-              </label>
-            ))}
-            {!chaptersQuery.isLoading && filteredChapters.length === 0 && (
-              <p className="px-3 py-2 text-sm text-muted-foreground">
-                No chapters found.
-              </p>
-            )}
-          </div>
-
-          {setDownloads.isError && (
-            <p className="mt-2 text-sm text-destructive">
-              Failed to update downloaded chapters.
-            </p>
-          )}
-
-          <div className="mt-6 flex justify-end gap-2">
-            <Dialog.Close asChild>
-              <Button variant="outline">Cancel</Button>
-            </Dialog.Close>
-            <Button
-              disabled={!dirty || setDownloads.isPending}
-              onClick={() => setDownloads.mutate()}
-            >
-              Save
-            </Button>
-          </div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+      <div className="mt-6 flex justify-end gap-2">
+        <Dialog.Close asChild>
+          <Button variant="outline">Cancel</Button>
+        </Dialog.Close>
+        <Button
+          disabled={!dirty || setDownloads.isPending}
+          onClick={() => setDownloads.mutate()}
+        >
+          Save
+        </Button>
+      </div>
+    </Modal>
   )
 }
 

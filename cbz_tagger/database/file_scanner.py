@@ -108,6 +108,6 @@ class FileScanner:
                 raise RuntimeError(f"ERROR >> {manga_name} not in database. Run manual mode to add new series.")
             return entity_name, entity_xml, entity_image_path, mylar_series_json
 
-        except (RuntimeError, EnvironmentError) as err:
+        except (OSError, RuntimeError) as err:
             logger.error("ERROR >> %s not in database. Run manual mode to add new series. %s", manga_name, err)
             return None, None, None, None

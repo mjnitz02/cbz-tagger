@@ -75,13 +75,13 @@ class ChapterEntityDB(BaseEntityDB[list[ChapterEntity]]):
     def download(self, entity_id: str, chapter_id: str, filepath: str):
         chapters = self[entity_id]
         if chapters is None:
-            raise EnvironmentError(f"No chapters found for entity {entity_id}")
+            raise OSError(f"No chapters found for entity {entity_id}")
 
         chapter = next(iter(c for c in chapters if c.entity_id == chapter_id), None)
         if chapter is not None:
             return chapter.download_chapter(filepath)
 
-        raise EnvironmentError(f"Chapter {chapter_id} not found for {entity_id}")
+        raise OSError(f"Chapter {chapter_id} not found for {entity_id}")
 
     def get_latest_chapter(self, entity_id) -> ChapterEntity | None:
         chapters = self.database.get(entity_id)

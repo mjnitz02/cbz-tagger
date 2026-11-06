@@ -1,7 +1,7 @@
 import json
 import os
+from datetime import UTC
 from datetime import datetime
-from datetime import timezone
 from unittest import mock
 
 import pytest
@@ -713,7 +713,7 @@ def test_entity_database_to_state(mock_entity_db, manga_name):
             "status": "ongoing",
             "tracked": False,
             "latest_chapter": "11",
-            "latest_chapter_date": datetime(2021, 7, 13, 8, 28, 1, tzinfo=timezone.utc),
+            "latest_chapter_date": datetime(2021, 7, 13, 8, 28, 1, tzinfo=UTC),
             "metadata_updated": "2022-12-31T11:57:41+00:00",
             "plugin": "mdx",
             "plugin_link": f"https://{Urls.MDX}/title/831b12b8-2d0e-4397-8719-1efee4c32f40",

@@ -56,6 +56,18 @@ updates:
           - version-update:semver-major
           - version-update:semver-minor
           - version-update:semver-patch
+      # Exact pins in pyproject.toml. A new ty or jscpd can report findings
+      # across the tree, so they are bumped by hand with the fixes in the same PR.
+      - dependency-name: ty
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+          - version-update:semver-patch
+      - dependency-name: jscpd
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+          - version-update:semver-patch
 
   # React frontend.
   - package-ecosystem: npm
