@@ -22,6 +22,12 @@ class BaseEntityObject:
 class BaseEntity(BaseEntityObject):
     entity_url: str
     paginated: bool = False
+    # Whether requests from this class go through cloudscraper with rotating browser
+    # headers. Off by default: a plain client with an honest User-Agent is what most
+    # APIs expect, and some now gate browser-looking traffic behind a JS challenge
+    # that cloudscraper cannot solve (MangaDex since 2026-11-01). A source that sits
+    # behind a Cloudflare challenge sets this to True on its class.
+    CLOUDSCRAPER: bool = False
 
     def __init__(self, content):
         self.content = content
@@ -129,45 +135,60 @@ class BaseEntity(BaseEntityObject):
         ]
 
     @classmethod
+    def user_agent(cls) -> str:
+        return f"cbz-tagger/{AppEnv.VERSION} (+https://github.com/mjnitz02/cbz-tagger)"
+
+    @classmethod
+    def _create_session(cls, attempt: int) -> tuple[requests.Session, dict[str, str]]:
+        """Return the session and base headers for one attempt.
+
+        With CLOUDSCRAPER set, each attempt rotates to the next browser configuration;
+        otherwise it is a plain requests session that identifies itself honestly.
+        """
+        if not cls.CLOUDSCRAPER:
+            return requests.Session(), {"User-Agent": cls.user_agent()}
+        configs = cls._get_request_configs()
+        config = configs[attempt % len(configs)]
+        scraper = cloudscraper.create_scraper(
+            browser={"browser": config["browser"], "platform": config["platform"], "mobile": False},
+            delay=10,  # Add delay between challenge solving attempts
+        )
+        return scraper, config["headers"]
+
+    @classmethod
     def request_with_retry(cls, url, params=None, retries=3, timeout=30, headers=None):
-        """Enhanced request with browser fingerprinting rotation and improved 403 handling.
+        """GET with retries and backoff; see CLOUDSCRAPER for how the request is made.
 
         Args:
-            headers: Extra headers merged over the rotated browser headers (e.g. a Referer)
+            headers: Extra headers merged over the base headers (e.g. a Referer)
         """
         env = AppEnv()
-        configs = cls._get_request_configs()
 
         for attempt in range(retries):
             try:
-                # Rotate through different browser configurations
-                config = configs[attempt % len(configs)]
-
-                with cloudscraper.create_scraper(
-                    browser={"browser": config["browser"], "platform": config["platform"], "mobile": False},
-                    delay=10,  # Add delay between challenge solving attempts
-                ) as scraper:
-                    request_parameters = {
-                        "url": url,
-                        "params": params,
-                        "timeout": timeout,
-                        "headers": {**config["headers"], **(headers or {})},
-                    }
-
+                session, base_headers = cls._create_session(attempt)
+                with session as scraper:
+                    proxies = None
                     if env.PROXY_URL is not None:
-                        request_parameters["proxies"] = {"http": env.PROXY_URL, "https": env.PROXY_URL}
+                        proxies = {"http": env.PROXY_URL, "https": env.PROXY_URL}
 
                     # Add random jitter to appear more human-like
                     time.sleep(random.uniform(0.5, 2.0))
 
-                    response = scraper.get(**request_parameters)
+                    response = scraper.get(
+                        url,
+                        params=params,
+                        timeout=timeout,
+                        headers={**base_headers, **(headers or {})},
+                        proxies=proxies,
+                    )
 
                     if response.status_code == 200:
                         time.sleep(AppEnv.DELAY_PER_REQUEST)
                         return response
                     elif response.status_code == 403:
                         logger.warning(
-                            "403 Forbidden on %s - switching browser config (attempt %s/%s)",
+                            "403 Forbidden on %s (attempt %s/%s)",
                             url,
                             attempt + 1,
                             retries,
