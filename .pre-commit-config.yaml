@@ -1,7 +1,7 @@
 ---
 # Run by prek (https://prek.j178.dev/), a Rust drop-in for pre-commit that reads
-# this file unchanged. `make pre-commit-install` installs the hooks;
-# `make pre-commit` runs every hook against the whole tree.
+# this file unchanged. `task pre-commit-install` installs the hooks;
+# `task pre-commit` runs every hook against the whole tree.
 repos:
   # prek runs these with its own built-in Rust implementations rather than
   # cloning the repo and building a Python environment for them.
@@ -24,10 +24,19 @@ repos:
     hooks:
       - id: gitleaks
 
-  # These all invoke make targets that operate on the whole tree, so filenames
-  # must not be appended — `make lint-check foo.py` would have make treat
-  # foo.py as a target rather than passing it to ruff. Each runs the tool
-  # version pinned in uv.lock or package-lock.json, so a local pass matches CI.
+  # Validate Taskfile.yml against Task's own JSON schema, so a misspelled key or
+  # a wrong type fails here rather than at run time. yamlfix (below) only
+  # checks the formatting.
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.39.0
+    hooks:
+      - id: check-taskfile
+
+  # These all invoke tasks that operate on the whole tree, so filenames must
+  # not be appended — `task lint-check foo.py` would have Task treat foo.py as
+  # a second task name rather than passing it to ruff. `uv run` uses the Task
+  # pinned in uv.lock, and each task runs the tool version pinned in uv.lock or
+  # package-lock.json, so a local pass matches CI.
   #
   # The `files`/`types` filters decide whether a hook runs at all: it runs once,
   # over the whole tree, when any staged file matches. A backend-only commit
@@ -36,27 +45,27 @@ repos:
     hooks:
       - id: lint-format
         name: Check codestyle format with ruff-format
-        entry: make lint-format
+        entry: uv run task lint-format
         language: system
         pass_filenames: false
         types_or: [python, pyi]
       - id: lint-check
         name: Check code for lint errors with ruff-check
-        entry: make lint-check
+        entry: uv run task lint-check
         language: system
         pass_filenames: false
         # pyproject.toml carries the rule selection, so a change there re-lints.
         files: (\.pyi?|^pyproject\.toml)$
       - id: lint-yaml
         name: Check YAML files with yamlfix
-        entry: make lint-yaml
+        entry: uv run task lint-yaml
         language: system
         pass_filenames: false
         types: [yaml]
       # ty checks the whole project; a filename subset loses cross-module types.
       - id: lint-typing
         name: Check typing errors with ty
-        entry: make lint-typing
+        entry: uv run task lint-typing
         language: system
         pass_filenames: false
         files: (\.pyi?|^pyproject\.toml|^uv\.lock)$
@@ -64,19 +73,19 @@ repos:
       # in scope (a few ms) rather than just what is staged.
       - id: lint-dupes
         name: Check for copy-pasted code with jscpd
-        entry: make lint-dupes
+        entry: uv run task lint-dupes
         language: system
         pass_filenames: false
         files: ^(cbz_tagger/|frontend/src/|\.jscpd\.json$)
       - id: frontend-lint
         name: Format and lint the frontend
-        entry: make frontend-lint
+        entry: uv run task frontend-lint
         language: system
         pass_filenames: false
         files: ^frontend/
       - id: frontend-typing
         name: Check frontend typing errors with tsc
-        entry: make frontend-typing
+        entry: uv run task frontend-typing
         language: system
         pass_filenames: false
         files: ^frontend/

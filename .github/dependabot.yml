@@ -37,7 +37,7 @@ updates:
     # run on GitHub Actions — Cloudflare blocks the runners from reaching the
     # live endpoints — so green CI does not mean a bump is safe. A
     # beautifulsoup4 upgrade once passed the unit tests and still broke a
-    # plugin connector in real use. Bump these by hand with `make update-latest`
+    # plugin connector in real use. Bump these by hand with `task update-latest`
     # and run the integration tests locally. Naming update-types keeps this to
     # version updates; security fixes for them still come through.
     ignore:

@@ -1,0 +1,314 @@
+---
+# Task runner for local development and CI (https://taskfile.dev).
+# `task` with no arguments lists everything; `task --list` does the same.
+#
+# Task is pinned in the dev dependency group (go-task-bin), so `uv run task <name>`
+# always runs the locked version. `uv tool install go-task-bin` puts a bare
+# `task` on your PATH for day-to-day use.
+#
+# Tasks that run pytest forward anything after `--` to it:
+#   task test-unit -- -k tagger -x
+version: '3'
+
+set: [errexit, nounset, pipefail]
+
+vars:
+  YAML_PATHS: .github cbz_tagger tests docker-compose.example.yaml .pre-commit-config.yaml Taskfile.yml
+  PYTEST_FLAGS: -W ignore::DeprecationWarning
+  # Local data root for `dev` and `run`, the same layout the container mounts.
+  LOCAL_DATA: '{{.HOME}}/Downloads/cbz_tagger'
+
+tasks:
+  default:
+    desc: List every task
+    silent: true
+    cmds:
+      - '{{.TASK_EXE}} --list --sort none'
+
+  # ---- Setup ----
+
+  install:
+    desc: Install project dependencies with uv
+    cmds:
+      - uv sync
+
+  # prek reads .pre-commit-config.yaml as-is. --force replaces a hook script left
+  # by the old pre-commit, which prek would otherwise keep chaining to.
+  pre-commit-install:
+    desc: Install the git pre-commit hooks (prek)
+    cmds:
+      - uv run prek install --force
+
+  pre-commit:
+    desc: Run every pre-commit hook against all files, not just staged ones
+    cmds:
+      - uv run prek run --all-files
+
+  # ---- Linting ----
+
+  lint-format:
+    desc: Format code with ruff
+    cmds:
+      - uv run ruff format .
+
+  lint-check:
+    desc: Run ruff checks and auto-fix issues
+    cmds:
+      - uv run ruff check . --fix
+
+  lint-yaml:
+    desc: Fix YAML formatting across the repo
+    cmds:
+      - uvx yamlfix {{.YAML_PATHS}}
+
+  # Scope lives in [tool.ty.src] in pyproject.toml; the version is pinned in uv.lock.
+  lint-typing:
+    desc: Run static type checking with ty
+    cmds:
+      - uv run ty check
+
+  lint-dupes:
+    desc: Check backend and frontend source for copy-pasted code (jscpd)
+    cmds:
+      - uv run jscpd --no-tips --config .jscpd.json
+
+  # Sequential on purpose: `deps:` would run these in parallel, and ruff format
+  # and ruff check --fix rewriting the same files at once is a race.
+  lint:
+    desc: Run all linters and auto-fix issues
+    cmds:
+      - task: lint-format
+      - task: lint-check
+      - task: lint-typing
+      - task: lint-yaml
+      - task: lint-dupes
+      - task: frontend-lint
+
+  test-lint:
+    desc: Check formatting/lint/types without modifying files (CI mode)
+    cmds:
+      - uv run ruff format . --check
+      - uv run ruff check .
+      - uvx yamlfix {{.YAML_PATHS}} --check
+      - uv run ty check
+      - uv run jscpd --no-tips --config .jscpd.json
+      - uv lock --check
+      - task: frontend-test-lint
+
+  # ---- Frontend ----
+
+  frontend-install:
+    desc: Install frontend dependencies
+    dir: frontend
+    cmds:
+      - npm ci
+
+  frontend-lint:
+    desc: Format and lint the frontend, auto-fixing issues
+    dir: frontend
+    cmds:
+      - npm run format
+      - npm run lint
+
+  frontend-typing:
+    desc: Check frontend TypeScript types
+    dir: frontend
+    cmds:
+      - npx tsc -b --noEmit
+
+  frontend-test-lint:
+    desc: Check frontend formatting/lint/types without modifying files (CI mode)
+    dir: frontend
+    cmds:
+      - npm run format:check
+      - npm run lint:check
+      - task: frontend-typing
+
+  frontend-test:
+    desc: Run frontend unit/component tests
+    dir: frontend
+    cmds:
+      - npm run test
+
+  frontend-build:
+    desc: Build the frontend static assets
+    dir: frontend
+    cmds:
+      - npm run build
+
+  frontend-generate-api:
+    desc: Regenerate the typed TS API client from FastAPI's OpenAPI schema
+    cmds:
+      - uv run python -m scripts.export_openapi_schema
+      - cd frontend && npx openapi-typescript openapi.json -o src/lib/api-schema.ts
+
+  # ---- Testing ----
+
+  test:
+    desc: Run the full test suite locally and in Docker
+    deps: [build-docker-test]
+    cmds:
+      - cmd: echo "Running tests locally"
+        silent: true
+      - uv run pytest tests/ {{.PYTEST_FLAGS}} {{.CLI_ARGS}}
+      - cmd: echo "Running tests in Docker"
+        silent: true
+      - docker run --entrypoint /bin/sh cbz-tagger-test -c "uv run pytest /app/tests/ {{.PYTEST_FLAGS}}"
+
+  test-unit:
+    desc: Run unit tests locally
+    cmds:
+      - uv run pytest tests/test_unit/ {{.PYTEST_FLAGS}} {{.CLI_ARGS}}
+
+  test-integration:
+    desc: Run integration tests locally
+    cmds:
+      - uv run pytest tests/test_integration/ {{.PYTEST_FLAGS}} {{.CLI_ARGS}}
+
+  test-unit-docker:
+    desc: Run unit tests inside a Docker container
+    deps: [build-docker-test]
+    cmds:
+      - docker run --entrypoint /bin/sh cbz-tagger-test -c "uv run pytest /app/tests/test_unit/ {{.PYTEST_FLAGS}}"
+
+  # -e with no value forwards the variable from the calling environment (CI sets it).
+  test-integration-docker:
+    desc: Run integration tests inside a Docker container
+    deps: [build-docker-test]
+    cmds:
+      - >-
+        docker run -e CBZ_TAGGER_SKIP_INTEGRATION_TESTS --entrypoint /bin/sh cbz-tagger-test
+        -c "uv run pytest /app/tests/test_integration/ {{.PYTEST_FLAGS}}"
+
+  # ---- Docker ----
+
+  build-docker:
+    desc: Build the cbz-tagger Docker image (runtime, exactly as published)
+    cmds:
+      - docker build --target runtime -t cbz-tagger .
+
+  build-docker-test:
+    desc: Build the runtime image plus the dev group, for dockerised tests
+    cmds:
+      - docker build --target test -t cbz-tagger-test .
+
+  run-docker:
+    desc: Build and run the runtime image locally
+    deps: [build-docker]
+    cmds:
+      - >-
+        docker run --rm -it
+        -p 8080:8080
+        -e TIMER_DELAY=600
+        -e LOG_LEVEL=INFO
+        -v {{.LOCAL_DATA}}/config:/config
+        -v {{.LOCAL_DATA}}/scan:/scan
+        -v {{.LOCAL_DATA}}/storage:/storage
+        cbz-tagger
+
+  # ---- Local development ----
+
+  # The two servers are parallel deps: Task runs them side by side and Ctrl-C
+  # stops both, so there is no PID bookkeeping to clean up after.
+  dev:
+    desc: Run the API (port 8000) and frontend (port 5173) dev servers locally
+    deps: [_dev-api, _dev-frontend]
+
+  _dev-api:
+    internal: true
+    env:
+      LOG_LEVEL: INFO
+      DEBUG_MODE: 'true'
+      TIMER_DELAY: '180'
+      CONFIG_PATH: '{{.LOCAL_DATA}}/config'
+      SCAN_PATH: '{{.LOCAL_DATA}}/scan'
+      STORAGE_PATH: '{{.LOCAL_DATA}}/storage'
+    cmds:
+      - mkdir -p "$CONFIG_PATH" "$SCAN_PATH" "$STORAGE_PATH"
+      - uv run python -m cbz_tagger.web.server
+
+  _dev-frontend:
+    internal: true
+    dir: frontend
+    cmds:
+      - npm run dev
+
+  run:
+    desc: Run the standalone tagger script locally
+    env:
+      LOG_LEVEL: INFO
+      TIMER_DELAY: '600'
+      CONFIG_PATH: '{{.LOCAL_DATA}}/config'
+      SCAN_PATH: '{{.LOCAL_DATA}}/scan'
+      STORAGE_PATH: '{{.LOCAL_DATA}}/storage'
+    cmds:
+      - mkdir -p "$CONFIG_PATH" "$SCAN_PATH" "$STORAGE_PATH"
+      - uv run python run.py
+
+  # ---- Dependencies ----
+
+  update:
+    desc: Upgrade locked dependencies within the declared constraints (quick CVE fix)
+    cmds:
+      - uv sync --upgrade
+      - cd frontend && npm update
+      - task: audit
+
+  update-latest:
+    desc: Bump the declared constraints in pyproject.toml/package.json to the latest releases
+    cmds:
+      - uv lock --upgrade
+      - uv run python -m scripts.bump_constraints
+      - uv sync
+      - cd frontend && npx --yes npm-check-updates -u
+      - cd frontend && npm install
+      - task: audit
+
+  # Sequential so the two reports don't interleave. Both report rather than
+  # fail: a finding here is something to read, not a broken build.
+  audit:
+    desc: Report known vulnerabilities in all dependencies
+    cmds:
+      - task: audit-python
+      - task: audit-frontend
+
+  audit-python:
+    desc: Report known vulnerabilities in Python dependencies
+    silent: true
+    cmds:
+      - echo "== Python =="
+      - cmd: uv export --format requirements-txt --no-emit-project -q | uvx pip-audit -r /dev/stdin --disable-pip
+        ignore_error: true
+
+  audit-frontend:
+    desc: Report known vulnerabilities in frontend dependencies
+    silent: true
+    dir: frontend
+    cmds:
+      - echo "== Frontend =="
+      - cmd: npm audit
+        ignore_error: true
+
+  # ---- Release ----
+
+  # Patch releases need nothing: the release workflow assigns the patch number
+  # from the git tags on every merge to main. These raise the version in
+  # pyproject.toml (and uv.lock), which makes the next release start a new
+  # minor or major series.
+  bump-minor:
+    desc: Make the next release a new minor version (e.g. 5.2.x -> 5.3.0)
+    cmds:
+      - uv version --bump minor
+
+  bump-major:
+    desc: Make the next release a new major version (e.g. 5.2.x -> 6.0.0)
+    cmds:
+      - uv version --bump major
+
+  # ---- Maintenance ----
+
+  clean-git:
+    desc: Delete local branches that no longer exist on the remote
+    cmds:
+      - chmod +x ./scripts/clean_git.sh
+      - ./scripts/clean_git.sh

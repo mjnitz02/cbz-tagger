@@ -8,8 +8,7 @@ on:
   pull_request:
     branches: [main]
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref
-    }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 permissions:
   contents: read
@@ -50,11 +49,11 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - name: Install dependencies
         run: |
-          make install
-          make frontend-install
+          uv run task install
+          uv run task frontend-install
       - name: Lint
         run: |
-          make test-lint
+          uv run task test-lint
   pytest_unit_tests:
     name: Unit Tests
     runs-on: ubuntu-latest
@@ -67,15 +66,20 @@ jobs:
           enable-cache: true
       - name: Install dependencies
         run: |
-          make install
+          uv run task install
       - name: Test with pytest
         run: |
-          make test-unit
+          uv run task test-unit
   frontend_unit_tests:
     name: Frontend Unit Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      # Only here for Task, which is pinned in the uv dev group.
+      - name: Install uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e  # v10.3.2
+        with:
+          enable-cache: true
       - name: Set up Node 22
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
         with:
@@ -84,10 +88,10 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - name: Install dependencies
         run: |
-          make frontend-install
+          uv run task frontend-install
       - name: Test with vitest
         run: |
-          make frontend-test
+          uv run task frontend-test
   pytest_integration_tests:
     name: Integration Tests
     runs-on: ubuntu-latest
@@ -100,19 +104,24 @@ jobs:
           enable-cache: true
       - name: Install dependencies
         run: |
-          make install
+          uv run task install
       - name: Test with pytest
         env:
           CBZ_TAGGER_SKIP_INTEGRATION_TESTS: WBC,MFI
         run: |
-          make test-integration
+          uv run task test-integration
   docker_image_integration_tests:
     name: Dockerized Integration Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      # Only here for Task, which is pinned in the uv dev group.
+      - name: Install uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e  # v10.3.2
+        with:
+          enable-cache: true
       - name: Build docker image
         env:
           CBZ_TAGGER_SKIP_INTEGRATION_TESTS: WBC,MFI
         run: |-
-          make test-integration-docker
+          uv run task test-integration-docker
