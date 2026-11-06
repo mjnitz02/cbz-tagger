@@ -10,6 +10,7 @@ from cbz_tagger.entities.plugins.plugin_entity import ChapterPluginEntity
 
 @Plugins.register("mfi")
 class ChapterPluginMFI(ChapterPluginEntity):
+    CLOUDSCRAPER = True
     """Chapter plugin backed by the site's JSON API.
 
     The plugin_id is the title's short id from its URL (e.g. "1abc2" from /title/1abc2-some-slug);

@@ -8,6 +8,7 @@ from cbz_tagger.entities.plugins.plugin_entity import ChapterPluginEntity
 
 @Plugins.register("wbc")
 class ChapterPluginWBC(ChapterPluginEntity):
+    CLOUDSCRAPER = True
     BASE_URL = base64.b64decode("d2VlYmNlbnRyYWwuY29t").decode("utf-8")
     TITLE_URL = f"https://{BASE_URL}/series/"
     HARU_SOURCE = base64.b64decode("V2VlYkNlbnRyYWwudHM=").decode("utf-8")
@@ -26,7 +27,7 @@ class ChapterPluginWBC(ChapterPluginEntity):
 
             title_element = item.select_one("span.grow span")
             if title_element is None:
-                raise EnvironmentError("Could not find chapter title")
+                raise OSError("Could not find chapter title")
             item_title = title_element.get_text(strip=True)
 
             time_element = item.select_one("time")

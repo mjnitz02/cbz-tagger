@@ -11,6 +11,7 @@ logger = logging.getLogger()
 
 @Plugins.register("cmk")
 class ChapterPluginCMK(ChapterPluginEntity):
+    CLOUDSCRAPER = True
     BASE_URL = base64.b64decode("YXBpLmNvbWljay5mdW4=").decode("utf-8")
     TITLE_URL = f"https://{BASE_URL}/comic/"
     entity_url = f"https://{BASE_URL}/"
@@ -49,9 +50,9 @@ class ChapterPluginCMK(ChapterPluginEntity):
             try:
                 items, total = cls.get_chapter_page_items(page_url)
                 if len(set(r["id"] for r in items)) != total:
-                    raise EnvironmentError("Paginated response contains duplicate entries")
+                    raise OSError("Paginated response contains duplicate entries")
                 break  # Success, exit retry loop
-            except EnvironmentError as e:
+            except OSError as e:
                 if attempt < max_retries:
                     logger.warning(f"Attempt {attempt + 1} failed: {e}. Retrying in 10 seconds...")
                     time.sleep(10)

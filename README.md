@@ -178,10 +178,13 @@ required dependencies without affecting your system Python installation.
 make install
 ```
 
-You can also install `pre-commit` hooks to ensure that code is formatted correctly and passes linting checks before
-committing.
+You can also install the git hooks to ensure that code is formatted correctly and passes linting checks before
+committing. They run with [prek](https://prek.j178.dev/), which is installed by `make install`.
 ```shell
 make pre-commit-install
+
+# Run every hook against the whole tree
+make pre-commit
 ```
 
 ### Running tests

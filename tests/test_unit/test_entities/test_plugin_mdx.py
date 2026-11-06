@@ -136,7 +136,7 @@ def test_download_chapter_raises_environment_error(
         "baseUrl": "http://example.com",
         "chapter": {"hash": "hash_value", "data": ["image1.jpg", "image2.jpg"]},
     }
-    mock_download_file.side_effect = EnvironmentError("Failed to download file")
+    mock_download_file.side_effect = OSError("Failed to download file")
 
     with pytest.raises(EnvironmentError, match="Failed to download file"):
         chapter_entity.download_chapter("/fake/filepath")

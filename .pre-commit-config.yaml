@@ -1,7 +1,10 @@
 ---
-# See https://pre-commit.com for more information
-# See https://pre-commit.com/hooks.html for more hooks
+# Run by prek (https://prek.j178.dev/), a Rust drop-in for pre-commit that reads
+# this file unchanged. `make pre-commit-install` installs the hooks;
+# `make pre-commit` runs every hook against the whole tree.
 repos:
+  # prek runs these with its own built-in Rust implementations rather than
+  # cloning the repo and building a Python environment for them.
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
@@ -15,8 +18,7 @@ repos:
       - id: detect-private-key
 
   # Catch credentials before they reach a commit, matching what CI enforces
-  # on the way in. The other two repos have had this for a while; this one
-  # had no secret scanning on either side of the push.
+  # on the way in.
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.30.1
     hooks:
@@ -24,7 +26,12 @@ repos:
 
   # These all invoke make targets that operate on the whole tree, so filenames
   # must not be appended — `make lint-check foo.py` would have make treat
-  # foo.py as a target rather than passing it to ruff.
+  # foo.py as a target rather than passing it to ruff. Each runs the tool
+  # version pinned in uv.lock or package-lock.json, so a local pass matches CI.
+  #
+  # The `files`/`types` filters decide whether a hook runs at all: it runs once,
+  # over the whole tree, when any staged file matches. A backend-only commit
+  # skips the frontend hooks and vice versa.
   - repo: local
     hooks:
       - id: lint-format
@@ -32,34 +39,44 @@ repos:
         entry: make lint-format
         language: system
         pass_filenames: false
-        always_run: true
+        types_or: [python, pyi]
       - id: lint-check
         name: Check code for lint errors with ruff-check
         entry: make lint-check
         language: system
         pass_filenames: false
-        always_run: true
+        # pyproject.toml carries the rule selection, so a change there re-lints.
+        files: (\.pyi?|^pyproject\.toml)$
       - id: lint-yaml
-        name: Check YAML files with yamllint
+        name: Check YAML files with yamlfix
         entry: make lint-yaml
         language: system
         pass_filenames: false
-        always_run: true
+        types: [yaml]
+      # ty checks the whole project; a filename subset loses cross-module types.
       - id: lint-typing
         name: Check typing errors with ty
         entry: make lint-typing
         language: system
         pass_filenames: false
-        always_run: true
+        files: (\.pyi?|^pyproject\.toml|^uv\.lock)$
+      # A clone of an unstaged file is still a clone, so it scans everything
+      # in scope (a few ms) rather than just what is staged.
+      - id: lint-dupes
+        name: Check for copy-pasted code with jscpd
+        entry: make lint-dupes
+        language: system
+        pass_filenames: false
+        files: ^(cbz_tagger/|frontend/src/|\.jscpd\.json$)
       - id: frontend-lint
         name: Format and lint the frontend
         entry: make frontend-lint
         language: system
         pass_filenames: false
-        always_run: true
+        files: ^frontend/
       - id: frontend-typing
         name: Check frontend typing errors with tsc
         entry: make frontend-typing
         language: system
         pass_filenames: false
-        always_run: true
+        files: ^frontend/

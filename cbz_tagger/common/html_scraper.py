@@ -45,7 +45,7 @@ class HtmlScraper:
         """
         elements = self.soup.find_all(tag, attrs)
         if len(elements) == 0:
-            raise EnvironmentError(error_msg)
+            raise OSError(error_msg)
         result = elements[0]
         assert isinstance(result, Tag), f"Expected Tag, got {type(result)}"
         return result
@@ -66,7 +66,7 @@ class HtmlScraper:
         """
         elements = self.soup.find_all(tag, attrs)
         if len(elements) == 0:
-            raise EnvironmentError(error_msg)
+            raise OSError(error_msg)
         return list(elements)
 
     def find_all(self, tag: str, attrs: dict[str, Any] | None = None) -> list[PageElement]:
@@ -112,7 +112,7 @@ class HtmlScraper:
         """
         elements = self.select(css)
         if len(elements) == 0:
-            raise EnvironmentError(error_msg)
+            raise OSError(error_msg)
         return elements
 
     def extract_script_variable(self, var_name: str, error_msg: str) -> str:
@@ -142,4 +142,4 @@ class HtmlScraper:
                 match = re.search(pattern, script_text)
                 if match:
                     return match.group(1)
-        raise EnvironmentError(error_msg)
+        raise OSError(error_msg)

@@ -109,16 +109,38 @@ def test_request_with_retry_rotates_through_configs(mock_sleep, mock_random):
     _ = mock_sleep, mock_random
     configs = BaseEntity._get_request_configs()
 
+    class CloudscraperEntity(BaseEntity):
+        CLOUDSCRAPER = True
+
     with requests_mock.Mocker() as rm:
         rm.get("http://example.com/file", status_code=500)
 
-        with pytest.raises(EnvironmentError):
-            BaseEntity.request_with_retry("http://example.com/file", retries=len(configs))
+        with pytest.raises(OSError):
+            CloudscraperEntity.request_with_retry("http://example.com/file", retries=len(configs))
 
         assert rm.call_count == len(configs)
         for attempt, request in enumerate(rm.request_history):
             expected_headers = configs[attempt % len(configs)]["headers"]
             assert request.headers["User-Agent"] == expected_headers["User-Agent"]
+
+
+@patch("cbz_tagger.entities.base_entity.random.uniform", return_value=1.0)
+@patch("cbz_tagger.entities.base_entity.time.sleep")
+@patch("cbz_tagger.entities.base_entity.cloudscraper.create_scraper")
+def test_request_with_retry_defaults_to_plain_client(mock_create_scraper, mock_sleep, mock_random):
+    """Without CLOUDSCRAPER the request identifies itself honestly and sends no browser headers."""
+    _ = mock_sleep, mock_random
+    with requests_mock.Mocker() as rm:
+        rm.get("http://example.com/file", text="ok")
+
+        BaseEntity.request_with_retry("http://example.com/file", headers={"Referer": "http://example.com/"})
+
+        mock_create_scraper.assert_not_called()
+        sent = rm.request_history[0].headers
+        assert sent["User-Agent"].startswith("cbz-tagger/")
+        assert "Mozilla" not in sent["User-Agent"]
+        assert "Sec-Fetch-Mode" not in sent
+        assert sent["Referer"] == "http://example.com/"
 
 
 @patch("cbz_tagger.entities.base_entity.random.uniform", return_value=1.0)

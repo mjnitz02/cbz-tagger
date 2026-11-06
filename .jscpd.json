@@ -1,0 +1,9 @@
+{
+  "path": ["cbz_tagger", "frontend/src"],
+  "format": ["python", "typescript", "tsx"],
+  "ignore": ["**/*.test.ts", "**/*.test.tsx", "**/lib/api-schema.ts"],
+  "minLines": 5,
+  "minTokens": 50,
+  "reporters": ["console"],
+  "exitCode": 1
+}

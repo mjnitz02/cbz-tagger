@@ -1,6 +1,5 @@
 import copy
 import os
-from typing import Union
 from unittest import mock
 
 import pytest
@@ -108,7 +107,7 @@ def mock_entity_db_with_mock_updates(mock_entity_db, manga_request_id, manga_req
 @pytest.fixture
 def mock_entity_db_with_metadata_update(mock_entity_db, manga_request_content):
     class MockMetadataEntityDB(MetadataEntityDB):
-        def update(self, entity_ids: Union[list[str], str], skip_on_exist=False, **kwargs):
+        def update(self, entity_ids: list[str] | str, skip_on_exist=False, **kwargs):
             if not isinstance(entity_ids, list):
                 entity_ids = [entity_ids]
 
@@ -149,7 +148,7 @@ def mock_entity_db_with_mock_updates_out_of_date_chapter(
 @pytest.fixture
 def mock_chapter_1_xml(tests_fixtures_path):
     fixture_name = os.path.join(tests_fixtures_path, "expected_chapter_1.xml")
-    with open(fixture_name, "r", encoding="UTF-8") as read_file:
+    with open(fixture_name, encoding="UTF-8") as read_file:
         content = read_file.read()
     content = content.replace("example.com", Urls.MDX)
     return content
@@ -158,7 +157,7 @@ def mock_chapter_1_xml(tests_fixtures_path):
 @pytest.fixture
 def mock_chapter_1_xml_with_count_3(tests_fixtures_path):
     fixture_name = os.path.join(tests_fixtures_path, "expected_chapter_1_with_count_3.xml")
-    with open(fixture_name, "r", encoding="UTF-8") as read_file:
+    with open(fixture_name, encoding="UTF-8") as read_file:
         content = read_file.read()
     content = content.replace("example.com", Urls.MDX)
     return content
@@ -167,7 +166,7 @@ def mock_chapter_1_xml_with_count_3(tests_fixtures_path):
 @pytest.fixture
 def mock_chapter_1_xml_with_count_11(tests_fixtures_path):
     fixture_name = os.path.join(tests_fixtures_path, "expected_chapter_1_with_count_11.xml")
-    with open(fixture_name, "r", encoding="UTF-8") as read_file:
+    with open(fixture_name, encoding="UTF-8") as read_file:
         content = read_file.read()
     content = content.replace("example.com", Urls.MDX)
     return content
@@ -176,7 +175,7 @@ def mock_chapter_1_xml_with_count_11(tests_fixtures_path):
 @pytest.fixture
 def mock_chapter_10_xml(tests_fixtures_path):
     fixture_name = os.path.join(tests_fixtures_path, "expected_chapter_10.xml")
-    with open(fixture_name, "r", encoding="UTF-8") as read_file:
+    with open(fixture_name, encoding="UTF-8") as read_file:
         content = read_file.read()
     content = content.replace("example.com", Urls.MDX)
     return content

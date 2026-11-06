@@ -312,7 +312,7 @@ def check_proxy_status_operation() -> tuple[str, str]:
         external_ip = response.text.strip()
         if external_ip:
             return "good", external_ip
-    except EnvironmentError as e:
+    except OSError as e:
         logger.error("Proxy status check failed: %s", e)
     return "bad", "0.0.0.0"
 

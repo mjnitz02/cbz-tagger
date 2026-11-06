@@ -19,7 +19,7 @@ class ChapterEntity(ChapterPluginEntity):
         entity_id = query_params["ids[]"][0]
         if plugin_type != Plugins.DEFAULT:
             if "plugin_id" not in kwargs:
-                raise EnvironmentError("plugin_id not provided")
+                raise OSError("plugin_id not provided")
 
             entity_id = kwargs["plugin_id"]
         plugin_cls = Plugins.get_plugin(plugin_type)
