@@ -158,8 +158,8 @@ container's own database and cover cache and is left owned by whoever the contai
 
 ## Development and Contributions
 Development and contribution to the project is welcome. Please feel free to fork the project and submit a pull request.
-There are a variety of `make` commands designed to make development easier. Additionally, the codebase features a
-comprehensive suite of unit and integration tests. These are all designed to be run using `pytest`. The integration
+There are a variety of [Task](https://taskfile.dev) commands designed to make development easier; run `task`
+on its own to list them all. Additionally, the codebase features a comprehensive suite of unit and integration tests. These are all designed to be run using `pytest`. The integration
 tests will allow you to execute commands against the backend by mocking the docker environment. This is useful for
 testing the API and ensuring that the code is functioning as expected.
 
@@ -169,39 +169,44 @@ maintainable and that new features do not break existing functionality.
 ### Requirements
 - Docker (https://docs.docker.com/engine/install/)
 - uv (https://docs.astral.sh/uv/getting-started/installation/)
+- Task, optional (https://taskfile.dev). It is pinned in the dev dependencies, so `uv run task <name>` always works;
+  `uv tool install go-task-bin` puts a bare `task` on your PATH.
 - Python 3.13 (https://www.python.org/downloads/)
 
 ### Environment setup
 You can set up the environment using `uv` to create a virtual environment. This will allow you to install the
 required dependencies without affecting your system Python installation.
 ```shell
-make install
+task install
 ```
 
 You can also install the git hooks to ensure that code is formatted correctly and passes linting checks before
-committing. They run with [prek](https://prek.j178.dev/), which is installed by `make install`.
+committing. They run with [prek](https://prek.j178.dev/), which is installed by `task install`.
 ```shell
-make pre-commit-install
+task pre-commit-install
 
 # Run every hook against the whole tree
-make pre-commit
+task pre-commit
 ```
 
 ### Running tests
 ```shell
 # Run the full test suite locally and in Docker
-make test
+task test
 
 # Run unit tests only (locally or in Docker)
-make test-unit
-make test-unit-docker
+task test-unit
+task test-unit-docker
+
+# Anything after `--` is passed to pytest
+task test-unit -- -k tagger -x
 
 # Run integration tests only (locally or in Docker)
-make test-integration
-make test-integration-docker
+task test-integration
+task test-integration-docker
 ```
 
 ### Run CBZ Tagger docker locally
 ```shell
-make run-docker
+task run-docker
 ```

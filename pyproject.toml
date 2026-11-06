@@ -1,7 +1,7 @@
 # `version` is major.minor only. The patch number is assigned by the release
 # workflow from the git tags, so it never needs touching for an ordinary
-# change. To cut a new minor or major release, run `make bump-minor` or
-# `make bump-major` in the PR that earns it.
+# change. To cut a new minor or major release, run `task bump-minor` or
+# `task bump-major` in the PR that earns it.
 [project]
 name = "cbz_tagger"
 version = "5.3.0"
@@ -45,9 +45,12 @@ dev = [
     # Exact pin, and Dependabot ignores it: ty is pre-1.0 and a bump can add new
     # errors across the tree. Bump it by hand and fix what it finds in the same PR.
     "ty==0.0.99",
-    # Copy-paste detection (`make lint-dupes`, settings in .jscpd.json). Exact pin
+    # Copy-paste detection (`task lint-dupes`, settings in .jscpd.json). Exact pin
     # for the same reason: a new release can find clones the old one missed.
     "jscpd==5.4.2",
+    # Task (taskfile.dev), the repo's command runner. A floor pin like the rest:
+    # Taskfile v3 is stable, so a routine Dependabot bump is safe.
+    "go-task-bin>=3.54.0",
 ]
 
 
@@ -118,3 +121,11 @@ force-single-line = true
 # its ~17 findings (mostly Optional returns indexed without a None check) are
 # fixed in a follow-up.
 exclude = ["tests/"]
+
+[tool.yamlfix]
+# 120 to match ruff. keep_style leaves block vs flow lists as written, so a
+# Taskfile's `cmds:` stays one command per line. One blank line is kept, which
+# is what separates tasks from each other.
+line_length = 120
+sequence_style = "keep_style"
+whitelines = 1
