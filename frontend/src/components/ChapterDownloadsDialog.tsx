@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Dialog } from 'radix-ui'
 import { Button } from '@/components/ui/button'
@@ -30,8 +30,12 @@ function ChapterDownloadsDialog({
   const entityId = series?.entity_id
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
-  const [working, setWorking] = useState<Set<string>>(new Set())
-  const [seed, setSeed] = useState<Set<string>>(new Set())
+  // User edits, tagged with the seed they started from. A refetch produces a
+  // new seed, which discards stale edits without an effect.
+  const [edits, setEdits] = useState<{
+    base: Set<string>
+    working: Set<string>
+  } | null>(null)
 
   const chaptersQuery = useQuery({
     queryKey: ['chapters', entityId],
@@ -46,20 +50,28 @@ function ChapterDownloadsDialog({
     enabled: !!entityId,
   })
 
-  useEffect(() => {
-    if (!chaptersQuery.data) return
-    const downloaded = new Set(
-      chaptersQuery.data.chapters
-        .filter((c) => c.downloaded)
-        .map((c) => c.entity_id),
-    )
-    setWorking(downloaded)
-    setSeed(downloaded)
-  }, [chaptersQuery.data])
+  const seed = useMemo(
+    () =>
+      new Set(
+        (chaptersQuery.data?.chapters ?? [])
+          .filter((c) => c.downloaded)
+          .map((c) => c.entity_id),
+      ),
+    [chaptersQuery.data],
+  )
+  const working = edits?.base === seed ? edits.working : seed
 
-  useEffect(() => {
-    if (!series) setSearch('')
-  }, [series])
+  function updateWorking(change: (next: Set<string>) => void) {
+    const next = new Set(working)
+    change(next)
+    setEdits({ base: seed, working: next })
+  }
+
+  function close() {
+    setSearch('')
+    setEdits(null)
+    onOpenChange(false)
+  }
 
   const chapters = useMemo(
     () => chaptersQuery.data?.chapters ?? [],
@@ -93,35 +105,29 @@ function ChapterDownloadsDialog({
       onStatusMessage(`Updated downloaded chapters for ${series?.name}`)
       queryClient.invalidateQueries({ queryKey: ['chapters', entityId] })
       queryClient.invalidateQueries({ queryKey: ['series-state'] })
-      onOpenChange(false)
+      close()
     },
   })
 
   function toggleChapter(chapterId: string) {
-    setWorking((prev) => {
-      const next = new Set(prev)
+    updateWorking((next) => {
       if (next.has(chapterId)) {
         next.delete(chapterId)
       } else {
         next.add(chapterId)
       }
-      return next
     })
   }
 
   function selectAllFiltered() {
-    setWorking((prev) => {
-      const next = new Set(prev)
+    updateWorking((next) => {
       for (const c of filteredChapters) next.add(c.entity_id)
-      return next
     })
   }
 
   function clearAllFiltered() {
-    setWorking((prev) => {
-      const next = new Set(prev)
+    updateWorking((next) => {
       for (const c of filteredChapters) next.delete(c.entity_id)
-      return next
     })
   }
 
@@ -129,7 +135,7 @@ function ChapterDownloadsDialog({
     <Modal
       open={series !== null}
       onOpenChange={(open) => {
-        if (!open) onOpenChange(false)
+        if (!open) close()
       }}
       title={<>Manage downloads — {series?.name}</>}
       description={

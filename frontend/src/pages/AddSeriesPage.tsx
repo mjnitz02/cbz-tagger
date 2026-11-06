@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,7 +22,7 @@ function AddSeriesPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedResultId, setSelectedResultId] = useState<string>()
   const [selectedTitleName, setSelectedTitleName] = useState<string>()
-  const [selectedBackend, setSelectedBackend] = useState<string>()
+  const [backendChoice, setBackendChoice] = useState<string>()
   const [backendId, setBackendId] = useState('')
   const [trackingMode, setTrackingMode] = useState<TrackingMode>('No')
   const [statusMessage, setStatusMessage] = useState<string>()
@@ -36,11 +36,8 @@ function AddSeriesPage() {
     },
   })
 
-  useEffect(() => {
-    if (pluginsQuery.data && !selectedBackend) {
-      setSelectedBackend(pluginsQuery.data.DEFAULT)
-    }
-  }, [pluginsQuery.data, selectedBackend])
+  // Unset until the user picks one, so it falls back to the default plugin.
+  const selectedBackend = backendChoice ?? pluginsQuery.data?.DEFAULT
 
   const search = useMutation({
     mutationFn: async () => {
@@ -94,7 +91,7 @@ function AddSeriesPage() {
       setSearchTerm('')
       setSelectedResultId(undefined)
       setSelectedTitleName(undefined)
-      setSelectedBackend(pluginsQuery.data?.DEFAULT)
+      setBackendChoice(undefined)
       setBackendId('')
       setTrackingMode('No')
       queryClient.invalidateQueries({ queryKey: ['series'] })
@@ -186,7 +183,7 @@ function AddSeriesPage() {
         <Label htmlFor="backend-select">
           Select a series backend (Default: MDX)
         </Label>
-        <Select value={selectedBackend} onValueChange={setSelectedBackend}>
+        <Select value={selectedBackend} onValueChange={setBackendChoice}>
           <SelectTrigger id="backend-select" className="w-full">
             <SelectValue />
           </SelectTrigger>

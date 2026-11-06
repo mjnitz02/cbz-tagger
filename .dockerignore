@@ -22,3 +22,6 @@ debug_image
 README.md
 LICENSE.txt
 docker-compose.yaml
+
+# Dev tooling; nothing in the image runs Task.
+Taskfile.yml
