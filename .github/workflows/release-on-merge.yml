@@ -62,7 +62,7 @@ jobs:
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - name: Log in to GitHub Container Registry
         if: steps.plan.outputs.release == 'true'
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -70,7 +70,7 @@ jobs:
       - name: Extract metadata (tags, labels) for Docker
         if: steps.plan.outputs.release == 'true'
         id: meta
-        uses: docker/metadata-action@8e671d84a3bd81afdfc4fdbb96a42b07c2a80934
+        uses: docker/metadata-action@1ec73021df0717d8bef7700a897c064453280439
         with:
           images: ghcr.io/${{ github.repository }}
           # `latest` comes for free: metadata-action's default flavor is
