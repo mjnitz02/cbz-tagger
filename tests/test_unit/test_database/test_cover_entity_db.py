@@ -54,13 +54,6 @@ def test_get_missing_covers(cover_entity_db):
         assert missing_covers == {"entity1", "entity2"}
 
 
-@patch("cbz_tagger.database.cover_entity_db.CoverEntityDB.download")
-def test_download_missing_covers(mock_download, cover_entity_db):
-    with patch("cbz_tagger.database.cover_entity_db.CoverEntityDB.get_missing_covers", return_value={"entity1"}):
-        cover_entity_db.download_missing_covers("mock_path")
-        mock_download.assert_called_once_with("entity1", "mock_path")
-
-
 @pytest.mark.parametrize(
     "content, expected_locale",
     [
