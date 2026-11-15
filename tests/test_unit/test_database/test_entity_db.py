@@ -1120,3 +1120,119 @@ def test_entity_db_set_downloaded_chapters_ignores_unknown_chapters(simple_mock_
 
     assert (manga_request_id, "unknown-chapter") in simple_mock_entity_db.entity_downloads
     simple_mock_entity_db.save.assert_called_once()
+
+
+# ---- Failure isolation: one failed unit of work must never stop the work after it ----
+
+
+@pytest.fixture
+def two_series_db(simple_mock_entity_db):
+    simple_mock_entity_db.entity_names = {"a": "Series A", "b": "Series B"}
+    simple_mock_entity_db.entity_map = {"Series A": "a", "Series B": "b"}
+    simple_mock_entity_db.entity_chapter_plugin = {"a": {"plugin_type": "x"}, "b": {"plugin_type": "x"}}
+    simple_mock_entity_db.metadata = mock.MagicMock()
+    simple_mock_entity_db.metadata.to_hash.return_value = "same"
+    simple_mock_entity_db.chapters = mock.MagicMock()
+    simple_mock_entity_db.chapters.to_hash.return_value = "same"
+    return simple_mock_entity_db
+
+
+def test_failed_metadata_batch_does_not_stop_chapter_checks(two_series_db):
+    two_series_db.metadata.update.side_effect = [OSError("api down"), None]
+
+    two_series_db.update_manga_entity_id_metadata_and_find_updated_ids(["a", "b"], batch_size=1)
+
+    assert two_series_db.metadata.update.call_count == 2
+    assert two_series_db.chapters.update.call_count == 2
+    assert two_series_db.refresh_failures == {"metadata batch": 1}
+
+
+def test_failed_chapter_list_does_not_stop_later_series(two_series_db, caplog):
+    two_series_db.chapters.update.side_effect = [ValueError("Chapter entries are not being filtered"), None]
+
+    two_series_db.update_manga_entity_id_metadata_and_find_updated_ids(["a", "b"])
+
+    assert [c.args[0] for c in two_series_db.chapters.update.call_args_list] == ["a", "b"]
+    assert two_series_db.refresh_failures == {"chapter list": 1}
+    # Unexpected (non-OSError) failures carry a traceback
+    assert "Traceback" in caplog.text
+    assert "Could not update chapters for Series A (a)" in caplog.text
+
+
+def test_update_manga_entity_id_catches_non_oserror(two_series_db):
+    two_series_db.volumes = mock.MagicMock()
+    two_series_db.volumes.update.side_effect = KeyError("volumes")
+
+    two_series_db.update_manga_entity_id("a", update_metadata=False)
+
+    assert two_series_db.refresh_failures == {"series update": 1}
+
+
+def test_failed_cover_download_does_not_stop_other_covers(two_series_db):
+    two_series_db.covers = mock.MagicMock()
+    two_series_db.covers.get_missing_covers.return_value = ["a", "b"]
+    two_series_db.covers.download.side_effect = [ValueError("bad cover"), None]
+
+    two_series_db.download_missing_covers()
+
+    assert two_series_db.covers.download.call_count == 2
+    assert two_series_db.refresh_failures == {"cover download": 1}
+
+
+def test_failed_chapter_download_does_not_stop_other_chapters(two_series_db):
+    two_series_db.get_missing_chapters = mock.MagicMock(
+        return_value=[("a", mock.MagicMock(entity_id="c1")), ("b", mock.MagicMock(entity_id="c2"))]
+    )
+    two_series_db.download_chapter = mock.MagicMock(side_effect=[StopIteration, None])
+
+    two_series_db.download_missing_chapters("storage")
+
+    assert two_series_db.download_chapter.call_count == 2
+    assert two_series_db.refresh_failures == {"chapter download": 1}
+
+
+def test_download_chapter_catches_non_oserror_and_cleans_up(mock_entity_db, manga_request_id, tmp_path):
+    chapter_item = next(iter(mock_entity_db.chapters[manga_request_id]))
+    mock_entity_db.save = mock.MagicMock()
+    mock_entity_db.build_chapter_metadata = mock.MagicMock(side_effect=ValueError("no volume data"))
+
+    mock_entity_db.download_chapter(manga_request_id, chapter_item, str(tmp_path))
+
+    assert mock_entity_db.refresh_failures == {"chapter download": 1}
+    assert (manga_request_id, chapter_item.entity_id) not in mock_entity_db.entity_downloads
+    manga_dir = tmp_path / next(iter(mock_entity_db.entity_map))
+    assert list(manga_dir.iterdir()) == []
+
+
+def test_download_chapter_unknown_series_raises_for_caller(mock_entity_db, tmp_path):
+    chapter_item = mock.MagicMock(entity_id="c1")
+    with pytest.raises(ValueError, match="not in the database"):
+        mock_entity_db.download_chapter("unknown", chapter_item, str(tmp_path))
+
+
+def test_refresh_failed_stage_does_not_stop_later_stages(two_series_db, caplog):
+    two_series_db.update_manga_entity_id_metadata_and_find_updated_ids = mock.MagicMock(side_effect=RuntimeError)
+    two_series_db.download_missing_covers = mock.MagicMock(side_effect=OSError("disk"))
+    two_series_db.remove_orphaned_covers = mock.MagicMock()
+    two_series_db.download_missing_chapters = mock.MagicMock()
+
+    two_series_db.refresh("storage")
+
+    two_series_db.remove_orphaned_covers.assert_called_once()
+    two_series_db.download_missing_chapters.assert_called_once_with("storage")
+    assert two_series_db.refresh_failures == {"refresh stage": 2}
+    assert "Refresh complete with failures: 2 refresh stage" in caplog.text
+
+
+def test_refresh_resets_failures_and_reports_clean_run(two_series_db, caplog):
+    caplog.set_level("INFO")
+    two_series_db.refresh_failures["chapter download"] = 5
+    two_series_db.update_manga_entity_id_metadata_and_find_updated_ids = mock.MagicMock(return_value=[])
+    two_series_db.download_missing_covers = mock.MagicMock()
+    two_series_db.remove_orphaned_covers = mock.MagicMock()
+    two_series_db.download_missing_chapters = mock.MagicMock()
+
+    two_series_db.refresh("storage")
+
+    assert not two_series_db.refresh_failures
+    assert "Refresh complete." in caplog.text

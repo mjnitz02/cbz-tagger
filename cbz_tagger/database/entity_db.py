@@ -3,6 +3,8 @@ import logging
 import os
 import re
 import shutil
+import sys
+from collections import Counter
 from typing import Any
 from xml.dom import minidom
 from xml.etree import ElementTree
@@ -52,6 +54,22 @@ class EntityDB:
         self.authors: AuthorEntityDB = AuthorEntityDB() if authors is None else authors
         self.volumes: VolumeEntityDB = VolumeEntityDB() if volumes is None else volumes
         self.chapters: ChapterEntityDB = ChapterEntityDB() if chapters is None else chapters
+
+        # Failed units of work since the last refresh() began, by kind; summarised at its end
+        self.refresh_failures: Counter[str] = Counter()
+
+    def record_failure(self, kind: str, message: str, *args) -> None:
+        """Log a failed unit of work from inside an `except` block, and count it for the refresh summary.
+
+        OSError is the expected failure (a site down, a bad file) and gets one line. Anything
+        else is unexpected, likely a bug or a changed response shape, so it gets a traceback.
+        """
+        self.refresh_failures[kind] += 1
+        err = sys.exc_info()[1]
+        if isinstance(err, OSError):
+            logger.error(f"{message}: %s", *args, err)
+        else:
+            logger.exception(message, *args)
 
     def __getitem__(self, manga_name) -> str | None:
         return self.entity_map.get(manga_name)
@@ -302,7 +320,10 @@ class EntityDB:
         logger.info("Checking for metadata updates...")
         for i in range(0, len(entity_ids), batch_size):
             batch = entity_ids[i : i + batch_size]
-            self.metadata.update(batch, batch_response=True)
+            try:
+                self.metadata.update(batch, batch_response=True)
+            except Exception:
+                self.record_failure("metadata batch", "Could not update metadata for %d series", len(batch))
 
         for idx, entity_id in enumerate(entity_ids):
             if idx % 10 == 0:
@@ -313,7 +334,15 @@ class EntityDB:
             # Check if chapter uses plugin, always update when plugin present
             chapter_plugin = self.entity_chapter_plugin.get(entity_id, {})
             if chapter_plugin or metadata_changed:
-                self.chapters.update(entity_id, **chapter_plugin)
+                try:
+                    self.chapters.update(entity_id, **chapter_plugin)
+                except Exception:
+                    self.record_failure(
+                        "chapter list",
+                        "Could not update chapters for %s (%s)",
+                        self.entity_names.get(entity_id, "Unknown"),
+                        entity_id,
+                    )
 
         # There are extra verbose checks here, but this makes debugging easier if breakpoints are set
         updated_entity_ids = []
@@ -355,20 +384,38 @@ class EntityDB:
                 # since the APIs are prone to crashing
                 self.save()
 
-            except OSError as err:
-                logger.info("API Down >> Unable to update %s metadata. %s", manga_name, err)
+            except Exception:
+                self.record_failure("series update", "Could not update %s (%s)", manga_name, entity_id)
 
     def refresh(self, storage_path):
+        """Run every refresh stage. Each unit of work inside a stage is isolated, and each
+        stage is isolated from the next, so one failure never stops the work after it."""
         logger.info("Refreshing database...")
+        self.refresh_failures = Counter()
+
         entity_ids = sorted(self.metadata.keys())
-        updated_entity_ids = self.update_manga_entity_id_metadata_and_find_updated_ids(entity_ids)
-        for entity_id in updated_entity_ids:
+        updated_entity_ids = self._run_stage(
+            "checking for updates", self.update_manga_entity_id_metadata_and_find_updated_ids, entity_ids
+        )
+        for entity_id in updated_entity_ids or []:
             self.update_manga_entity_id(entity_id, update_metadata=False)
-        self.download_missing_covers()
-        self.remove_orphaned_covers()
+        self._run_stage("downloading missing covers", self.download_missing_covers)
+        self._run_stage("removing orphaned covers", self.remove_orphaned_covers)
         logger.debug("Downloading missing chapters...")
-        self.download_missing_chapters(storage_path)
-        logger.info("Refresh complete.")
+        self._run_stage("downloading missing chapters", self.download_missing_chapters, storage_path)
+
+        if self.refresh_failures:
+            summary = ", ".join(f"{count} {kind}" for kind, count in sorted(self.refresh_failures.items()))
+            logger.warning("Refresh complete with failures: %s. See the errors above.", summary)
+        else:
+            logger.info("Refresh complete.")
+
+    def _run_stage(self, stage, func, *args):
+        try:
+            return func(*args)
+        except Exception:
+            self.record_failure("refresh stage", "Refresh stage failed: %s", stage)
+            return None
 
     def remove_orphaned_covers(self):
         logger.debug("Cleaning orphaned covers...")
@@ -376,13 +423,24 @@ class EntityDB:
 
     def download_missing_covers(self):
         logger.debug("Downloading missing covers...")
-        self.covers.download_missing_covers(self.image_db_path)
+        for entity_id in self.covers.get_missing_covers(self.image_db_path):
+            try:
+                self.covers.download(entity_id, self.image_db_path)
+            except Exception:
+                self.record_failure(
+                    "cover download",
+                    "Could not download covers for %s (%s)",
+                    self.entity_names.get(entity_id, "Unknown"),
+                    entity_id,
+                )
 
     def download_chapter(self, entity_id, chapter_item, storage_path):
         if (entity_id, chapter_item.entity_id) in self.entity_downloads:
             return
 
-        manga_name = next(iter(name for name, id in self.entity_map.items() if id == entity_id))
+        manga_name = next((name for name, id in self.entity_map.items() if id == entity_id), None)
+        if manga_name is None:
+            raise ValueError(f"Series {entity_id} is not in the database")
         chapter_name = f"{manga_name} - Chapter {chapter_item.padded_chapter_string}"
 
         chapter_filepath = os.path.join(storage_path, manga_name, chapter_name)
@@ -412,8 +470,14 @@ class EntityDB:
                 json_file.write(mylar_series_json)
             set_file_ownership(mylar_series_json_path)
 
-        except OSError as err:
-            logger.error("Could not download chapter: %s, %s, %s", entity_id, chapter_item.entity_id, err)
+        except Exception:
+            self.record_failure(
+                "chapter download",
+                "Could not download %s (%s, %s)",
+                chapter_name,
+                entity_id,
+                chapter_item.entity_id,
+            )
             if os.path.exists(f"{chapter_filepath}.cbz"):
                 logger.error("Removing CBZ: %s, %s", entity_id, chapter_item.entity_id)
                 os.remove(f"{chapter_filepath}.cbz")
@@ -422,8 +486,8 @@ class EntityDB:
                 self.entity_downloads.discard((entity_id, chapter_item.entity_id))
                 self.save()
         finally:
-            # Cleanup excess
-            shutil.rmtree(chapter_filepath)
+            # Cleanup excess. ignore_errors so a folder that was never created cannot mask the real error
+            shutil.rmtree(chapter_filepath, ignore_errors=True)
 
     def build_chapter_metadata(self, manga_name, chapter_item, chapter_filepath):
         # Write the comicinfo.xml file
@@ -610,6 +674,8 @@ class EntityDB:
         for entity_id, chapter_item in missing_chapters:
             try:
                 self.download_chapter(entity_id, chapter_item, storage_path)
-            except OSError as err:
-                logger.error("Error occurred in chapter: %s, %s, %s", entity_id, chapter_item.entity_id, err)
+            except Exception:
+                self.record_failure(
+                    "chapter download", "Could not download chapter %s, %s", entity_id, chapter_item.entity_id
+                )
         return missing_chapters

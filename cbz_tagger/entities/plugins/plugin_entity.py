@@ -213,6 +213,35 @@ class ChapterPluginEntity(BaseEntity):
             scanlation_group=scanlation_group,
         )
 
+    @staticmethod
+    def decode_image(data: bytes, label: str) -> Image.Image:
+        """Decode downloaded image bytes, tolerating a source file that is itself damaged.
+
+        A short download never reaches this point: requests rejects a body shorter than
+        its Content-Length. So a decode error here means the file on the server is bad,
+        and retrying will never fix it. Real case: a 2018 MangaDex PNG (Needless ch.15
+        p.15) whose pixel data is 80 bytes short with bad checksums. Pillow renders it
+        with only the last row garbled, which beats failing the chapter on every refresh.
+
+        Bytes Pillow cannot identify at all (an HTML error page, say) still raise.
+        """
+        image = Image.open(BytesIO(data))
+        try:
+            image.load()
+            return image
+        except OSError as err:
+            logger.warning("Damaged image for %s, saving what decodes: %s", label, err)
+
+        # LOAD_TRUNCATED_IMAGES is module-global in Pillow, so scope it to this one decode
+        previous = ImageFile.LOAD_TRUNCATED_IMAGES
+        ImageFile.LOAD_TRUNCATED_IMAGES = True  # ty: ignore[invalid-assignment]
+        try:
+            image = Image.open(BytesIO(data))
+            image.load()
+        finally:
+            ImageFile.LOAD_TRUNCATED_IMAGES = previous
+        return image
+
     def download_chapter(self, filepath) -> list[str]:
         # Get chapter image urls
         url = self.get_chapter_url()
@@ -225,14 +254,10 @@ class ChapterPluginEntity(BaseEntity):
             cached_images.append(image_path)
             if not os.path.exists(image_path):
                 image = self.download_file(image_url, headers=self.image_headers())
-                in_memory_image = Image.open(BytesIO(image))
+                in_memory_image = self.decode_image(image, f"chapter {self.entity_id} page {index + 1}")
                 if in_memory_image.format != "JPEG":
                     in_memory_image = in_memory_image.convert("RGB")
-                try:
-                    in_memory_image.save(image_path, quality=95, optimize=True)
-                except OSError:
-                    ImageFile.LOAD_TRUNCATED_IMAGES = True  # ty: ignore[invalid-assignment]
-                    in_memory_image.save(image_path, quality=95, optimize=True)
+                in_memory_image.save(image_path, quality=95, optimize=True)
 
         if self.pages != -1 and len(cached_images) != self.pages:
             logger.error("Failed to download chapter %s, not enough pages saved from server", self.entity_id)

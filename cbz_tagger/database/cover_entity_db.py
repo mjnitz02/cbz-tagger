@@ -45,11 +45,6 @@ class CoverEntityDB(BaseEntityDB[list[CoverEntity]]):
         missing_entities = set(item[0] for item in missing_covers)
         return missing_entities
 
-    def download_missing_covers(self, image_db_path):
-        missing_entities = self.get_missing_covers(image_db_path)
-        for entity_id in missing_entities:
-            self.download(entity_id, image_db_path)
-
     def get_latest_cover_for_entity(self, entity_id: str) -> CoverEntity:
         covers = self[entity_id]
         if covers is None or len(covers) == 0:
